@@ -24,6 +24,16 @@ func BuildFilterQuery(
 
 	keys := make([]string, 0, len(filters))
 	for key := range filters {
+		if key == "username" {
+			return model.DBQuery{
+				ID:            queryID,
+				Query:         baseQuery + " AND USERNAME = $1",
+				PostgresQuery: baseQuery + " AND USERNAME = $1",
+				SQLiteQuery:   baseQuery + " AND USERNAME = ?",
+			}, 
+			append(args, filters[key]), 
+			nil
+		}
 		if err := validateKey(key); err != nil {
 			return model.DBQuery{}, nil, fmt.Errorf("invalid filter key: %w", err)
 		}

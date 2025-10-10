@@ -46,7 +46,7 @@ var (
 	// QueryCreateUser is the query to create a new user.
 	QueryCreateUser = model.DBQuery{
 		ID:    "ASQ-USER_MGT-03",
-		Query: "INSERT INTO \"USER\" (USER_ID, OU_ID, TYPE, ATTRIBUTES, CREDENTIALS) VALUES ($1, $2, $3, $4, $5)",
+		Query: "INSERT INTO \"USER\" (USER_ID, OU_ID, TYPE, ATTRIBUTES, CREDENTIALS, USERNAME, PWD_HASH, PWD_SALT, PWD_ALG) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
 	}
 	// QueryGetUserByUserID is the query to get a user by user ID.
 	QueryGetUserByUserID = model.DBQuery{
@@ -66,7 +66,7 @@ var (
 	// QueryValidateUserWithCredentials is the query to validate the user with the give credentials.
 	QueryValidateUserWithCredentials = model.DBQuery{
 		ID:    "ASQ-USER_MGT-07",
-		Query: "SELECT USER_ID, OU_ID, TYPE, ATTRIBUTES, CREDENTIALS FROM \"USER\" WHERE USER_ID = $1",
+		Query: "SELECT USER_ID, OU_ID, TYPE, ATTRIBUTES, CREDENTIALS, PWD_HASH, PWD_SALT, PWD_ALG FROM \"USER\" WHERE USER_ID = $1",
 	}
 )
 
