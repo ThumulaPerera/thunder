@@ -75,7 +75,7 @@ jobs:
       - name: 🛠️ Build and Run Tests
         run: |
             set -e
-            make all OS=$(go env GOOS) ARCH=$(go env GOARCH)
+            make build OS=$(go env GOOS) ARCH=$(go env GOARCH)
 
       - name: 🧹 Clean Previous Builds
         run: make clean_all
