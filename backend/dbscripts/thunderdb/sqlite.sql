@@ -19,6 +19,10 @@ CREATE TABLE USER (
     TYPE        TEXT               NOT NULL,
     ATTRIBUTES  TEXT,
     CREDENTIALS TEXT,
+    USERNAME    TEXT,
+    PWD_HASH    TEXT,
+    PWD_SALT    TEXT,
+    PWD_ALG     TEXT,
     CREATED_AT  TEXT DEFAULT (datetime('now')),
     UPDATED_AT  TEXT DEFAULT (datetime('now'))
 );
