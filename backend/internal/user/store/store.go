@@ -125,9 +125,6 @@ func CreateUser(user model.User, credentials []model.Credential) error {
 		string(attributes),
 		credentialsJSON,
 		m["username"],
-		credentials[0].Value,
-		credentials[0].Salt,
-		credentials[0].StorageAlgo,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
@@ -298,21 +295,9 @@ func VerifyUser(id string) (model.User, []model.Credential, error) {
 		return model.User{}, []model.Credential{}, fmt.Errorf("failed to parse credentials as string")
 	}
 
-	hash, ok := row["pwd_hash"].(string)
-	salt, _ := row["pwd_salt"].(string)
-	alg, _ := row["pwd_alg"].(string)
-
 	var credentials []model.Credential
 
-	if ok && hash != "" {
-		credentials = append(credentials, model.Credential{
-			CredentialType: "password",
-			StorageType:    "hash",
-			StorageAlgo:    alg,
-			Value:          hash,
-			Salt:           salt,
-		})
-	} else if err := json.Unmarshal([]byte(credentialsJSON), &credentials); err != nil {
+	if err := json.Unmarshal([]byte(credentialsJSON), &credentials); err != nil {
 		return model.User{}, []model.Credential{}, fmt.Errorf("failed to unmarshal credentials: %w", err)
 	}
 
