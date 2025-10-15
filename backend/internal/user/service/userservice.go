@@ -253,6 +253,20 @@ func extractCredentials(user *model.User) ([]model.Credential, error) {
 		}
 	}
 
+	for i := 1; i <= 10; i++ {
+		credHash := hash.NewCredential([]byte("test"))
+
+		credential := model.Credential{
+			CredentialType: "testcred",
+			StorageType:    "hash",
+			StorageAlgo:    credHash.Algorithm,
+			Value:          credHash.Hash,
+			Salt:           credHash.Salt,
+		}
+
+		credentials = append(credentials, credential)
+	}
+
 	if len(credentials) > 0 {
 		updatedAttrs, err := json.Marshal(attrsMap)
 		if err != nil {
