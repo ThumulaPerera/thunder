@@ -37,12 +37,14 @@ type flowStoreInterface interface {
 // flowStore implements the FlowStoreInterface for managing flow contexts.
 type flowStore struct {
 	dbProvider provider.DBProviderInterface
+	serverID   string
 }
 
 // newFlowStore creates a new instance of FlowStore.
-func newFlowStore(dbProvider provider.DBProviderInterface) flowStoreInterface {
+func newFlowStore(dbProvider provider.DBProviderInterface, serverID string) flowStoreInterface {
 	return &flowStore{
 		dbProvider: dbProvider,
+		serverID:   serverID,
 	}
 }
 
@@ -58,13 +60,13 @@ func (s *flowStore) StoreFlowContext(ctx EngineContext) error {
 		func(tx dbmodel.TxInterface) error {
 			_, err := tx.Exec(QueryCreateFlowContext.Query, dbModel.FlowID, dbModel.AppID,
 				dbModel.CurrentNodeID, dbModel.CurrentActionID, dbModel.GraphID,
-				dbModel.RuntimeData, dbModel.ExecutionHistory)
+				dbModel.RuntimeData, dbModel.ExecutionHistory, s.serverID)
 			return err
 		},
 		func(tx dbmodel.TxInterface) error {
 			_, err := tx.Exec(QueryCreateFlowUserData.Query, dbModel.FlowID,
 				dbModel.IsAuthenticated, dbModel.UserID,
-				dbModel.UserInputs, dbModel.UserAttributes)
+				dbModel.UserInputs, dbModel.UserAttributes, s.serverID)
 			return err
 		},
 	}
@@ -79,7 +81,7 @@ func (s *flowStore) GetFlowContext(flowID string) (*FlowContextWithUserDataDB, e
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(QueryGetFlowContextWithUserData, flowID)
+	results, err := dbClient.Query(QueryGetFlowContextWithUserData, flowID, s.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -107,12 +109,13 @@ func (s *flowStore) UpdateFlowContext(ctx EngineContext) error {
 	queries := []func(tx dbmodel.TxInterface) error{
 		func(tx dbmodel.TxInterface) error {
 			_, err := tx.Exec(QueryUpdateFlowContext.Query, dbModel.FlowID,
-				dbModel.CurrentNodeID, dbModel.CurrentActionID, dbModel.RuntimeData, dbModel.ExecutionHistory)
+				dbModel.CurrentNodeID, dbModel.CurrentActionID, dbModel.RuntimeData, dbModel.ExecutionHistory,
+				s.serverID)
 			return err
 		},
 		func(tx dbmodel.TxInterface) error {
 			_, err := tx.Exec(QueryUpdateFlowUserData.Query, dbModel.FlowID, dbModel.IsAuthenticated,
-				dbModel.UserID, dbModel.UserInputs, dbModel.UserAttributes)
+				dbModel.UserID, dbModel.UserInputs, dbModel.UserAttributes, s.serverID)
 			return err
 		},
 	}
@@ -124,11 +127,11 @@ func (s *flowStore) UpdateFlowContext(ctx EngineContext) error {
 func (s *flowStore) DeleteFlowContext(flowID string) error {
 	queries := []func(tx dbmodel.TxInterface) error{
 		func(tx dbmodel.TxInterface) error {
-			_, err := tx.Exec(QueryDeleteFlowUserData.Query, flowID)
+			_, err := tx.Exec(QueryDeleteFlowUserData.Query, flowID, s.serverID)
 			return err
 		},
 		func(tx dbmodel.TxInterface) error {
-			_, err := tx.Exec(QueryDeleteFlowContext.Query, flowID)
+			_, err := tx.Exec(QueryDeleteFlowContext.Query, flowID, s.serverID)
 			return err
 		},
 	}

@@ -1,6 +1,7 @@
 server:
   hostname: localhost
   port: 8080
+  identifier: test-server-id
 
 gate_client:
   hostname: localhost

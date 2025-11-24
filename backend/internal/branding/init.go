@@ -21,12 +21,13 @@ package branding
 import (
 	"net/http"
 
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
 
 // Initialize initializes the branding service and registers its routes.
 func Initialize(mux *http.ServeMux) BrandingServiceInterface {
-	brandingStore := newBrandingStore()
+	brandingStore := newBrandingStore(config.GetThunderRuntime().Config.Server.Identifier)
 	brandingService := newBrandingService(brandingStore)
 	brandingHandler := newBrandingHandler(brandingService)
 	registerRoutes(mux, brandingHandler)

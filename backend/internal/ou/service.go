@@ -72,9 +72,9 @@ type organizationUnitService struct {
 }
 
 // newOrganizationUnitService creates a new instance of OrganizationUnitService.
-func newOrganizationUnitService() OrganizationUnitServiceInterface {
+func newOrganizationUnitService(serverID string) OrganizationUnitServiceInterface {
 	return &organizationUnitService{
-		ouStore: newOrganizationUnitStore(),
+		ouStore: newOrganizationUnitStore(serverID),
 	}
 }
 

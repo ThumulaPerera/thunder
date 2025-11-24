@@ -40,24 +40,26 @@ type certificateStoreInterface interface {
 // certificateStore implements the certificateStoreInterface for managing certificates.
 type certificateStore struct {
 	dbProvider dbprovider.DBProviderInterface
+	serverID   string
 }
 
 // NewCertificateStore creates a new instance of CertificateStore.
-func newCertificateStore() certificateStoreInterface {
+func newCertificateStore(serverID string) certificateStoreInterface {
 	return &certificateStore{
 		dbProvider: dbprovider.GetDBProvider(),
+		serverID:   serverID,
 	}
 }
 
 // GetCertificateByID retrieves a certificate by its ID.
 func (s *certificateStore) GetCertificateByID(id string) (*Certificate, error) {
-	return s.getCertificate(queryGetCertificateByID, id)
+	return s.getCertificate(queryGetCertificateByID, id, s.serverID)
 }
 
 // GetCertificateByReference retrieves a certificate by its reference type and ID.
 func (s *certificateStore) GetCertificateByReference(refType CertificateReferenceType, refID string) (
 	*Certificate, error) {
-	return s.getCertificate(queryGetCertificateByReference, refType, refID)
+	return s.getCertificate(queryGetCertificateByReference, refType, refID, s.serverID)
 }
 
 // getCertificate retrieves a certificate based on a query and its arguments.
@@ -130,7 +132,8 @@ func (s *certificateStore) CreateCertificate(cert *Certificate) error {
 		return fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	rows, err := dbClient.Execute(queryInsertCertificate, cert.ID, cert.RefType, cert.RefID, cert.Type, cert.Value)
+	rows, err := dbClient.Execute(queryInsertCertificate, cert.ID, cert.RefType, cert.RefID, cert.Type, cert.Value,
+		s.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to insert certificate: %w", err)
 	}
@@ -143,13 +146,14 @@ func (s *certificateStore) CreateCertificate(cert *Certificate) error {
 
 // UpdateCertificateByID updates a certificate by its ID.
 func (s *certificateStore) UpdateCertificateByID(existingCert, updatedCert *Certificate) error {
-	return s.updateCertificate(queryUpdateCertificateByID, existingCert.ID, updatedCert.Type, updatedCert.Value)
+	return s.updateCertificate(queryUpdateCertificateByID, existingCert.ID, updatedCert.Type, updatedCert.Value,
+		s.serverID)
 }
 
 // UpdateCertificateByReference updates a certificate by its reference type and ID.
 func (s *certificateStore) UpdateCertificateByReference(existingCert, updatedCert *Certificate) error {
 	return s.updateCertificate(queryUpdateCertificateByReference, existingCert.RefType, existingCert.RefID,
-		updatedCert.Type, updatedCert.Value)
+		updatedCert.Type, updatedCert.Value, s.serverID)
 }
 
 // updateCertificate updates a certificate based on a query and its arguments.
@@ -172,13 +176,13 @@ func (s *certificateStore) updateCertificate(query dbmodel.DBQuery, args ...inte
 
 // DeleteCertificateByID deletes a certificate by its ID.
 func (s *certificateStore) DeleteCertificateByID(id string) error {
-	return s.deleteCertificate(queryDeleteCertificateByID, id)
+	return s.deleteCertificate(queryDeleteCertificateByID, id, s.serverID)
 }
 
 // DeleteCertificateByReference deletes a certificate by its reference type and ID.
 func (s *certificateStore) DeleteCertificateByReference(refType CertificateReferenceType,
 	refID string) error {
-	return s.deleteCertificate(queryDeleteCertificateByReference, refType, refID)
+	return s.deleteCertificate(queryDeleteCertificateByReference, refType, refID, s.serverID)
 }
 
 // deleteCertificate deletes a certificate based on a query and its arguments.

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	oupkg "github.com/asgardeo/thunder/internal/ou"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 	"github.com/asgardeo/thunder/internal/userschema"
 )
@@ -33,7 +34,7 @@ func Initialize(
 	ouService oupkg.OrganizationUnitServiceInterface,
 	userSchemaService userschema.UserSchemaServiceInterface,
 ) UserServiceInterface {
-	userService := newUserService(ouService, userSchemaService)
+	userService := newUserService(ouService, userSchemaService, config.GetThunderRuntime().Config.Server.Identifier)
 	setUserService(userService) // Set the provider for backward compatibility
 	userHandler := newUserHandler(userService)
 	registerRoutes(mux, userHandler)

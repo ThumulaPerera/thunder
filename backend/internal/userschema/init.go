@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	oupkg "github.com/asgardeo/thunder/internal/ou"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
 
@@ -30,7 +31,7 @@ func Initialize(
 	mux *http.ServeMux,
 	ouService oupkg.OrganizationUnitServiceInterface,
 ) UserSchemaServiceInterface {
-	userSchemaService := newUserSchemaService(ouService)
+	userSchemaService := newUserSchemaService(ouService, config.GetThunderRuntime().Config.Server.Identifier)
 	userSchemaHandler := newUserSchemaHandler(userSchemaService)
 	registerRoutes(mux, userSchemaHandler)
 	return userSchemaService

@@ -40,12 +40,14 @@ type idpStoreInterface interface {
 // idpStore is the default implementation of IDPStoreInterface.
 type idpStore struct {
 	dbProvider provider.DBProviderInterface
+	serverID   string
 }
 
 // newIDPStore creates a new instance of IDPStore.
-func newIDPStore() idpStoreInterface {
+func newIDPStore(serverID string) idpStoreInterface {
 	return &idpStore{
 		dbProvider: provider.GetDBProvider(),
+		serverID:   serverID,
 	}
 }
 
@@ -64,7 +66,9 @@ func (s *idpStore) CreateIdentityProvider(idp IDPDTO) error {
 		}
 	}
 
-	_, err = dbClient.Execute(queryCreateIdentityProvider, idp.ID, idp.Name, idp.Description, idp.Type, propertiesJSON)
+	_, err = dbClient.Execute(
+		queryCreateIdentityProvider, idp.ID, idp.Name, idp.Description, idp.Type, propertiesJSON, s.serverID,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -79,7 +83,7 @@ func (s *idpStore) GetIdentityProviderList() ([]BasicIDPDTO, error) {
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(queryGetIdentityProviderList)
+	results, err := dbClient.Query(queryGetIdentityProviderList, s.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -113,7 +117,7 @@ func (s *idpStore) getIDP(query dbmodel.DBQuery, identifier string) (*IDPDTO, er
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(query, identifier)
+	results, err := dbClient.Query(query, identifier, s.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -178,7 +182,7 @@ func (s *idpStore) UpdateIdentityProvider(idp *IDPDTO) error {
 
 	// Update the IDP in the database
 	_, err = dbClient.Execute(queryUpdateIdentityProviderByID, idp.ID, idp.Name,
-		idp.Description, idp.Type, propertiesJSON)
+		idp.Description, idp.Type, propertiesJSON, s.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -195,7 +199,7 @@ func (s *idpStore) DeleteIdentityProvider(id string) error {
 		return fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	rowsAffected, err := dbClient.Execute(queryDeleteIdentityProviderByID, id)
+	rowsAffected, err := dbClient.Execute(queryDeleteIdentityProviderByID, id, s.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}

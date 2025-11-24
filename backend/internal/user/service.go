@@ -72,9 +72,10 @@ type userService struct {
 func newUserService(
 	ouService oupkg.OrganizationUnitServiceInterface,
 	userSchemaService userschema.UserSchemaServiceInterface,
+	serverID string,
 ) UserServiceInterface {
 	return &userService{
-		userStore:         newUserStore(),
+		userStore:         newUserStore(serverID),
 		ouService:         ouService,
 		userSchemaService: userSchemaService,
 	}

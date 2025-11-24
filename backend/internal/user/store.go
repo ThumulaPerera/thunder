@@ -42,11 +42,15 @@ type userStoreInterface interface {
 }
 
 // userStore is the default implementation of userStoreInterface.
-type userStore struct{}
+type userStore struct {
+	serverID string
+}
 
 // newUserStore creates a new instance of userStore.
-func newUserStore() userStoreInterface {
-	return &userStore{}
+func newUserStore(serverID string) userStoreInterface {
+	return &userStore{
+		serverID: serverID,
+	}
 }
 
 // GetUserListCount retrieves the total count of users.
@@ -56,7 +60,7 @@ func (us *userStore) GetUserListCount(filters map[string]interface{}) (int, erro
 		return 0, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	countQuery, args, err := buildUserCountQuery(filters)
+	countQuery, args, err := buildUserCountQuery(filters, us.serverID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to build count query: %w", err)
 	}
@@ -85,7 +89,7 @@ func (us *userStore) GetUserList(limit, offset int, filters map[string]interface
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	listQuery, args, err := buildUserListQuery(filters, limit, offset)
+	listQuery, args, err := buildUserListQuery(filters, limit, offset, us.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build list query: %w", err)
 	}
@@ -140,6 +144,7 @@ func (us *userStore) CreateUser(user User, credentials []Credential) error {
 		user.Type,
 		string(attributes),
 		credentialsJSON,
+		us.serverID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
@@ -155,7 +160,7 @@ func (us *userStore) GetUser(id string) (User, error) {
 		return User{}, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(QueryGetUserByUserID, id)
+	results, err := dbClient.Query(QueryGetUserByUserID, id, us.serverID)
 	if err != nil {
 		return User{}, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -191,7 +196,7 @@ func (us *userStore) UpdateUser(user *User) error {
 	}
 
 	rowsAffected, err := dbClient.Execute(
-		QueryUpdateUserByUserID, user.ID, user.OrganizationUnit, user.Type, string(attributes))
+		QueryUpdateUserByUserID, user.ID, user.OrganizationUnit, user.Type, string(attributes), us.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -212,7 +217,7 @@ func (us *userStore) DeleteUser(id string) error {
 		return fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	rowsAffected, err := dbClient.Execute(QueryDeleteUserByUserID, id)
+	rowsAffected, err := dbClient.Execute(QueryDeleteUserByUserID, id, us.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -233,7 +238,7 @@ func (us *userStore) IdentifyUser(filters map[string]interface{}) (*string, erro
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	identifyUserQuery, args, err := buildIdentifyQuery(filters)
+	identifyUserQuery, args, err := buildIdentifyQuery(filters, us.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build identify query: %w", err)
 	}
@@ -279,7 +284,7 @@ func (us *userStore) VerifyUser(id string) (User, []Credential, error) {
 		return User{}, []Credential{}, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(QueryValidateUserWithCredentials, id)
+	results, err := dbClient.Query(QueryValidateUserWithCredentials, id, us.serverID)
 	if err != nil {
 		return User{}, []Credential{}, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -329,7 +334,7 @@ func (us *userStore) ValidateUserIDs(userIDs []string) ([]string, error) {
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	query, args, err := buildBulkUserExistsQuery(userIDs)
+	query, args, err := buildBulkUserExistsQuery(userIDs, us.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build bulk user exists query: %w", err)
 	}
@@ -363,7 +368,7 @@ func (us *userStore) GetGroupCountForUser(userID string) (int, error) {
 		return 0, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	countResults, err := dbClient.Query(QueryGetGroupCountForUser, userID)
+	countResults, err := dbClient.Query(QueryGetGroupCountForUser, userID, us.serverID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get group count for user: %w", err)
 	}
@@ -385,7 +390,7 @@ func (us *userStore) GetUserGroups(userID string, limit, offset int) ([]UserGrou
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(QueryGetGroupsForUser, userID, limit, offset)
+	results, err := dbClient.Query(QueryGetGroupsForUser, userID, limit, offset, us.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get groups for user: %w", err)
 	}

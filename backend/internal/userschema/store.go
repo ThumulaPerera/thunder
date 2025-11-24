@@ -41,12 +41,14 @@ type userSchemaStoreInterface interface {
 // userSchemaStore is the default implementation of userSchemaStoreInterface.
 type userSchemaStore struct {
 	dbProvider provider.DBProviderInterface
+	serverID   string
 }
 
 // newUserSchemaStore creates a new instance of userSchemaStore.
-func newUserSchemaStore() userSchemaStoreInterface {
+func newUserSchemaStore(serverID string) userSchemaStoreInterface {
 	return &userSchemaStore{
 		dbProvider: provider.GetDBProvider(),
+		serverID:   serverID,
 	}
 }
 
@@ -57,7 +59,7 @@ func (s *userSchemaStore) GetUserSchemaListCount() (int, error) {
 		return 0, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	countResults, err := dbClient.Query(queryGetUserSchemaCount)
+	countResults, err := dbClient.Query(queryGetUserSchemaCount, s.serverID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute count query: %w", err)
 	}
@@ -83,7 +85,7 @@ func (s *userSchemaStore) GetUserSchemaList(limit, offset int) ([]UserSchemaList
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(queryGetUserSchemaList, limit, offset)
+	results, err := dbClient.Query(queryGetUserSchemaList, limit, offset, s.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -115,6 +117,7 @@ func (s *userSchemaStore) CreateUserSchema(userSchema UserSchema) error {
 		userSchema.OrganizationUnitID,
 		userSchema.AllowSelfRegistration,
 		string(userSchema.Schema),
+		s.serverID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create user schema: %w", err)
@@ -130,7 +133,7 @@ func (s *userSchemaStore) GetUserSchemaByID(schemaID string) (UserSchema, error)
 		return UserSchema{}, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(queryGetUserSchemaByID, schemaID)
+	results, err := dbClient.Query(queryGetUserSchemaByID, schemaID, s.serverID)
 	if err != nil {
 		return UserSchema{}, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -149,7 +152,7 @@ func (s *userSchemaStore) GetUserSchemaByName(name string) (UserSchema, error) {
 		return UserSchema{}, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(queryGetUserSchemaByName, name)
+	results, err := dbClient.Query(queryGetUserSchemaByName, name, s.serverID)
 	if err != nil {
 		return UserSchema{}, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -175,6 +178,7 @@ func (s *userSchemaStore) UpdateUserSchemaByID(schemaID string, userSchema UserS
 		userSchema.AllowSelfRegistration,
 		string(userSchema.Schema),
 		schemaID,
+		s.serverID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update user schema: %w", err)
@@ -192,7 +196,7 @@ func (s *userSchemaStore) DeleteUserSchemaByID(schemaID string) error {
 		return fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	rowsAffected, err := dbClient.Execute(queryDeleteUserSchemaByID, schemaID)
+	rowsAffected, err := dbClient.Execute(queryDeleteUserSchemaByID, schemaID, s.serverID)
 	if err != nil {
 		return fmt.Errorf("failed to delete user schema: %w", err)
 	}

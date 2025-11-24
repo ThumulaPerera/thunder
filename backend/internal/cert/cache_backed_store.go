@@ -35,11 +35,11 @@ type cacheBackedStore struct {
 }
 
 // NewCachedBackedCertificateStore creates a new instance of CachedBackedCertificateStore.
-func newCachedBackedCertificateStore() certificateStoreInterface {
+func newCachedBackedCertificateStore(serverID string) certificateStoreInterface {
 	return &cacheBackedStore{
 		certByIDCache:        cache.GetCache[*Certificate]("CertificateByIDCache"),
 		certByReferenceCache: cache.GetCache[*Certificate]("CertificateByReferenceCache"),
-		store:                newCertificateStore(),
+		store:                newCertificateStore(serverID),
 	}
 }
 

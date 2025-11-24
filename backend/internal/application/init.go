@@ -48,7 +48,7 @@ func Initialize(
 	if config.GetThunderRuntime().Config.ImmutableResources.Enabled {
 		appStore = newFileBasedStore()
 	} else {
-		store := newApplicationStore()
+		store := newApplicationStore(config.GetThunderRuntime().Config.Server.Identifier)
 		appStore = newCachedBackedApplicationStore(store)
 	}
 

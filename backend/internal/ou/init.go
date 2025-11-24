@@ -22,12 +22,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
 
 // Initialize initializes the organization unit service and registers its routes.
 func Initialize(mux *http.ServeMux) OrganizationUnitServiceInterface {
-	ouService := newOrganizationUnitService()
+	ouService := newOrganizationUnitService(config.GetThunderRuntime().Config.Server.Identifier)
 	ouHandler := newOrganizationUnitHandler(ouService)
 	registerRoutes(mux, ouHandler)
 	return ouService

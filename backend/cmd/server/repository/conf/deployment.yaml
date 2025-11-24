@@ -1,6 +1,7 @@
 server:
   hostname: "localhost"
   port: 8090
+  identifier: "default-server"
 
 security:
   cert_file: "repository/resources/security/server.cert"

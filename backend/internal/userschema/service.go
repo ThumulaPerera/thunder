@@ -55,9 +55,10 @@ type userSchemaService struct {
 }
 
 // newUserSchemaService creates a new instance of userSchemaService.
-func newUserSchemaService(ouService oupkg.OrganizationUnitServiceInterface) UserSchemaServiceInterface {
+func newUserSchemaService(ouService oupkg.OrganizationUnitServiceInterface,
+	serverID string) UserSchemaServiceInterface {
 	return &userSchemaService{
-		userSchemaStore: newUserSchemaStore(),
+		userSchemaStore: newUserSchemaStore(serverID),
 		ouService:       ouService,
 	}
 }

@@ -21,6 +21,7 @@ package notification
 import (
 	"net/http"
 
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/jwt"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
@@ -28,7 +29,7 @@ import (
 // Initialize creates and configures the notification service components.
 func Initialize(mux *http.ServeMux, jwtService jwt.JWTServiceInterface) (
 	NotificationSenderMgtSvcInterface, OTPServiceInterface) {
-	mgtService := newNotificationSenderMgtService()
+	mgtService := newNotificationSenderMgtService(config.GetThunderRuntime().Config.Server.Identifier)
 	otpService := newOTPService(mgtService, jwtService)
 	handler := newMessageNotificationSenderHandler(mgtService, otpService)
 	registerRoutes(mux, handler)

@@ -22,12 +22,13 @@ package idp
 import (
 	"net/http"
 
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
 
 // Initialize initializes the IDP service and registers its routes.
 func Initialize(mux *http.ServeMux) IDPServiceInterface {
-	idpStore := newIDPStore()
+	idpStore := newIDPStore(config.GetThunderRuntime().Config.Server.Identifier)
 	idpService := newIDPService(idpStore)
 	idpHandler := newIDPHandler(idpService)
 	registerRoutes(mux, idpHandler)

@@ -24,6 +24,7 @@ import (
 	"github.com/asgardeo/thunder/internal/application"
 	"github.com/asgardeo/thunder/internal/flow/executor"
 	"github.com/asgardeo/thunder/internal/flow/flowmgt"
+	"github.com/asgardeo/thunder/internal/system/config"
 	dbprovider "github.com/asgardeo/thunder/internal/system/database/provider"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
@@ -36,7 +37,7 @@ func Initialize(
 	executorRegistry executor.ExecutorRegistryInterface,
 ) FlowExecServiceInterface {
 	dbProvider := dbprovider.GetDBProvider()
-	flowStore := newFlowStore(dbProvider)
+	flowStore := newFlowStore(dbProvider, config.GetThunderRuntime().Config.Server.Identifier)
 	flowEngine := newFlowEngine(executorRegistry)
 	flowExecService := newFlowExecService(flowMgtService, flowStore, flowEngine, applicationService)
 

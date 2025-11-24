@@ -23,6 +23,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/application"
 	"github.com/asgardeo/thunder/internal/flow/flowexec"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/jwt"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 )
@@ -34,7 +35,7 @@ func Initialize(
 	jwtService jwt.JWTServiceInterface,
 	flowExecService flowexec.FlowExecServiceInterface,
 ) AuthorizeServiceInterface {
-	authzCodeStore := newAuthorizationCodeStore()
+	authzCodeStore := newAuthorizationCodeStore(config.GetThunderRuntime().Config.Server.Identifier)
 	authzService := newAuthorizeService(authzCodeStore)
 	authzHandler := newAuthorizeHandler(applicationService, jwtService, authzCodeStore, flowExecService)
 	registerRoutes(mux, authzHandler)

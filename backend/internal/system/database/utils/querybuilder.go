@@ -50,6 +50,27 @@ func BuildFilterQuery(
 	return resultQuery, args, nil
 }
 
+// AppendServerIDToFilterQuery appends a SERVER_ID condition to the given filter query.
+func AppendServerIDToFilterQuery(
+	query model.DBQuery, args []interface{}, serverID string,
+) (model.DBQuery, []interface{}) {
+	postgresQuery := fmt.Sprintf("%s AND SERVER_ID = $%d", query.PostgresQuery, len(args)+1)
+	sqliteQuery := fmt.Sprintf("%s AND SERVER_ID = ?", query.SQLiteQuery)
+
+	argsWithServerID := make([]interface{}, 0, len(args)+1)
+	argsWithServerID = append(argsWithServerID, args...)
+	argsWithServerID = append(argsWithServerID, serverID)
+
+	updatedQuery := &model.DBQuery{
+		ID:            query.ID,
+		Query:         postgresQuery,
+		PostgresQuery: postgresQuery,
+		SQLiteQuery:   sqliteQuery,
+	}
+
+	return *updatedQuery, argsWithServerID
+}
+
 // buildPostgresJSONCondition builds a PostgreSQL JSON filter condition.
 // For nested paths (e.g., "address.city"), it uses the #>> operator with an array path.
 // For simple paths (e.g., "email"), it uses the ->> operator.

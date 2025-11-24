@@ -18,9 +18,11 @@
 
 package cert
 
+import "github.com/asgardeo/thunder/internal/system/config"
+
 // Initialize initializes and returns the certificate service.
 func Initialize() CertificateServiceInterface {
-	certStore := newCachedBackedCertificateStore()
+	certStore := newCachedBackedCertificateStore(config.GetThunderRuntime().Config.Server.Identifier)
 	certService := newCertificateService(certStore)
 	return certService
 }

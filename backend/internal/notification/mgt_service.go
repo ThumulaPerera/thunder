@@ -21,6 +21,7 @@ package notification
 
 import (
 	"github.com/asgardeo/thunder/internal/notification/common"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/system/log"
 	sysutils "github.com/asgardeo/thunder/internal/system/utils"
@@ -44,9 +45,9 @@ type notificationSenderMgtService struct {
 }
 
 // newNotificationSenderMgtService returns a new instance of NotificationSenderMgtSvcInterface.
-func newNotificationSenderMgtService() NotificationSenderMgtSvcInterface {
+func newNotificationSenderMgtService(serverID string) NotificationSenderMgtSvcInterface {
 	return &notificationSenderMgtService{
-		notificationStore: newNotificationStore(),
+		notificationStore: newNotificationStore(serverID),
 	}
 }
 
@@ -54,7 +55,7 @@ func newNotificationSenderMgtService() NotificationSenderMgtSvcInterface {
 // [Deprecated: use dependency injection to get the instance instead].
 // TODO: Remove this when the flow executors are migrated to the di pattern.
 func NewNotificationSenderMgtService() NotificationSenderMgtSvcInterface {
-	return newNotificationSenderMgtService()
+	return newNotificationSenderMgtService(config.GetThunderRuntime().Config.Server.Identifier)
 }
 
 // CreateSender creates a new notification sender.

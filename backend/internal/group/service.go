@@ -58,9 +58,10 @@ type groupService struct {
 func newGroupService(
 	ouService oupkg.OrganizationUnitServiceInterface,
 	userService user.UserServiceInterface,
+	serverID string,
 ) GroupServiceInterface {
 	return &groupService{
-		groupStore:  newGroupStore(),
+		groupStore:  newGroupStore(serverID),
 		ouService:   ouService,
 		userService: userService,
 	}

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	oupkg "github.com/asgardeo/thunder/internal/ou"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 	"github.com/asgardeo/thunder/internal/user"
 )
@@ -33,7 +34,7 @@ func Initialize(
 	ouService oupkg.OrganizationUnitServiceInterface,
 	userService user.UserServiceInterface,
 ) GroupServiceInterface {
-	groupService := newGroupService(ouService, userService)
+	groupService := newGroupService(ouService, userService, config.GetThunderRuntime().Config.Server.Identifier)
 	groupHandler := newGroupHandler(groupService)
 	registerRoutes(mux, groupHandler)
 	return groupService

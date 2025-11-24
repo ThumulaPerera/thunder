@@ -60,12 +60,14 @@ type AuthorizationCodeStoreInterface interface {
 // authorizationCodeStore implements the AuthorizationCodeStoreInterface for managing authorization codes.
 type authorizationCodeStore struct {
 	dbProvider provider.DBProviderInterface
+	serverID   string
 }
 
 // newAuthorizationCodeStore creates a new instance of authorizationCodeStore with injected dependencies.
-func newAuthorizationCodeStore() AuthorizationCodeStoreInterface {
+func newAuthorizationCodeStore(serverID string) AuthorizationCodeStoreInterface {
 	return &authorizationCodeStore{
 		dbProvider: provider.GetDBProvider(),
+		serverID:   serverID,
 	}
 }
 
@@ -82,7 +84,7 @@ func (acs *authorizationCodeStore) InsertAuthorizationCode(authzCode Authorizati
 	}
 
 	_, err = dbClient.Execute(queryInsertAuthorizationCode, authzCode.CodeID, authzCode.Code,
-		authzCode.ClientID, authzCode.State, jsonDataBytes, authzCode.TimeCreated, authzCode.ExpiryTime)
+		authzCode.ClientID, authzCode.State, jsonDataBytes, authzCode.TimeCreated, authzCode.ExpiryTime, acs.serverID)
 	if err != nil {
 		return fmt.Errorf("error inserting authorization code: %w", err)
 	}
@@ -97,7 +99,7 @@ func (acs *authorizationCodeStore) GetAuthorizationCode(clientID, authCode strin
 		return nil, fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	results, err := dbClient.Query(queryGetAuthorizationCode, clientID, authCode)
+	results, err := dbClient.Query(queryGetAuthorizationCode, clientID, authCode, acs.serverID)
 	if err != nil {
 		return nil, fmt.Errorf("error while retrieving authorization code: %w", err)
 	}
@@ -132,7 +134,7 @@ func (acs *authorizationCodeStore) updateAuthorizationCodeState(authzCode Author
 		return fmt.Errorf("failed to get database client: %w", err)
 	}
 
-	_, err = dbClient.Execute(queryUpdateAuthorizationCodeState, newState, authzCode.CodeID)
+	_, err = dbClient.Execute(queryUpdateAuthorizationCodeState, newState, authzCode.CodeID, acs.serverID)
 	return err
 }
 
