@@ -1,0 +1,575 @@
+openapi: 3.0.3
+info:
+  title: Thunder i18n API
+  version: "1.0"
+  description: API to manage internationalization (i18n) translations organized by locale, namespace, and key.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://{host}:{port}
+    variables:
+      host:
+        default: "localhost"
+      port:
+        default: "8090"
+
+tags:
+  - name: locales
+    description: List supported locales
+  - name: bulk-translations
+    description: Manage bulk translations for a locale
+  - name: single-translation
+    description: Manage individual translations
+
+security:
+  - OAuth2: [system]
+
+paths:
+  /i18n/locales:
+    get:
+      tags:
+        - locales
+      summary: List all locales
+      description: Returns a list of all locale codes that have translations in the system.
+      operationId: listLocales
+      responses:
+        '200':
+          description: List of locale codes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocaleListResponse'
+              examples:
+                multiple-locales:
+                  summary: Multiple locales
+                  value:
+                    locales:
+                      - en
+                      - es
+                      - fr
+                      - fr-CA
+                default-only:
+                  summary: Default locale only
+                  value:
+                    locales:
+                      - en
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/resolve:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+
+    post:
+      tags:
+        - bulk-translations
+      summary: Resolve all translations for a locale
+      description: Resolves all translations for a locale by merging custom and default values; returns 200 even when only defaults exist (404 only if neither custom nor default exists for the requested scope).
+      operationId: resolveTranslationsByLocale
+      parameters:
+        - name: namespace
+          in: query
+          required: false
+          description: Filter translations by namespace.
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
+            example: auth
+      responses:
+        '200':
+          description: Translations resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocaleTranslationsResponse'
+              examples:
+                all-namespaces:
+                  summary: All namespaces for Spanish
+                  value:
+                    locale: es
+                    totalResults: 5
+                    translations:
+                      auth:
+                        login.button: Iniciar sesión
+                        login.title: Bienvenido
+                        logout.button: Cerrar sesión
+                      errors:
+                        user.not_found: Usuario no encontrado
+                        invalid.input: Entrada inválida
+                filtered-namespace:
+                  summary: Filtered by namespace
+                  value:
+                    locale: es
+                    totalResults: 3
+                    translations:
+                      auth:
+                        login.button: Iniciar sesión
+                        login.title: Bienvenido
+                        logout.button: Cerrar sesión
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/set-override:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+
+    post:
+      tags:
+        - bulk-translations
+      summary: Set overrides for a locale
+      description: Replaces all custom overrides for the locale with the provided values.
+      operationId: setOverrideTranslationsByLocale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTranslationsRequest'
+            example:
+              translations:
+                auth:
+                  login.button: Iniciar sesión
+                  login.title: Bienvenido
+                  logout.button: Cerrar sesión
+                errors:
+                  user.not_found: Usuario no encontrado
+                  invalid.input: Entrada inválida
+                common:
+                  save: Guardar
+                  cancel: Cancelar
+      responses:
+        '200':
+          description: Custom translations set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocaleTranslationsResponse'
+              example:
+                locale: es
+                totalResults: 7
+                translations:
+                  auth:
+                    login.button: Iniciar sesión
+                    login.title: Bienvenido
+                    logout.button: Cerrar sesión
+                  errors:
+                    user.not_found: Usuario no encontrado
+                    invalid.input: Entrada inválida
+                  common:
+                    save: Guardar
+                    cancel: Cancelar
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/clear-override:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+
+    post:
+      tags:
+        - bulk-translations
+      summary: Clear all overrides for a locale
+      description: Removes all custom overrides for the locale and reverts to default system values.
+      operationId: clearOverrideTranslationsByLocale
+      responses:
+        '204':
+          description: Translations reset to default successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/ns/{namespace}/keys/{key}/resolve:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+      - $ref: '#/components/parameters/namespacePathParam'
+      - $ref: '#/components/parameters/keyPathParam'
+
+    post:
+      tags:
+        - single-translation
+      summary: Resolve a single translation
+      description: Resolves the final value for a translation by merging custom and default values; returns 200 even when only a default exists (404 only if neither custom nor default exists).
+      operationId: resolveTranslation
+      responses:
+        '200':
+          description: Translation resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+              example:
+                locale: es
+                namespace: errors
+                key: user.not_found
+                value: Usuario no encontrado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/ns/{namespace}/keys/{key}/set-override:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+      - $ref: '#/components/parameters/namespacePathParam'
+      - $ref: '#/components/parameters/keyPathParam'
+
+    post:
+      tags:
+        - single-translation
+      summary: Set an override for a single translation
+      description: Creates or updates a custom override for the specified locale, namespace, and key.
+      operationId: setOverrideTranslation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTranslationRequest'
+            example:
+              value: Usuario no encontrado
+      responses:
+        '200':
+          description: Translation set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+              example:
+                locale: es
+                namespace: errors
+                key: user.not_found
+                value: Usuario no encontrado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /i18n/locales/{locale}/translations/ns/{namespace}/keys/{key}/clear-override:
+    parameters:
+      - $ref: '#/components/parameters/localePathParam'
+      - $ref: '#/components/parameters/namespacePathParam'
+      - $ref: '#/components/parameters/keyPathParam'
+
+    post:
+      tags:
+        - single-translation
+      summary: Clear the override for a single translation
+      description: Removes the custom override so the default system value applies.
+      operationId: clearOverrideTranslation
+      responses:
+        '204':
+          description: Translations reset to default successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://localhost:8090/oauth2/authorize
+          tokenUrl: https://localhost:8090/oauth2/token
+          scopes:
+            system: Access to system management APIs
+
+  parameters:
+    localePathParam:
+      name: locale
+      in: path
+      required: true
+      description: Locale code in BCP 47 format (e.g., `en`, `es`, `fr-CA`).
+      schema:
+        type: string
+        pattern: '^[a-z]{2}(-[A-Z]{2})?(-[A-Za-z]+)?$'
+        example: es
+
+    namespacePathParam:
+      name: namespace
+      in: path
+      required: true
+      description: Namespace for grouping translations (e.g., `auth`, `errors`, `common`).
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_-]+$'
+        minLength: 1
+        maxLength: 64
+        example: errors
+
+    keyPathParam:
+      name: key
+      in: path
+      required: true
+      description: Translation key within the namespace (e.g., `login.button`, `user.not_found`).
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9._-]+$'
+        minLength: 1
+        maxLength: 256
+        example: user.not_found
+
+  schemas:
+    LocaleListResponse:
+      type: object
+      required:
+        - locales
+      properties:
+        locales:
+          type: array
+          items:
+            type: string
+          description: List of locale codes available in the system.
+          example:
+            - en
+            - es
+            - fr
+            - fr-CA
+
+    TranslationResponse:
+      type: object
+      description: Single translation response.
+      required:
+        - locale
+        - namespace
+        - key
+        - value
+      properties:
+        locale:
+          type: string
+          description: Locale code.
+          example: es
+        namespace:
+          type: string
+          description: Namespace of the translation.
+          example: errors
+        key:
+          type: string
+          description: Translation key.
+          example: user.not_found
+        value:
+          type: string
+          description: Translated value.
+          example: Usuario no encontrado
+
+    SetTranslationRequest:
+      type: object
+      description: Request to set a single translation.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Translation value.
+          minLength: 1
+          maxLength: 4096
+          example: Usuario no encontrado
+
+    LocaleTranslationsResponse:
+      type: object
+      description: All translations for a locale, organized by namespace.
+      required:
+        - locale
+        - translations
+      properties:
+        locale:
+          type: string
+          description: Locale code.
+          example: es
+        totalResults:
+          type: integer
+          description: Total number of translation keys returned.
+          example: 5
+        translations:
+          type: object
+          description: Translations organized by namespace.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+          example:
+            auth:
+              login.button: Iniciar sesión
+              login.title: Bienvenido
+            errors:
+              user.not_found: Usuario no encontrado
+
+    SetTranslationsRequest:
+      type: object
+      description: Request to set custom translations for a locale.
+      required:
+        - translations
+      properties:
+        translations:
+          type: object
+          description: Translations organized by namespace.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+          example:
+            auth:
+              login.button: Iniciar sesión
+              login.title: Bienvenido
+              logout.button: Cerrar sesión
+            errors:
+              user.not_found: Usuario no encontrado
+              invalid.input: Entrada inválida
+
+    I18nMessage:
+      type: object
+      description: Internationalized message with translation key and default value.
+      required:
+        - key
+        - defaultValue
+      properties:
+        key:
+          type: string
+          description: Translation key for fetching localized message.
+          example: error.i18nservice.missing_locale
+        defaultValue:
+          type: string
+          description: Default message in English (fallback).
+          example: Missing locale code
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code for programmatic handling.
+          example: I18N-1003
+        message:
+          $ref: '#/components/schemas/I18nMessage'
+        description:
+          $ref: '#/components/schemas/I18nMessage'
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalid-locale:
+              summary: Invalid locale format
+              value:
+                code: I18N-1001
+                message:
+                  key: error.i18nservice.invalid_locale
+                  defaultValue: Invalid locale format
+                description:
+                  key: error.i18nservice.invalid_locale_description
+                  defaultValue: "The locale must follow BCP 47 format (e.g., 'en', 'es', 'fr-CA')"
+            invalid-namespace:
+              summary: Invalid namespace format
+              value:
+                code: I18N-1002
+                message:
+                  key: error.i18nservice.invalid_namespace
+                  defaultValue: Invalid namespace format
+                description:
+                  key: error.i18nservice.invalid_namespace_description
+                  defaultValue: "The namespace can only contain alphanumeric characters, underscores, and hyphens"
+            invalid-key:
+              summary: Invalid key format
+              value:
+                code: I18N-1003
+                message:
+                  key: error.i18nservice.invalid_key
+                  defaultValue: Invalid key format
+                description:
+                  key: error.i18nservice.invalid_key_description
+                  defaultValue: "The key can only contain alphanumeric characters, dots, underscores, and hyphens"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: AUTH-4001
+            message:
+              key: error.auth.unauthorized
+              defaultValue: Unauthorized
+            description:
+              key: error.auth.unauthorized_description
+              defaultValue: Authentication is required to access this resource
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: AUTH-4003
+            message:
+              key: error.auth.forbidden
+              defaultValue: Forbidden
+            description:
+              key: error.auth.forbidden_description
+              defaultValue: You do not have permission to access this resource
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: I18N-1006
+            message:
+              key: error.i18nservice.translation_not_found
+              defaultValue: Translation not found
+            description:
+              key: error.i18nservice.translation_not_found_description
+              defaultValue: The requested translation does not exist for the specified locale, namespace, and key
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: I18N-5000
+            message:
+              key: error.i18nservice.internal_server_error
+              defaultValue: Internal server error
+            description:
+              key: error.i18nservice.internal_server_error_description
+              defaultValue: An unexpected error occurred while processing the request
