@@ -24,12 +24,6 @@ import (
 	goi18n "golang.org/x/text/language"
 )
 
-// SystemLanguage is the default language code for the system.
-const SystemLanguage = "en"
-
-// SystemNamespace is the default namespace for system translations.
-const SystemNamespace = "system"
-
 // LanguagePreferenceOrder defines the priority of languages for fallback.
 var LanguagePreferenceOrder = map[string]int{
 	"en-US": 0,

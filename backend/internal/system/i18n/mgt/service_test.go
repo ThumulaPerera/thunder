@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/asgardeo/thunder/internal/system/config"
+	"github.com/asgardeo/thunder/internal/system/i18n/core"
 	immutableresource "github.com/asgardeo/thunder/internal/system/immutable_resource"
 )
 
@@ -85,7 +86,7 @@ func (suite *I18nMgtServiceTestSuite) TestListLanguages_AddsSystemLanguage() {
 	result, err := suite.service.ListLanguages()
 
 	suite.Nil(err)
-	suite.Contains(result, SystemLanguage)
+	suite.Contains(result, core.SystemLanguage)
 	suite.Contains(result, "fr-FR")
 }
 

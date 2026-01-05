@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html"
 	"net/http"
 	"net/url"
@@ -31,6 +32,7 @@ import (
 	"github.com/asgardeo/thunder/internal/system/constants"
 	"github.com/asgardeo/thunder/internal/system/error/apierror"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/internal/system/i18n/core"
 	"github.com/asgardeo/thunder/internal/system/log"
 )
 
@@ -218,8 +220,20 @@ func WriteI18nErrorResponse(w http.ResponseWriter, statusCode int, errorResp api
 	w.Header().Set(constants.ContentTypeHeaderName, constants.ContentTypeJSON)
 	w.WriteHeader(statusCode)
 
-	if err := json.NewEncoder(w).Encode(errorResp); err != nil {
+	if err := json.NewEncoder(w).Encode(getTemplatedErrorResponse(errorResp)); err != nil {
 		logger.Error("Failed to encode i18n error response", log.Error(err))
 		http.Error(w, serviceerror.ErrorEncodingError, http.StatusInternalServerError)
 	}
+}
+
+func getTemplatedErrorResponse(errorResp apierror.I18nErrorResponse) apierror.ErrorResponse {
+	return apierror.ErrorResponse{
+		Code:    errorResp.Code,
+		Message: getTemplatedKey(errorResp.Message.Key, core.SystemNamespace),
+		Description: getTemplatedKey(errorResp.Description.Key, core.SystemNamespace),
+	}
+}
+
+func getTemplatedKey(i18nKey string, namespace string) string {
+	return fmt.Sprintf("{{t(%s:%s)}}", namespace, i18nKey)
 }

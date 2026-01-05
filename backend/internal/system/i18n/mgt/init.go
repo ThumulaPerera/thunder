@@ -22,7 +22,7 @@ import (
 	"net/http"
 
 	immutableresource "github.com/asgardeo/thunder/internal/system/immutable_resource"
-	"github.com/asgardeo/thunder/internal/system/middleware"
+	systemmiddleware "github.com/asgardeo/thunder/internal/system/middleware"
 )
 
 // Initialize initializes the i18n service and registers its routes.
@@ -46,89 +46,90 @@ func Initialize(mux *http.ServeMux) (I18nServiceInterface, immutableresource.Res
 	registerRoutes(mux, handler)
 
 	exporter := newTranslationExporter(store)
+
 	return service, exporter, nil
 }
 
 // registerRoutes registers the routes for i18n management operations.
 func registerRoutes(mux *http.ServeMux, handler *i18nHandler) {
 	// List languages (public API)
-	opts1 := middleware.CORSOptions{
+	opts1 := systemmiddleware.CORSOptions{
 		AllowedMethods:   "GET",
 		AllowedHeaders:   "Content-Type",
 		AllowCredentials: false,
 	}
 
-	mux.HandleFunc(middleware.WithCORS("GET /i18n/languages",
+	mux.HandleFunc(systemmiddleware.WithCORS("GET /i18n/languages",
 		handler.HandleListLanguages, opts1))
-	mux.HandleFunc(middleware.WithCORS("OPTIONS /i18n/languages",
+	mux.HandleFunc(systemmiddleware.WithCORS("OPTIONS /i18n/languages",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}, opts1))
 
 	// Bulk translation operations
-	bulkResolveOpts := middleware.CORSOptions{
+	bulkResolveOpts := systemmiddleware.CORSOptions{
 		AllowedMethods:   "GET",
 		AllowedHeaders:   "Content-Type, Authorization",
 		AllowCredentials: false,
 	}
 
-	mux.HandleFunc(middleware.WithCORS("GET /i18n/languages/{language}/translations/resolve",
+	mux.HandleFunc(systemmiddleware.WithCORS("GET /i18n/languages/{language}/translations/resolve",
 		handler.HandleResolveTranslationsByLanguage, bulkResolveOpts))
-	mux.HandleFunc(middleware.WithCORS("OPTIONS /i18n/languages/{language}/translations/resolve",
+	mux.HandleFunc(systemmiddleware.WithCORS("OPTIONS /i18n/languages/{language}/translations/resolve",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}, bulkResolveOpts))
 
-	bulkEditOpts := middleware.CORSOptions{
+	bulkEditOpts := systemmiddleware.CORSOptions{
 		AllowedMethods:   "POST, DELETE",
 		AllowedHeaders:   "Content-Type, Authorization",
 		AllowCredentials: true,
 	}
 
 	// Shared path for POST and DELETE
-	mux.HandleFunc(middleware.WithCORS("POST /i18n/languages/{language}/translations",
+	mux.HandleFunc(systemmiddleware.WithCORS("POST /i18n/languages/{language}/translations",
 		handler.HandleSetOverrideTranslationsByLanguage, bulkEditOpts))
-	mux.HandleFunc(middleware.WithCORS("DELETE /i18n/languages/{language}/translations",
+	mux.HandleFunc(systemmiddleware.WithCORS("DELETE /i18n/languages/{language}/translations",
 		handler.HandleClearOverrideTranslationsByLanguage, bulkEditOpts))
 
 	// Single OPTIONS handler for the shared path
-	mux.HandleFunc(middleware.WithCORS("OPTIONS /i18n/languages/{language}/translations",
+	mux.HandleFunc(systemmiddleware.WithCORS("OPTIONS /i18n/languages/{language}/translations",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}, bulkEditOpts))
 
 	// Individual translation operations
-	singleResolveOpts := middleware.CORSOptions{
+	singleResolveOpts := systemmiddleware.CORSOptions{
 		AllowedMethods:   "GET",
 		AllowedHeaders:   "Content-Type, Authorization",
 		AllowCredentials: false,
 	}
 
-	mux.HandleFunc(middleware.WithCORS(
+	mux.HandleFunc(systemmiddleware.WithCORS(
 		"GET /i18n/languages/{language}/translations/ns/{namespace}/keys/{key}/resolve",
 		handler.HandleResolveTranslation, singleResolveOpts))
-	mux.HandleFunc(middleware.WithCORS(
+	mux.HandleFunc(systemmiddleware.WithCORS(
 		"OPTIONS /i18n/languages/{language}/translations/ns/{namespace}/keys/{key}/resolve",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}, singleResolveOpts))
 
-	singleEditOpts := middleware.CORSOptions{
+	singleEditOpts := systemmiddleware.CORSOptions{
 		AllowedMethods:   "POST, DELETE",
 		AllowedHeaders:   "Content-Type, Authorization",
 		AllowCredentials: true,
 	}
 
 	// Shared path for POST and DELETE
-	mux.HandleFunc(middleware.WithCORS(
+	mux.HandleFunc(systemmiddleware.WithCORS(
 		"POST /i18n/languages/{language}/translations/ns/{namespace}/keys/{key}",
 		handler.HandleSetOverrideTranslation, singleEditOpts))
-	mux.HandleFunc(middleware.WithCORS(
+	mux.HandleFunc(systemmiddleware.WithCORS(
 		"DELETE /i18n/languages/{language}/translations/ns/{namespace}/keys/{key}",
 		handler.HandleClearOverrideTranslation, singleEditOpts))
 
 	// Single OPTIONS handler for the shared path
-	mux.HandleFunc(middleware.WithCORS(
+	mux.HandleFunc(systemmiddleware.WithCORS(
 		"OPTIONS /i18n/languages/{language}/translations/ns/{namespace}/keys/{key}",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)

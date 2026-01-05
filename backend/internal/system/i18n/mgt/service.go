@@ -25,6 +25,7 @@ import (
 	goi18n "golang.org/x/text/language"
 
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/internal/system/i18n/core"
 	sysi18n "github.com/asgardeo/thunder/internal/system/i18n/core"
 	immutableresource "github.com/asgardeo/thunder/internal/system/immutable_resource"
 	"github.com/asgardeo/thunder/internal/system/log"
@@ -73,14 +74,14 @@ func (s *i18nService) ListLanguages() ([]string, *serviceerror.I18nServiceError)
 	// Ensure default language is always in the list
 	hasDefaultLanguage := false
 	for _, code := range localeCodes {
-		if code == SystemLanguage {
+		if code == core.SystemLanguage {
 			hasDefaultLanguage = true
 			break
 		}
 	}
 
 	if !hasDefaultLanguage {
-		localeCodes = append(localeCodes, SystemLanguage)
+		localeCodes = append(localeCodes, core.SystemLanguage)
 	}
 
 	return localeCodes, nil
@@ -100,15 +101,15 @@ func (s *i18nService) ResolveTranslationsForKey(
 		return nil, &ErrorInternalServerError
 	}
 
-	if _, exists := trans[SystemLanguage]; !exists {
-		if namespace == SystemNamespace {
+	if _, exists := trans[core.SystemLanguage]; !exists {
+		if namespace == core.SystemNamespace {
 			// If no custom override for system language, use default translation for system language
 			defaultValue, exists := sysi18n.GetDefault(key)
 			if exists {
-				trans[SystemLanguage] = Translation{
+				trans[core.SystemLanguage] = Translation{
 					Key:       key,
-					Language:  SystemLanguage,
-					Namespace: SystemNamespace,
+					Language:  core.SystemLanguage,
+					Namespace: core.SystemNamespace,
 					Value:     defaultValue,
 				}
 			}
@@ -189,7 +190,7 @@ func (s *i18nService) ClearTranslationOverrideForKey(
 func (s *i18nService) ResolveTranslations(
 	language string, namespace string) (*LanguageTranslationsResponse, *serviceerror.I18nServiceError) {
 	if language == "" {
-		language = SystemLanguage
+		language = core.SystemLanguage
 	}
 	if !ValidateLanguage(language) {
 		return nil, &ErrorInvalidLanguage
@@ -220,19 +221,19 @@ func (s *i18nService) ResolveTranslations(
 		}
 	}
 
-	if namespace == "" || namespace == SystemNamespace {
+	if namespace == "" || namespace == core.SystemNamespace {
 		// Get system default translations
 		systemDefaults := sysi18n.GetAllDefaults()
 
 		for key, value := range systemDefaults {
-			if _, exists := allTranslations[key][SystemLanguage]; !exists {
+			if _, exists := allTranslations[key][core.SystemLanguage]; !exists {
 				if allTranslations[key] == nil {
 					allTranslations[key] = make(map[string]Translation)
 				}
-				allTranslations[key][SystemLanguage] = Translation{
+				allTranslations[key][core.SystemLanguage] = Translation{
 					Key:       key,
-					Language:  SystemLanguage,
-					Namespace: SystemNamespace,
+					Language:  core.SystemLanguage,
+					Namespace: core.SystemNamespace,
 					Value:     value,
 				}
 			}

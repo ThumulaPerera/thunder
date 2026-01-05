@@ -58,7 +58,7 @@ var observabilitySvc observability.ObservabilityServiceInterface
 func registerServices(
 	mux *http.ServeMux,
 	jwtService jwt.JWTServiceInterface,
-) {
+) i18nmgt.I18nServiceInterface {
 	logger := log.GetLogger()
 
 	observabilitySvc = observability.Initialize()
@@ -67,7 +67,7 @@ func registerServices(
 	var exporters []immutableresource.ResourceExporter
 
 	// Initialize i18n service for internationalization support.
-	_, i18nExporter, err := i18nmgt.Initialize(mux)
+	i18nService, i18nExporter, err := i18nmgt.Initialize(mux)
 	if err != nil {
 		logger.Fatal("Failed to initialize i18n service", log.Error(err))
 	}
@@ -150,6 +150,8 @@ func registerServices(
 
 	// Register the health service.
 	services.NewHealthCheckService(mux)
+
+	return i18nService
 }
 
 // unregisterServices unregisters all services that require cleanup during shutdown.

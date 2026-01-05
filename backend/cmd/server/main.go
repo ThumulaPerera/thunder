@@ -38,6 +38,7 @@ import (
 	"github.com/asgardeo/thunder/internal/system/jwt"
 	"github.com/asgardeo/thunder/internal/system/log"
 	"github.com/asgardeo/thunder/internal/system/middleware"
+	i18nMgt "github.com/asgardeo/thunder/internal/system/i18n/mgt"
 	"github.com/asgardeo/thunder/internal/system/security"
 )
 
@@ -70,7 +71,7 @@ func main() {
 	}
 
 	// Register the services.
-	registerServices(mux, jwtService)
+	i18nService := registerServices(mux, jwtService)
 
 	// Register static file handlers for frontend applications.
 	registerStaticFileHandlers(logger, mux, thunderHome)
@@ -83,7 +84,7 @@ func main() {
 	tlsConfig := loadCertConfig(logger, cfg, thunderHome)
 
 	// Create the HTTP server.
-	server := createHTTPServer(logger, cfg, mux, jwtService)
+	server := createHTTPServer(logger, cfg, mux, jwtService, i18nService)
 	// Start the server with or without TLS based on configuration.
 	if cfg.Server.HTTPOnly {
 		logger.Info("TLS is not enabled, starting server without TLS")
@@ -201,7 +202,7 @@ func startHTTPServer(logger *log.Logger, server *http.Server) {
 
 // createHTTPServer creates and configures an HTTP server with common settings.
 func createHTTPServer(logger *log.Logger, cfg *config.Config, mux *http.ServeMux,
-	jwtService jwt.JWTServiceInterface) *http.Server {
+	jwtService jwt.JWTServiceInterface, i18nService i18nMgt.I18nServiceInterface) *http.Server {
 	securityMiddleware := createSecurityMiddleware(logger, mux, jwtService)
 
 	// Build the middleware chain with proper execution order.
@@ -214,6 +215,10 @@ func createHTTPServer(logger *log.Logger, cfg *config.Config, mux *http.ServeMux
 		handler = log.AccessLogHandler(logger, mux)
 	}
 	handler = middleware.CorrelationIDMiddleware(handler)
+	handler, err := i18nMgt.I18nMiddleware(handler, i18nService)
+	if err != nil {
+		logger.Fatal("Failed to initialize i18n middleware", log.Error(err))
+	}
 
 	// Build the server address using hostname and port from the configurations.
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
