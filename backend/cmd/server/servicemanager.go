@@ -28,6 +28,7 @@ import (
 	brandingmgt "github.com/asgardeo/thunder/internal/branding/mgt"
 	brandingresolve "github.com/asgardeo/thunder/internal/branding/resolve"
 	"github.com/asgardeo/thunder/internal/cert"
+	"github.com/asgardeo/thunder/internal/externalsvc"
 	flowcore "github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/flow/executor"
 	"github.com/asgardeo/thunder/internal/flow/flowexec"
@@ -96,6 +97,9 @@ func registerServices(
 	}
 	groupService := group.Initialize(mux, ouService, userService)
 
+	// Create external service abstraction
+	externalSvc := externalsvc.NewExternalService(userService)
+
 	resourceService, err := resource.Initialize(mux, ouService)
 	if err != nil {
 		logger.Fatal("Failed to initialize Resource Service", log.Error(err))
@@ -116,13 +120,13 @@ func registerServices(
 	exporters = append(exporters, notificationExporter)
 
 	// Initialize authentication services.
-	_, authSvcRegistry := authn.Initialize(mux, idpService, jwtService, userService, otpService)
+	_, authSvcRegistry := authn.Initialize(mux, idpService, jwtService, userService, otpService, externalSvc)
 
 	// Initialize flow and executor services.
 	flowFactory, graphCache := flowcore.Initialize()
 	execRegistry := executor.Initialize(flowFactory, userService, ouService,
 		idpService, otpService, jwtService, authSvcRegistry, authZService, userSchemaService, observabilitySvc,
-		groupService, roleService)
+		groupService, roleService, externalSvc)
 
 	flowMgtService, flowMgtExporter, err := flowmgt.Initialize(mux, flowFactory, execRegistry, graphCache)
 	if err != nil {

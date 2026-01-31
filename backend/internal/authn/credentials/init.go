@@ -18,9 +18,17 @@
 
 package credentials
 
-import "github.com/asgardeo/thunder/internal/user"
+import (
+	"github.com/asgardeo/thunder/internal/externalsvc"
+	"github.com/asgardeo/thunder/internal/user"
+)
 
-// Initialize initializes the credentials authentication service.
+// Initialize initializes the credentials authenticator service.
 func Initialize(userSvc user.UserServiceInterface) CredentialsAuthnServiceInterface {
 	return newCredentialsAuthnService(userSvc)
+}
+
+// InitializeExternal initializes the external credentials authenticator service.
+func InitializeExternal(externalSvc externalsvc.ExternalSvcInterface) CredentialsAuthnServiceExternalInterface {
+	return newCredentialsAuthnServiceExternal(externalSvc)
 }

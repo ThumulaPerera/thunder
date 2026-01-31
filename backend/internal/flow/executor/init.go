@@ -21,6 +21,7 @@ package executor
 import (
 	"github.com/asgardeo/thunder/internal/authn"
 	"github.com/asgardeo/thunder/internal/authz"
+	"github.com/asgardeo/thunder/internal/externalsvc"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/group"
@@ -48,8 +49,11 @@ func Initialize(
 	observabilitySvc observability.ObservabilityServiceInterface,
 	groupService group.GroupServiceInterface,
 	roleService role.RoleServiceInterface,
+	externalSvc externalsvc.ExternalSvcInterface,
 ) ExecutorRegistryInterface {
 	reg := newExecutorRegistry()
+
+	// Register original executors
 	reg.RegisterExecutor(ExecutorNameBasicAuth, newBasicAuthExecutor(
 		flowFactory, userService, authRegistry.CredentialsAuthnService, observabilitySvc))
 	reg.RegisterExecutor(ExecutorNameSMSAuth, newSMSOTPAuthExecutor(
@@ -84,6 +88,10 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameIdentifying, newIdentifyingExecutor(
 		"", []common.Input{{Identifier: userAttributeUsername, Type: "string", Required: true}}, []common.Input{},
 		flowFactory, userService))
+
+	// Register external executors (decoupled from user package)
+	reg.RegisterExecutor(ExecutorNameBasicAuthExternal, newBasicAuthExecutorExternal(
+		flowFactory, externalSvc, authRegistry.CredentialsAuthnServiceExternal, observabilitySvc))
 
 	return reg
 }

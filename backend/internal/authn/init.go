@@ -29,6 +29,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
+	"github.com/asgardeo/thunder/internal/externalsvc"
 	"github.com/asgardeo/thunder/internal/idp"
 	"github.com/asgardeo/thunder/internal/notification"
 	"github.com/asgardeo/thunder/internal/system/jwt"
@@ -38,14 +39,15 @@ import (
 
 // AuthServiceRegistry holds references to all authentication services.
 type AuthServiceRegistry struct {
-	CredentialsAuthnService credentials.CredentialsAuthnServiceInterface
-	OTPAuthnService         otp.OTPAuthnServiceInterface
-	OAuthAuthnService       oauth.OAuthAuthnServiceInterface
-	OIDCAuthnService        oidc.OIDCAuthnServiceInterface
-	GithubOAuthAuthnService github.GithubOAuthAuthnServiceInterface
-	GoogleOIDCAuthnService  google.GoogleOIDCAuthnServiceInterface
-	AuthAssertGenerator     assert.AuthAssertGeneratorInterface
-	PasskeyService          passkey.PasskeyServiceInterface
+	CredentialsAuthnService         credentials.CredentialsAuthnServiceInterface
+	CredentialsAuthnServiceExternal credentials.CredentialsAuthnServiceExternalInterface
+	OTPAuthnService                 otp.OTPAuthnServiceInterface
+	OAuthAuthnService               oauth.OAuthAuthnServiceInterface
+	OIDCAuthnService                oidc.OIDCAuthnServiceInterface
+	GithubOAuthAuthnService         github.GithubOAuthAuthnServiceInterface
+	GoogleOIDCAuthnService          google.GoogleOIDCAuthnServiceInterface
+	AuthAssertGenerator             assert.AuthAssertGeneratorInterface
+	PasskeyService                  passkey.PasskeyServiceInterface
 }
 
 // Initialize initializes the authentication service and registers its routes.
@@ -55,8 +57,9 @@ func Initialize(
 	jwtSvc jwt.JWTServiceInterface,
 	userSvc user.UserServiceInterface,
 	otpSvc notification.OTPServiceInterface,
+	externalSvc externalsvc.ExternalSvcInterface,
 ) (AuthenticationServiceInterface, *AuthServiceRegistry) {
-	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc, userSvc, otpSvc)
+	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc, userSvc, otpSvc, externalSvc)
 	authnService := newAuthenticationService(
 		idpSvc,
 		jwtSvc,
@@ -82,16 +85,18 @@ func createAuthServiceRegistry(
 	jwtSvc jwt.JWTServiceInterface,
 	userSvc user.UserServiceInterface,
 	otpSvc notification.OTPServiceInterface,
+	externalSvc externalsvc.ExternalSvcInterface,
 ) *AuthServiceRegistry {
 	return &AuthServiceRegistry{
-		CredentialsAuthnService: credentials.Initialize(userSvc),
-		OTPAuthnService:         otp.Initialize(otpSvc, userSvc),
-		OAuthAuthnService:       oauth.Initialize(idpSvc, userSvc),
-		OIDCAuthnService:        oidc.Initialize(idpSvc, userSvc, jwtSvc),
-		GithubOAuthAuthnService: github.Initialize(idpSvc, userSvc),
-		GoogleOIDCAuthnService:  google.Initialize(idpSvc, userSvc, jwtSvc),
-		PasskeyService:          passkey.Initialize(userSvc),
-		AuthAssertGenerator:     assert.Initialize(),
+		CredentialsAuthnService:         credentials.Initialize(userSvc),
+		CredentialsAuthnServiceExternal: credentials.InitializeExternal(externalSvc),
+		OTPAuthnService:                 otp.Initialize(otpSvc, userSvc),
+		OAuthAuthnService:               oauth.Initialize(idpSvc, userSvc),
+		OIDCAuthnService:                oidc.Initialize(idpSvc, userSvc, jwtSvc),
+		GithubOAuthAuthnService:         github.Initialize(idpSvc, userSvc),
+		GoogleOIDCAuthnService:          google.Initialize(idpSvc, userSvc, jwtSvc),
+		PasskeyService:                  passkey.Initialize(userSvc),
+		AuthAssertGenerator:             assert.Initialize(),
 	}
 }
 
