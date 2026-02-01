@@ -97,8 +97,8 @@ func registerServices(
 	}
 	groupService := group.Initialize(mux, ouService, userService)
 
-	// Create external service abstraction
-	externalSvc := externalsvc.NewExternalService(userService)
+	// Create external service abstraction (HTTP client to external user service)
+	externalSvc := externalsvc.NewExternalService()
 
 	resourceService, err := resource.Initialize(mux, ouService)
 	if err != nil {

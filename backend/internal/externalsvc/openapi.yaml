@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: External User Service API
+  description: API contract for external user services integrated with Thunder
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8091
+    description: Default external user service
+
+paths:
+  /users/identify:
+    post:
+      summary: Identify User
+      description: Find a user matching the given identifier attributes
+      operationId: identifyUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentifyUserRequest'
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserIdResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/authenticate:
+    post:
+      summary: Authenticate User
+      description: Validate credentials and return user ID
+      operationId: authenticateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticateUserRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserIdResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      summary: Get User
+      description: Retrieve all non-credential attributes for a user
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique user ID
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    IdentifyUserRequest:
+      type: object
+      required:
+        - attributes
+      properties:
+        attributes:
+          type: object
+          additionalProperties: true
+          example:
+            username: "john"
+
+    AuthenticateUserRequest:
+      type: object
+      required:
+        - attributes
+      properties:
+        attributes:
+          type: object
+          additionalProperties: true
+          example:
+            username: "john"
+            password: "secret123"
+
+    UserIdResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          example: "user-uuid-12345"
+
+    User:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        organizationUnit:
+          type: string
+        type:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - error
+        - description
+      properties:
+        code:
+          type: string
+          example: "EXTSVC-1001"
+        error:
+          type: string
+          example: "user_not_found"
+        description:
+          type: string
+          example: "No user found matching the provided attributes"
