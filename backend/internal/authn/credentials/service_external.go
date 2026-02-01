@@ -62,8 +62,8 @@ func (c *credentialsAuthnServiceExternal) Authenticate(attributes map[string]int
 		return nil, &ErrorEmptyAttributesOrCredentials
 	}
 
-	authRequest := externalsvc.AuthenticateUserRequest(attributes)
-	authResponse, svcErr := c.externalSvc.AuthenticateUser(context.TODO(), authRequest)
+	// Authenticate and get user ID
+	userID, svcErr := c.externalSvc.Authenticate(context.TODO(), attributes)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
 			switch svcErr.Code {
@@ -83,7 +83,7 @@ func (c *credentialsAuthnServiceExternal) Authenticate(attributes map[string]int
 	}
 
 	// Fetch the user details
-	user, svcErr := c.externalSvc.GetUser(context.TODO(), authResponse.ID)
+	user, svcErr := c.externalSvc.GetUser(context.TODO(), *userID)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
 			return nil, serviceerror.CustomServiceError(

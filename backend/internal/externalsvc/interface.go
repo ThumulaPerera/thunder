@@ -26,42 +26,38 @@ import (
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 )
 
-// Error code constants for external service operations
+// Error code constants for external service operations.
 const (
-	ErrorCodeUserNotFound         = "USR-60002"
-	ErrorCodeAuthenticationFailed = "USR-60007"
+	ErrorCodeUserNotFound         = "EXTSVC-1001"
+	ErrorCodeAuthenticationFailed = "EXTSVC-1002"
 )
 
-// User represents a user in the external service interface.
+// User represents non-credential user attributes.
 type User struct {
-	ID               string          `json:"id,omitempty"`
-	OrganizationUnit string          `json:"organizationUnit,omitempty"`
-	Type             string          `json:"type,omitempty"`
-	Attributes       json.RawMessage `json:"attributes,omitempty"`
-}
-
-// AuthenticateUserRequest represents the request body for authenticating a user.
-type AuthenticateUserRequest map[string]interface{}
-
-// AuthenticateUserResponse represents the response body for authenticating a user.
-type AuthenticateUserResponse struct {
-	ID               string `json:"id"`
-	Type             string `json:"type"`
-	OrganizationUnit string `json:"organizationUnit"`
+	ID               string          `json:"id"`
+	OrganizationUnit string          `json:"organizationUnit"`
+	Type             string          `json:"type"`
+	Attributes       json.RawMessage `json:"attributes"`
 }
 
 // ExternalSvcInterface defines the interface for external services used by executors.
 // This abstraction decouples executors from direct dependencies on internal services.
 type ExternalSvcInterface interface {
-	// IdentifyUser identifies a user with the given filters.
-	// Returns the user ID if found, or an error if not found or if an error occurs.
-	IdentifyUser(ctx context.Context, filters map[string]interface{}) (*string, *serviceerror.ServiceError)
+	// IdentifyUser finds a user matching the given identifier attributes.
+	// Input: map of identifier attributes (e.g., {"username": "john"})
+	// Output: unique user ID if found
+	// Errors: ErrorCodeUserNotFound if no user matches
+	IdentifyUser(ctx context.Context, attributes map[string]interface{}) (*string, *serviceerror.ServiceError)
 
-	// AuthenticateUser authenticates a user with the given request.
-	// Returns authentication response with user ID and basic info, or an error.
-	AuthenticateUser(ctx context.Context, request AuthenticateUserRequest) (*AuthenticateUserResponse, *serviceerror.ServiceError)
+	// Authenticate validates the given attributes (identifiers + credentials).
+	// Input: map of attributes including credentials (e.g., {"username": "john", "password": "secret"})
+	// Output: unique user ID if authentication succeeds
+	// Errors: ErrorCodeUserNotFound, ErrorCodeAuthenticationFailed
+	Authenticate(ctx context.Context, attributes map[string]interface{}) (*string, *serviceerror.ServiceError)
 
-	// GetUser retrieves a user by ID.
-	// Returns the complete user object, or an error if not found.
+	// GetUser retrieves all non-credential attributes for a user by their unique ID.
+	// Input: unique user ID
+	// Output: User with all non-credential attributes
+	// Errors: ErrorCodeUserNotFound
 	GetUser(ctx context.Context, userID string) (*User, *serviceerror.ServiceError)
 }

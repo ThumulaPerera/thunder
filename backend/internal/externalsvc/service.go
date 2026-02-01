@@ -37,37 +37,30 @@ func NewExternalService(userService user.UserServiceInterface) ExternalSvcInterf
 	}
 }
 
-// IdentifyUser identifies a user with the given filters by delegating to the user service.
-func (e *externalService) IdentifyUser(ctx context.Context, filters map[string]interface{}) (*string, *serviceerror.ServiceError) {
-	return e.userService.IdentifyUser(ctx, filters)
+// IdentifyUser finds a user matching the given identifier attributes.
+func (e *externalService) IdentifyUser(ctx context.Context, attributes map[string]interface{}) (*string, *serviceerror.ServiceError) {
+	return e.userService.IdentifyUser(ctx, attributes)
 }
 
-// AuthenticateUser authenticates a user by delegating to the user service.
-func (e *externalService) AuthenticateUser(ctx context.Context, request AuthenticateUserRequest) (*AuthenticateUserResponse, *serviceerror.ServiceError) {
-	// Convert externalsvc.AuthenticateUserRequest to user.AuthenticateUserRequest
-	userRequest := user.AuthenticateUserRequest(request)
+// Authenticate validates the given attributes (identifiers + credentials) and returns the user ID.
+func (e *externalService) Authenticate(ctx context.Context, attributes map[string]interface{}) (*string, *serviceerror.ServiceError) {
+	userRequest := user.AuthenticateUserRequest(attributes)
 
 	userResponse, err := e.userService.AuthenticateUser(ctx, userRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert user.AuthenticateUserResponse to externalsvc.AuthenticateUserResponse
-	return &AuthenticateUserResponse{
-		ID:               userResponse.ID,
-		Type:             userResponse.Type,
-		OrganizationUnit: userResponse.OrganizationUnit,
-	}, nil
+	return &userResponse.ID, nil
 }
 
-// GetUser retrieves a user by ID by delegating to the user service.
+// GetUser retrieves all non-credential attributes for a user by their unique ID.
 func (e *externalService) GetUser(ctx context.Context, userID string) (*User, *serviceerror.ServiceError) {
 	userObj, err := e.userService.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert user.User to externalsvc.User
 	return &User{
 		ID:               userObj.ID,
 		OrganizationUnit: userObj.OrganizationUnit,
