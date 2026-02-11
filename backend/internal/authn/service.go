@@ -52,7 +52,7 @@ var crossAllowedIDPTypes = []idp.IDPType{idp.IDPTypeOAuth, idp.IDPTypeOIDC}
 
 // AuthenticationServiceInterface defines the interface for the authentication service.
 type AuthenticationServiceInterface interface {
-	AuthenticateWithCredentials(attributes map[string]interface{}, skipAssertion bool, existingAssertion string) (
+	AuthenticateWithCredentials(identifiers, credentials map[string]interface{}, skipAssertion bool, existingAssertion string) (
 		*common.AuthenticationResponse, *serviceerror.ServiceError)
 	SendOTP(senderID string, channel notifcommon.ChannelType, recipient string) (
 		string, *serviceerror.ServiceError)
@@ -119,26 +119,42 @@ func newAuthenticationService(
 }
 
 // AuthenticateWithCredentials authenticates a user using credentials.
-func (as *authenticationService) AuthenticateWithCredentials(attributes map[string]interface{},
+func (as *authenticationService) AuthenticateWithCredentials(identifiers, credentials map[string]interface{},
 	skipAssertion bool, existingAssertion string) (
 	*common.AuthenticationResponse, *serviceerror.ServiceError) {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Authenticating with credentials")
 
-	user, svcErr := as.credentialsService.Authenticate(attributes)
+	authenticateResp, svcErr := as.credentialsService.Authenticate(identifiers, credentials, nil)
+	if svcErr != nil {
+		return nil, svcErr
+	}
+
+	requestedAttributes := []string{}
+	for _, attr := range authenticateResp.AvailableAttributes {
+		requestedAttributes = append(requestedAttributes, attr.Name)
+	}
+
+	userAttributes, svcErr := as.credentialsService.GetAttributes(authenticateResp.Token, requestedAttributes, nil)
 	if svcErr != nil {
 		return nil, svcErr
 	}
 
 	authResponse := &common.AuthenticationResponse{
-		ID:               user.ID,
-		Type:             user.Type,
-		OrganizationUnit: user.OrganizationUnit,
+		ID:               userAttributes.UserID,
+		Type:             userAttributes.UserType,
+		OrganizationUnit: userAttributes.OU,
 	}
 
 	// Generate assertion if not skipped
 	if !skipAssertion {
-		svcErr = as.validateAndAppendAuthAssertion(authResponse, user, common.AuthenticatorCredentials,
+		authenticatedUser := &user.User{
+			ID:               userAttributes.UserID,
+			Type:             userAttributes.UserType,
+			OrganizationUnit: userAttributes.OU,
+			Attributes:       userAttributes.Attributes,
+		}
+		svcErr = as.validateAndAppendAuthAssertion(authResponse, authenticatedUser, common.AuthenticatorCredentials,
 			existingAssertion, logger)
 		if svcErr != nil {
 			return nil, svcErr

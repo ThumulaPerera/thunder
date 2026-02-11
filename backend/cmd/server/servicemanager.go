@@ -24,6 +24,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/application"
 	"github.com/asgardeo/thunder/internal/authn"
+	"github.com/asgardeo/thunder/internal/authnprovider"
 	"github.com/asgardeo/thunder/internal/authz"
 	brandingmgt "github.com/asgardeo/thunder/internal/branding/mgt"
 	brandingresolve "github.com/asgardeo/thunder/internal/branding/resolve"
@@ -116,10 +117,12 @@ func registerServices(
 	}
 	exporters = append(exporters, notificationExporter)
 
+	authnProvider := authnprovider.InitializeDefaultAuthnProvider(userService)
+
 	userProvider := userprovider.InitializeDefaultUserProvider(userService)
 
 	// Initialize authentication services.
-	_, authSvcRegistry := authn.Initialize(mux, idpService, jwtService, userService, otpService)
+	_, authSvcRegistry := authn.Initialize(mux, idpService, jwtService, userService, otpService, authnProvider)
 
 	// Initialize flow and executor services.
 	flowFactory, graphCache := flowcore.Initialize()
