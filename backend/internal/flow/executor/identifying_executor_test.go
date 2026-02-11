@@ -27,8 +27,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
-	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
-	"github.com/asgardeo/thunder/internal/user"
+	"github.com/asgardeo/thunder/internal/userprovider"
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
 	"github.com/asgardeo/thunder/tests/mocks/userprovidermock"
 )
@@ -87,7 +86,8 @@ func (suite *IdentifyingExecutorTestSuite) TestIdentifyUser_UserNotFound() {
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, &user.ErrorUserNotFound)
+	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, 
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	result, err := suite.executor.IdentifyUser(filters, execResp)
 
@@ -104,7 +104,8 @@ func (suite *IdentifyingExecutorTestSuite) TestIdentifyUser_ServiceError() {
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, &serviceerror.ServiceError{Error: "service error"})
+	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, 
+		userprovider.NewUserProviderError(userprovider.ErrorCodeSystemError, "", ""))
 
 	result, err := suite.executor.IdentifyUser(filters, execResp)
 
@@ -271,7 +272,7 @@ func (suite *IdentifyingExecutorTestSuite) TestExecute_Failure_IdentifyUserError
 
 	suite.mockUserProvider.On("IdentifyUser", map[string]interface{}{
 		"username": "testuser",
-	}).Return(nil, &serviceerror.ServiceError{Code: "INTERNAL_ERROR", Error: "service error"})
+	}).Return(nil, userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -408,7 +409,7 @@ func (suite *IdentifyingExecutorTestSuite) TestExecute_Failure_UserNotFoundByAtt
 
 			suite.mockUserProvider.On("IdentifyUser", map[string]interface{}{
 				tc.attribute: tc.value,
-			}).Return(nil, &user.ErrorUserNotFound)
+			}).Return(nil, userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 			resp, err := suite.executor.Execute(ctx)
 
