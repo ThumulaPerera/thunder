@@ -36,6 +36,7 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
 	"github.com/asgardeo/thunder/tests/mocks/observabilitymock"
 	"github.com/asgardeo/thunder/tests/mocks/usermock"
+	"github.com/asgardeo/thunder/tests/mocks/userprovidermock"
 )
 
 const (
@@ -54,6 +55,7 @@ type PasskeyAuthExecutorTestSuite struct {
 	mockPasskeyService *passkeymock.PasskeyServiceInterfaceMock
 	mockFlowFactory    *coremock.FlowFactoryInterfaceMock
 	mockObservability  *observabilitymock.ObservabilityServiceInterfaceMock
+	mockUserProvider   *userprovidermock.UserProviderInterfaceMock
 	executor           *passkeyAuthExecutor
 }
 
@@ -66,6 +68,7 @@ func (suite *PasskeyAuthExecutorTestSuite) SetupTest() {
 	suite.mockPasskeyService = passkeymock.NewPasskeyServiceInterfaceMock(suite.T())
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
 	suite.mockObservability = observabilitymock.NewObservabilityServiceInterfaceMock(suite.T())
+	suite.mockUserProvider = userprovidermock.NewUserProviderInterfaceMock(suite.T())
 
 	// Create mock identifying executor
 	identifyingMock := createMockIdentifyingExecutor(suite.T())
@@ -78,7 +81,7 @@ func (suite *PasskeyAuthExecutorTestSuite) SetupTest() {
 		mock.Anything, mock.Anything).Return(mockExec)
 
 	suite.executor = newPasskeyAuthExecutor(suite.mockFlowFactory, suite.mockUserService,
-		suite.mockPasskeyService, suite.mockObservability)
+		suite.mockPasskeyService, suite.mockObservability, suite.mockUserProvider)
 }
 
 func (suite *PasskeyAuthExecutorTestSuite) BeforeTest(suiteName, testName string) {

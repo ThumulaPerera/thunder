@@ -33,6 +33,7 @@ import (
 	"github.com/asgardeo/thunder/internal/observability"
 	"github.com/asgardeo/thunder/internal/system/log"
 	"github.com/asgardeo/thunder/internal/user"
+	"github.com/asgardeo/thunder/internal/userprovider"
 )
 
 const (
@@ -70,6 +71,7 @@ func newSMSOTPAuthExecutor(
 	userService user.UserServiceInterface,
 	otpService notification.OTPServiceInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
+	userProvider userprovider.UserProviderInterface,
 ) *smsOTPAuthExecutor {
 	defaultInputs := []common.Input{
 		{
@@ -87,7 +89,7 @@ func newSMSOTPAuthExecutor(
 		log.String(log.LoggerKeyExecutorName, ExecutorNameSMSAuth))
 
 	identifyExec := newIdentifyingExecutor(ExecutorNameSMSAuth, defaultInputs, prerequisites,
-		flowFactory, userService)
+		flowFactory, userProvider)
 	base := flowFactory.CreateExecutor(ExecutorNameSMSAuth, common.ExecutorTypeAuthentication,
 		defaultInputs, prerequisites)
 

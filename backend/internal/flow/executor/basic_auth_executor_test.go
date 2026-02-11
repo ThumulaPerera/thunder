@@ -33,12 +33,12 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/authn/credentialsmock"
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
 	"github.com/asgardeo/thunder/tests/mocks/observabilitymock"
-	"github.com/asgardeo/thunder/tests/mocks/usermock"
+	"github.com/asgardeo/thunder/tests/mocks/userprovidermock"
 )
 
 type BasicAuthExecutorTestSuite struct {
 	suite.Suite
-	mockUserService   *usermock.UserServiceInterfaceMock
+	mockUserProvider  *userprovidermock.UserProviderInterfaceMock
 	mockCredsService  *credentialsmock.CredentialsAuthnServiceInterfaceMock
 	mockFlowFactory   *coremock.FlowFactoryInterfaceMock
 	mockObservability *observabilitymock.ObservabilityServiceInterfaceMock
@@ -50,7 +50,7 @@ func TestBasicAuthExecutorSuite(t *testing.T) {
 }
 
 func (suite *BasicAuthExecutorTestSuite) SetupTest() {
-	suite.mockUserService = usermock.NewUserServiceInterfaceMock(suite.T())
+	suite.mockUserProvider = userprovidermock.NewUserProviderInterfaceMock(suite.T())
 	suite.mockCredsService = credentialsmock.NewCredentialsAuthnServiceInterfaceMock(suite.T())
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
 	suite.mockObservability = observabilitymock.NewObservabilityServiceInterfaceMock(suite.T())
@@ -69,7 +69,7 @@ func (suite *BasicAuthExecutorTestSuite) SetupTest() {
 	suite.mockFlowFactory.On("CreateExecutor", ExecutorNameBasicAuth, common.ExecutorTypeAuthentication,
 		defaultInputs, []common.Input{}).Return(mockExec)
 
-	suite.executor = newBasicAuthExecutor(suite.mockFlowFactory, suite.mockUserService, suite.mockCredsService,
+	suite.executor = newBasicAuthExecutor(suite.mockFlowFactory, suite.mockUserProvider, suite.mockCredsService,
 		suite.mockObservability)
 }
 
@@ -238,7 +238,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_RegistrationFlow() 
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockUserService.On("IdentifyUser", mock.Anything, map[string]interface{}{
+	suite.mockUserProvider.On("IdentifyUser", map[string]interface{}{
 		userAttributeUsername: "newuser",
 	}).Return(nil, &user.ErrorUserNotFound)
 
@@ -249,7 +249,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_RegistrationFlow() 
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
 	assert.False(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
 	assert.Equal(suite.T(), "newuser", resp.AuthenticatedUser.Attributes[userAttributeUsername])
-	suite.mockUserService.AssertExpectations(suite.T())
+	suite.mockUserProvider.AssertExpectations(suite.T())
 }
 
 func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttributes() {
@@ -383,7 +383,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_UserAlreadyExists_Registrat
 	}
 
 	userID := testUserID
-	suite.mockUserService.On("IdentifyUser", mock.Anything, map[string]interface{}{
+	suite.mockUserProvider.On("IdentifyUser", map[string]interface{}{
 		userAttributeUsername: "existinguser",
 	}).Return(&userID, nil)
 
@@ -393,7 +393,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_UserAlreadyExists_Registrat
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecFailure, resp.Status)
 	assert.Contains(suite.T(), resp.FailureReason, "User already exists")
-	suite.mockUserService.AssertExpectations(suite.T())
+	suite.mockUserProvider.AssertExpectations(suite.T())
 }
 
 func (suite *BasicAuthExecutorTestSuite) TestExecute_ServiceError() {
@@ -576,7 +576,7 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_RegistrationFl
 	}
 
 	// For registration flows, IdentifyUser should be called to check if user exists
-	suite.mockUserService.On("IdentifyUser", mock.Anything, map[string]interface{}{
+	suite.mockUserProvider.On("IdentifyUser", map[string]interface{}{
 		userAttributeUsername: "newuser",
 	}).Return(nil, &user.ErrorUserNotFound)
 
@@ -587,7 +587,7 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_RegistrationFl
 	assert.False(suite.T(), result.IsAuthenticated)
 	assert.Equal(suite.T(), "newuser", result.Attributes[userAttributeUsername])
 	// Verify IdentifyUser was called for registration flow
-	suite.mockUserService.AssertExpectations(suite.T())
+	suite.mockUserProvider.AssertExpectations(suite.T())
 	// Verify Authenticate was NOT called for registration flow
 	suite.mockCredsService.AssertNotCalled(suite.T(), "Authenticate")
 }

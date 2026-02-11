@@ -37,6 +37,7 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/groupmock"
 	"github.com/asgardeo/thunder/tests/mocks/rolemock"
 	"github.com/asgardeo/thunder/tests/mocks/usermock"
+	"github.com/asgardeo/thunder/tests/mocks/userprovidermock"
 )
 
 const (
@@ -50,6 +51,7 @@ type ProvisioningExecutorTestSuite struct {
 	mockGroupService *groupmock.GroupServiceInterfaceMock
 	mockRoleService  *rolemock.RoleServiceInterfaceMock
 	mockFlowFactory  *coremock.FlowFactoryInterfaceMock
+	mockUserProvider *userprovidermock.UserProviderInterfaceMock
 	executor         *provisioningExecutor
 }
 
@@ -62,6 +64,7 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 	suite.mockGroupService = groupmock.NewGroupServiceInterfaceMock(suite.T())
 	suite.mockRoleService = rolemock.NewRoleServiceInterfaceMock(suite.T())
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
+	suite.mockUserProvider = userprovidermock.NewUserProviderInterfaceMock(suite.T())
 
 	// Mock the embedded identifying executor first
 	identifyingMock := suite.createMockIdentifyingExecutor()
@@ -73,7 +76,7 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 		[]common.Input{}, []common.Input{}).Return(mockExec)
 
 	suite.executor = newProvisioningExecutor(suite.mockFlowFactory, suite.mockUserService,
-		suite.mockGroupService, suite.mockRoleService)
+		suite.mockGroupService, suite.mockRoleService, suite.mockUserProvider)
 }
 
 func (suite *ProvisioningExecutorTestSuite) createMockIdentifyingExecutor() core.ExecutorInterface {
