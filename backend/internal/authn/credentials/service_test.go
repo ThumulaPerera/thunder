@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authnprovider"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/tests/mocks/authnprovidermock"
@@ -162,7 +163,7 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateFailures() {
 			setupMock: func(m *authnprovidermock.AuthnProviderInterfaceMock) {
 				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(authnprovider.ErrorCodeUserNotFound, "User not found", "user not found description"))
 			},
-			expectedErrorCode: ErrorUserNotFound.Code,
+			expectedErrorCode: common.ErrorUserNotFound.Code,
 		},
 		{
 			name:        "InvalidCredentials",

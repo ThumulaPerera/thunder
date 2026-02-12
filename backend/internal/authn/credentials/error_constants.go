@@ -36,13 +36,6 @@ var (
 		Error:            "Invalid credentials",
 		ErrorDescription: "The provided credentials are invalid",
 	}
-	// ErrorUserNotFound is the error when the user is not found.
-	ErrorUserNotFound = serviceerror.ServiceError{
-		Type:             serviceerror.ClientErrorType,
-		Code:             "AUTH-CRED-1003",
-		Error:            "User not found",
-		ErrorDescription: "The provided user is not found",
-	}
 	// ErrorInvalidToken is the error when the provided token is invalid.
 	ErrorInvalidToken = serviceerror.ServiceError{
 		Type:             serviceerror.ClientErrorType,

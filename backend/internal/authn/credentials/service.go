@@ -64,7 +64,7 @@ func (c *credentialsAuthnService) Authenticate(identifiers, credentials map[stri
 		case authnprovider.ErrorCodeAuthenticationFailed:
 			return nil, &ErrorInvalidCredentials
 		case authnprovider.ErrorCodeUserNotFound:
-			return nil, &ErrorUserNotFound
+			return nil, &common.ErrorUserNotFound
 		default:
 			c.logger.Error("Error occurred while authenticating the user", log.String("errorCode", string(err.Code)),
 				log.String("errorDescription", err.Description))
