@@ -31,6 +31,7 @@ import (
 	"github.com/asgardeo/thunder/internal/role"
 	"github.com/asgardeo/thunder/internal/system/log"
 	"github.com/asgardeo/thunder/internal/user"
+	"github.com/asgardeo/thunder/internal/userprovider"
 )
 
 // provisioningExecutor implements the ExecutorInterface for user provisioning in a flow.
@@ -52,6 +53,7 @@ func newProvisioningExecutor(
 	userService user.UserServiceInterface,
 	groupService group.GroupServiceInterface,
 	roleService role.RoleServiceInterface,
+	userProvider userprovider.UserProviderInterface,
 ) *provisioningExecutor {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, ExecutorNameProvisioning),
 		log.String(log.LoggerKeyExecutorName, ExecutorNameProvisioning))
@@ -60,7 +62,7 @@ func newProvisioningExecutor(
 		[]common.Input{}, []common.Input{})
 
 	identifyingExec := newIdentifyingExecutor(ExecutorNameProvisioning,
-		[]common.Input{}, []common.Input{}, flowFactory, userService)
+		[]common.Input{}, []common.Input{}, flowFactory, userProvider)
 
 	return &provisioningExecutor{
 		ExecutorInterface:            base,

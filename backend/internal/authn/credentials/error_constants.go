@@ -36,11 +36,18 @@ var (
 		Error:            "Invalid credentials",
 		ErrorDescription: "The provided credentials are invalid",
 	}
+	// ErrorInvalidToken is the error when the provided token is invalid.
+	ErrorInvalidToken = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTH-CRED-1004",
+		Error:            "Invalid token",
+		ErrorDescription: "The provided token is invalid",
+	}
 	// ErrorClientErrorFromUserSvcAuthentication is the error when there is a client error from
 	// the user service during authentication.
 	ErrorClientErrorFromUserSvcAuthentication = serviceerror.ServiceError{
 		Type:             serviceerror.ClientErrorType,
-		Code:             "AUTH-CRED-1003",
+		Code:             "AUTH-CRED-1005",
 		Error:            "authentication failed",
 		ErrorDescription: "An error occurred while authenticating the user",
 	}

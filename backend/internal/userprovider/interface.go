@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,11 +16,18 @@
  * under the License.
  */
 
-package credentials
+package userprovider
 
-import "github.com/asgardeo/thunder/internal/authnprovider"
+import "encoding/json"
 
-// Initialize initializes the credentials authenticator service.
-func Initialize(authnProvider authnprovider.AuthnProviderInterface) CredentialsAuthnServiceInterface {
-	return newCredentialsAuthnService(authnProvider)
+type User struct {
+	UserID     string          `json:"userID"`
+	UserType   string          `json:"userType"`
+	OU         string          `json:"ou"`
+	Attributes json.RawMessage `json:"attributes,omitempty"`
+}
+
+type UserProviderInterface interface {
+	IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError)
+	GetUser(userID string) (*User, *UserProviderError)
 }
