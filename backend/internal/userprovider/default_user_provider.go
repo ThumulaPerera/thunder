@@ -157,9 +157,28 @@ func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserPr
 	}
 
 	return &User{
-		UserID:     userResult.ID,
-		UserType:   userResult.Type,
-		OU:         userResult.OrganizationUnit,
-		Attributes: json.RawMessage(userResult.Attributes),
+		UserID:   userResult.ID,
+		UserType: userResult.Type,
+		OU:       userResult.OrganizationUnit,
 	}, nil
+}
+
+func (p *defaultUserProvider) UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError {
+	err := p.userSvc.UpdateUserCredentials(context.Background(), userID, credentials)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorInvalidRequestFormat.Code:
+			return NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorMissingCredentials.Code:
+			return NewUserProviderError(ErrorCodeMissingCredentials, err.Error, err.ErrorDescription)
+		case user.ErrorUserNotFound.Code, user.ErrorMissingUserID.Code:
+			return NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		case user.ErrorAuthenticationFailed.Code:
+			// Map auth failed (e.g. empty user ID) to invalid request or not found depending on semantics
+			return NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		default:
+			return NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+	return nil
 }

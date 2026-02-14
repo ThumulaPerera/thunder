@@ -5,6 +5,8 @@
 package userprovidermock
 
 import (
+	"encoding/json"
+
 	"github.com/asgardeo/thunder/internal/userprovider"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -370,6 +372,65 @@ func (_c *UserProviderInterfaceMock_UpdateUser_Call) Return(user1 *userprovider.
 }
 
 func (_c *UserProviderInterfaceMock_UpdateUser_Call) RunAndReturn(run func(userID string, user *userprovider.User) (*userprovider.User, *userprovider.UserProviderError)) *UserProviderInterfaceMock_UpdateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateUserCredentials provides a mock function for the type UserProviderInterfaceMock
+func (_mock *UserProviderInterfaceMock) UpdateUserCredentials(userID string, credentials json.RawMessage) *userprovider.UserProviderError {
+	ret := _mock.Called(userID, credentials)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUserCredentials")
+	}
+
+	var r0 *userprovider.UserProviderError
+	if returnFunc, ok := ret.Get(0).(func(string, json.RawMessage) *userprovider.UserProviderError); ok {
+		r0 = returnFunc(userID, credentials)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*userprovider.UserProviderError)
+		}
+	}
+	return r0
+}
+
+// UserProviderInterfaceMock_UpdateUserCredentials_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUserCredentials'
+type UserProviderInterfaceMock_UpdateUserCredentials_Call struct {
+	*mock.Call
+}
+
+// UpdateUserCredentials is a helper method to define mock.On call
+//   - userID string
+//   - credentials json.RawMessage
+func (_e *UserProviderInterfaceMock_Expecter) UpdateUserCredentials(userID interface{}, credentials interface{}) *UserProviderInterfaceMock_UpdateUserCredentials_Call {
+	return &UserProviderInterfaceMock_UpdateUserCredentials_Call{Call: _e.mock.On("UpdateUserCredentials", userID, credentials)}
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUserCredentials_Call) Run(run func(userID string, credentials json.RawMessage)) *UserProviderInterfaceMock_UpdateUserCredentials_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 json.RawMessage
+		if args[1] != nil {
+			arg1 = args[1].(json.RawMessage)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUserCredentials_Call) Return(userProviderError *userprovider.UserProviderError) *UserProviderInterfaceMock_UpdateUserCredentials_Call {
+	_c.Call.Return(userProviderError)
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUserCredentials_Call) RunAndReturn(run func(userID string, credentials json.RawMessage) *userprovider.UserProviderError) *UserProviderInterfaceMock_UpdateUserCredentials_Call {
 	_c.Call.Return(run)
 	return _c
 }
