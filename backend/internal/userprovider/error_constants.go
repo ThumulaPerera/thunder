@@ -31,8 +31,11 @@ func (e *UserProviderError) Error() string {
 }
 
 const (
-	ErrorCodeSystemError  ErrorCode = "UP-0001"
-	ErrorCodeUserNotFound ErrorCode = "UP-0002"
+	ErrorCodeSystemError              ErrorCode = "UP-0001"
+	ErrorCodeUserNotFound             ErrorCode = "UP-0002"
+	ErrorCodeInvalidRequestFormat     ErrorCode = "UP-0003"
+	ErrorCodeOrganizationUnitMismatch ErrorCode = "UP-0004"
+	ErrorCodeAttributeConflict        ErrorCode = "UP-0005"
 )
 
 func NewUserProviderError(code ErrorCode, message string, description string) *UserProviderError {

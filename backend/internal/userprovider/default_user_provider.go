@@ -99,3 +99,34 @@ func (p *defaultUserProvider) GetUserGroups(userID string, limit, offset int) (*
 		Links:        links,
 	}, nil
 }
+
+func (p *defaultUserProvider) UpdateUser(userID string, userUpdateConfig *User) (*User, *UserProviderError) {
+	updatedUser := &user.User{
+		ID:               userUpdateConfig.UserID,
+		OrganizationUnit: userUpdateConfig.OU,
+		Type:             userUpdateConfig.UserType,
+		Attributes:       json.RawMessage(userUpdateConfig.Attributes),
+	}
+
+	userResult, err := p.userSvc.UpdateUser(context.Background(), userID, updatedUser)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorUserNotFound.Code, user.ErrorMissingUserID.Code:
+			return nil, NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		case user.ErrorInvalidRequestFormat.Code:
+			return nil, NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitMismatch.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		case user.ErrorAttributeConflict.Code, user.ErrorEmailConflict.Code:
+			return nil, NewUserProviderError(ErrorCodeAttributeConflict, err.Error, err.ErrorDescription)
+		default:
+			return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+	return &User{
+		UserID:     userResult.ID,
+		UserType:   userResult.Type,
+		OU:         userResult.OrganizationUnit,
+		Attributes: json.RawMessage(userResult.Attributes),
+	}, nil
+}

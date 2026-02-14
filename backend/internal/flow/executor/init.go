@@ -76,7 +76,7 @@ func Initialize(
 		groupService, roleService, userProvider))
 	reg.RegisterExecutor(ExecutorNameOUCreation, newOUExecutor(flowFactory, ouService))
 
-	reg.RegisterExecutor(ExecutorNameAttributeCollect, newAttributeCollector(flowFactory, userService))
+	reg.RegisterExecutor(ExecutorNameAttributeCollect, newAttributeCollector(flowFactory, userProvider))
 	reg.RegisterExecutor(ExecutorNameAuthAssert, newAuthAssertExecutor(flowFactory, jwtService,
 		ouService, authRegistry.AuthAssertGenerator, authnProvider, userProvider))
 	reg.RegisterExecutor(ExecutorNameAuthorization, newAuthorizationExecutor(flowFactory, authZService))

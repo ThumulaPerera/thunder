@@ -239,3 +239,73 @@ func (_c *UserProviderInterfaceMock_IdentifyUser_Call) RunAndReturn(run func(fil
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateUser provides a mock function for the type UserProviderInterfaceMock
+func (_mock *UserProviderInterfaceMock) UpdateUser(userID string, user *userprovider.User) (*userprovider.User, *userprovider.UserProviderError) {
+	ret := _mock.Called(userID, user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 *userprovider.User
+	var r1 *userprovider.UserProviderError
+	if returnFunc, ok := ret.Get(0).(func(string, *userprovider.User) (*userprovider.User, *userprovider.UserProviderError)); ok {
+		return returnFunc(userID, user)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, *userprovider.User) *userprovider.User); ok {
+		r0 = returnFunc(userID, user)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*userprovider.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, *userprovider.User) *userprovider.UserProviderError); ok {
+		r1 = returnFunc(userID, user)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*userprovider.UserProviderError)
+		}
+	}
+	return r0, r1
+}
+
+// UserProviderInterfaceMock_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type UserProviderInterfaceMock_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - userID string
+//   - user *userprovider.User
+func (_e *UserProviderInterfaceMock_Expecter) UpdateUser(userID interface{}, user interface{}) *UserProviderInterfaceMock_UpdateUser_Call {
+	return &UserProviderInterfaceMock_UpdateUser_Call{Call: _e.mock.On("UpdateUser", userID, user)}
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUser_Call) Run(run func(userID string, user *userprovider.User)) *UserProviderInterfaceMock_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 *userprovider.User
+		if args[1] != nil {
+			arg1 = args[1].(*userprovider.User)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUser_Call) Return(user1 *userprovider.User, userProviderError *userprovider.UserProviderError) *UserProviderInterfaceMock_UpdateUser_Call {
+	_c.Call.Return(user1, userProviderError)
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_UpdateUser_Call) RunAndReturn(run func(userID string, user *userprovider.User) (*userprovider.User, *userprovider.UserProviderError)) *UserProviderInterfaceMock_UpdateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}

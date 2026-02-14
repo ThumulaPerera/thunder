@@ -50,4 +50,5 @@ type UserProviderInterface interface {
 	IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError)
 	GetUser(userID string) (*User, *UserProviderError)
 	GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse, *UserProviderError)
+	UpdateUser(userID string, user *User) (*User, *UserProviderError)
 }
