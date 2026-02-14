@@ -72,7 +72,7 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameGoogleAuth, newGoogleOIDCAuthExecutor(
 		flowFactory, idpService, userSchemaService, authRegistry.GoogleOIDCAuthnService))
 
-	reg.RegisterExecutor(ExecutorNameProvisioning, newProvisioningExecutor(flowFactory, userService,
+	reg.RegisterExecutor(ExecutorNameProvisioning, newProvisioningExecutor(flowFactory,
 		groupService, roleService, userProvider))
 	reg.RegisterExecutor(ExecutorNameOUCreation, newOUExecutor(flowFactory, ouService))
 

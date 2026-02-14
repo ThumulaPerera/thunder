@@ -130,3 +130,36 @@ func (p *defaultUserProvider) UpdateUser(userID string, userUpdateConfig *User) 
 		Attributes: json.RawMessage(userResult.Attributes),
 	}, nil
 }
+
+func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserProviderError) {
+	newUser := &user.User{
+		OrganizationUnit: userCreateConfig.OU,
+		Type:             userCreateConfig.UserType,
+		Attributes:       json.RawMessage(userCreateConfig.Attributes),
+	}
+
+	userResult, err := p.userSvc.CreateUser(context.Background(), newUser)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorInvalidRequestFormat.Code:
+			return nil, NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitMismatch.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		case user.ErrorAttributeConflict.Code, user.ErrorEmailConflict.Code:
+			return nil, NewUserProviderError(ErrorCodeAttributeConflict, err.Error, err.ErrorDescription)
+		case user.ErrorMissingRequiredFields.Code:
+			return nil, NewUserProviderError(ErrorCodeMissingRequiredFields, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitNotFound.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		default:
+			return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+
+	return &User{
+		UserID:     userResult.ID,
+		UserType:   userResult.Type,
+		OU:         userResult.OrganizationUnit,
+		Attributes: json.RawMessage(userResult.Attributes),
+	}, nil
+}

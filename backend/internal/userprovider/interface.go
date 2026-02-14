@@ -51,4 +51,5 @@ type UserProviderInterface interface {
 	GetUser(userID string) (*User, *UserProviderError)
 	GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse, *UserProviderError)
 	UpdateUser(userID string, user *User) (*User, *UserProviderError)
+	CreateUser(user *User) (*User, *UserProviderError)
 }

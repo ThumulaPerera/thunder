@@ -36,6 +36,7 @@ const (
 	ErrorCodeInvalidRequestFormat     ErrorCode = "UP-0003"
 	ErrorCodeOrganizationUnitMismatch ErrorCode = "UP-0004"
 	ErrorCodeAttributeConflict        ErrorCode = "UP-0005"
+	ErrorCodeMissingRequiredFields    ErrorCode = "UP-0006"
 )
 
 func NewUserProviderError(code ErrorCode, message string, description string) *UserProviderError {

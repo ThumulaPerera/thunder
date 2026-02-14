@@ -36,6 +36,70 @@ func (_m *UserProviderInterfaceMock) EXPECT() *UserProviderInterfaceMock_Expecte
 	return &UserProviderInterfaceMock_Expecter{mock: &_m.Mock}
 }
 
+// CreateUser provides a mock function for the type UserProviderInterfaceMock
+func (_mock *UserProviderInterfaceMock) CreateUser(user *userprovider.User) (*userprovider.User, *userprovider.UserProviderError) {
+	ret := _mock.Called(user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateUser")
+	}
+
+	var r0 *userprovider.User
+	var r1 *userprovider.UserProviderError
+	if returnFunc, ok := ret.Get(0).(func(*userprovider.User) (*userprovider.User, *userprovider.UserProviderError)); ok {
+		return returnFunc(user)
+	}
+	if returnFunc, ok := ret.Get(0).(func(*userprovider.User) *userprovider.User); ok {
+		r0 = returnFunc(user)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*userprovider.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(*userprovider.User) *userprovider.UserProviderError); ok {
+		r1 = returnFunc(user)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*userprovider.UserProviderError)
+		}
+	}
+	return r0, r1
+}
+
+// UserProviderInterfaceMock_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
+type UserProviderInterfaceMock_CreateUser_Call struct {
+	*mock.Call
+}
+
+// CreateUser is a helper method to define mock.On call
+//   - user *userprovider.User
+func (_e *UserProviderInterfaceMock_Expecter) CreateUser(user interface{}) *UserProviderInterfaceMock_CreateUser_Call {
+	return &UserProviderInterfaceMock_CreateUser_Call{Call: _e.mock.On("CreateUser", user)}
+}
+
+func (_c *UserProviderInterfaceMock_CreateUser_Call) Run(run func(user *userprovider.User)) *UserProviderInterfaceMock_CreateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *userprovider.User
+		if args[0] != nil {
+			arg0 = args[0].(*userprovider.User)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_CreateUser_Call) Return(user1 *userprovider.User, userProviderError *userprovider.UserProviderError) *UserProviderInterfaceMock_CreateUser_Call {
+	_c.Call.Return(user1, userProviderError)
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_CreateUser_Call) RunAndReturn(run func(user *userprovider.User) (*userprovider.User, *userprovider.UserProviderError)) *UserProviderInterfaceMock_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUser provides a mock function for the type UserProviderInterfaceMock
 func (_mock *UserProviderInterfaceMock) GetUser(userID string) (*userprovider.User, *userprovider.UserProviderError) {
 	ret := _mock.Called(userID)
