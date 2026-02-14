@@ -63,3 +63,39 @@ func (p *defaultUserProvider) GetUser(userID string) (*User, *UserProviderError)
 		Attributes: json.RawMessage(userResult.Attributes),
 	}, nil
 }
+
+func (p *defaultUserProvider) GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse,
+	*UserProviderError) {
+	userGroupListResponse, err := p.userSvc.GetUserGroups(context.Background(), userID, limit, offset)
+	if err != nil {
+		if err.Code == user.ErrorUserNotFound.Code || err.Code == user.ErrorMissingUserID.Code {
+			return nil, NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		}
+		return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+	}
+
+	groups := make([]UserGroup, len(userGroupListResponse.Groups))
+	for i, g := range userGroupListResponse.Groups {
+		groups[i] = UserGroup{
+			ID:                 g.ID,
+			Name:               g.Name,
+			OrganizationUnitID: g.OrganizationUnitID,
+		}
+	}
+
+	links := make([]Link, len(userGroupListResponse.Links))
+	for i, l := range userGroupListResponse.Links {
+		links[i] = Link{
+			Href: l.Href,
+			Rel:  l.Rel,
+		}
+	}
+
+	return &UserGroupListResponse{
+		TotalResults: userGroupListResponse.TotalResults,
+		StartIndex:   userGroupListResponse.StartIndex,
+		Count:        userGroupListResponse.Count,
+		Groups:       groups,
+		Links:        links,
+	}, nil
+}

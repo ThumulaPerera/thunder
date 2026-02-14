@@ -100,6 +100,82 @@ func (_c *UserProviderInterfaceMock_GetUser_Call) RunAndReturn(run func(userID s
 	return _c
 }
 
+// GetUserGroups provides a mock function for the type UserProviderInterfaceMock
+func (_mock *UserProviderInterfaceMock) GetUserGroups(userID string, limit int, offset int) (*userprovider.UserGroupListResponse, *userprovider.UserProviderError) {
+	ret := _mock.Called(userID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserGroups")
+	}
+
+	var r0 *userprovider.UserGroupListResponse
+	var r1 *userprovider.UserProviderError
+	if returnFunc, ok := ret.Get(0).(func(string, int, int) (*userprovider.UserGroupListResponse, *userprovider.UserProviderError)); ok {
+		return returnFunc(userID, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, int, int) *userprovider.UserGroupListResponse); ok {
+		r0 = returnFunc(userID, limit, offset)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*userprovider.UserGroupListResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, int, int) *userprovider.UserProviderError); ok {
+		r1 = returnFunc(userID, limit, offset)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*userprovider.UserProviderError)
+		}
+	}
+	return r0, r1
+}
+
+// UserProviderInterfaceMock_GetUserGroups_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserGroups'
+type UserProviderInterfaceMock_GetUserGroups_Call struct {
+	*mock.Call
+}
+
+// GetUserGroups is a helper method to define mock.On call
+//   - userID string
+//   - limit int
+//   - offset int
+func (_e *UserProviderInterfaceMock_Expecter) GetUserGroups(userID interface{}, limit interface{}, offset interface{}) *UserProviderInterfaceMock_GetUserGroups_Call {
+	return &UserProviderInterfaceMock_GetUserGroups_Call{Call: _e.mock.On("GetUserGroups", userID, limit, offset)}
+}
+
+func (_c *UserProviderInterfaceMock_GetUserGroups_Call) Run(run func(userID string, limit int, offset int)) *UserProviderInterfaceMock_GetUserGroups_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_GetUserGroups_Call) Return(userGroupListResponse *userprovider.UserGroupListResponse, userProviderError *userprovider.UserProviderError) *UserProviderInterfaceMock_GetUserGroups_Call {
+	_c.Call.Return(userGroupListResponse, userProviderError)
+	return _c
+}
+
+func (_c *UserProviderInterfaceMock_GetUserGroups_Call) RunAndReturn(run func(userID string, limit int, offset int) (*userprovider.UserGroupListResponse, *userprovider.UserProviderError)) *UserProviderInterfaceMock_GetUserGroups_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IdentifyUser provides a mock function for the type UserProviderInterfaceMock
 func (_mock *UserProviderInterfaceMock) IdentifyUser(filters map[string]interface{}) (*string, *userprovider.UserProviderError) {
 	ret := _mock.Called(filters)
