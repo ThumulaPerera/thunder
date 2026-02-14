@@ -57,7 +57,7 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameBasicAuth, newBasicAuthExecutor(
 		flowFactory, userProvider, authRegistry.CredentialsAuthnService, observabilitySvc))
 	reg.RegisterExecutor(ExecutorNameSMSAuth, newSMSOTPAuthExecutor(
-		flowFactory, userService, otpService, observabilitySvc, userProvider))
+		flowFactory, otpService, observabilitySvc, userProvider))
 	reg.RegisterExecutor(ExecutorNamePasskeyAuth, newPasskeyAuthExecutor(
 		flowFactory, userService, authRegistry.PasskeyService, observabilitySvc, userProvider))
 
