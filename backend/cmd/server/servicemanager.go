@@ -141,7 +141,7 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 
 	// Initialize flow and executor services.
 	flowFactory, graphCache := flowcore.Initialize()
-	execRegistry := executor.Initialize(flowFactory, userService, ouService,
+	execRegistry := executor.Initialize(flowFactory, ouService,
 		idpService, otpService, jwtService, authSvcRegistry, authZService, userSchemaService, observabilitySvc,
 		groupService, roleService, userProvider, authnProvider)
 

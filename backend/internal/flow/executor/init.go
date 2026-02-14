@@ -31,7 +31,6 @@ import (
 	"github.com/asgardeo/thunder/internal/ou"
 	"github.com/asgardeo/thunder/internal/role"
 	"github.com/asgardeo/thunder/internal/system/jose/jwt"
-	"github.com/asgardeo/thunder/internal/user"
 	"github.com/asgardeo/thunder/internal/userprovider"
 	"github.com/asgardeo/thunder/internal/userschema"
 )
@@ -39,7 +38,6 @@ import (
 // Initialize registers available executors and returns the executor registry.
 func Initialize(
 	flowFactory core.FlowFactoryInterface,
-	userService user.UserServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
 	idpService idp.IDPServiceInterface,
 	otpService notification.OTPServiceInterface,
