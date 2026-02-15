@@ -157,9 +157,10 @@ func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserPr
 	}
 
 	return &User{
-		UserID:   userResult.ID,
-		UserType: userResult.Type,
-		OU:       userResult.OrganizationUnit,
+		UserID:     userResult.ID,
+		UserType:   userResult.Type,
+		OU:         userResult.OrganizationUnit,
+		Attributes: json.RawMessage(userResult.Attributes),
 	}, nil
 }
 
