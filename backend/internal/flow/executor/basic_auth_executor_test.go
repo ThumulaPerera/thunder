@@ -19,6 +19,7 @@
 package executor
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -145,6 +146,7 @@ func createMockBasicAuthExecutor(t *testing.T) core.ExecutorInterface {
 func (suite *BasicAuthExecutorTestSuite) TestNewBasicAuthExecutor() {
 	assert.NotNil(suite.T(), suite.executor)
 	assert.NotNil(suite.T(), suite.executor.credsAuthSvc)
+	assert.NotNil(suite.T(), suite.executor.userProvider)
 }
 
 func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_AuthenticationFlow() {
@@ -159,10 +161,10 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_AuthenticationFlow(
 	}
 
 	authenticateResult := &authnprovider.AuthnResult{
-		UserID: testUserID,
+		UserID:   testUserID,
 		UserType: "person",
-		OU: "ou-123",
-		Token: "test-token",
+		OU:       "ou-123",
+		Token:    "test-token",
 		AvailableAttributes: []authnprovider.AvailableAttribute{
 			{Name: "username", DisplayName: "username", Verified: true},
 		},
@@ -173,6 +175,10 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_AuthenticationFlow(
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
 	}, mock.Anything).Return(authenticateResult, nil)
+
+	// Throw error to simulate userprovider interface not being implemented
+	suite.mockUserProvider.On("GetUser", testUserID).Return(nil,
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -204,20 +210,24 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithEmailAttribute(
 		suite.T(), ExecutorNameBasicAuth, originalInputs)
 
 	authenticatedUser := &authnprovider.AuthnResult{
-		UserID: testUserID,
+		UserID:   testUserID,
 		UserType: "person",
-		OU: "ou-123",
-		Token: "test-token",
+		OU:       "ou-123",
+		Token:    "test-token",
 		AvailableAttributes: []authnprovider.AvailableAttribute{
 			{Name: "email", DisplayName: "email", Verified: true},
 		},
 	}
 
 	suite.mockCredsService.On("Authenticate", map[string]interface{}{
-		"email":    "test@example.com",
+		"email": "test@example.com",
 	}, map[string]interface{}{
 		"password": "password123",
 	}, mock.Anything).Return(authenticatedUser, nil)
+
+	// Throw error to simulate userprovider interface not being implemented
+	suite.mockUserProvider.On("GetUser", testUserID).Return(nil,
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -276,10 +286,10 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttribu
 		suite.T(), ExecutorNameBasicAuth, customInputs)
 
 	authenticatedUser := &authnprovider.AuthnResult{
-		UserID: testUserID,
+		UserID:   testUserID,
 		UserType: "person",
-		OU: "ou-123",
-		Token: "test-token",
+		OU:       "ou-123",
+		Token:    "test-token",
 		AvailableAttributes: []authnprovider.AvailableAttribute{
 			{Name: "email", DisplayName: "email", Verified: true},
 			{Name: "phone", DisplayName: "phone", Verified: true},
@@ -287,11 +297,15 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttribu
 	}
 
 	suite.mockCredsService.On("Authenticate", map[string]interface{}{
-		"email":    "test@example.com",
-		"phone":    "+1234567890",
+		"email": "test@example.com",
+		"phone": "+1234567890",
 	}, map[string]interface{}{
 		"password": "password123",
 	}, mock.Anything).Return(authenticatedUser, nil)
+
+	// Throw error to simulate userprovider interface not being implemented
+	suite.mockUserProvider.On("GetUser", testUserID).Return(nil,
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -472,10 +486,10 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_SuccessfulAuth
 	}
 
 	authenticatedUser := &authnprovider.AuthnResult{
-		UserID: testUserID,
+		UserID:   testUserID,
 		UserType: "person",
-		OU: "ou-123",
-		Token: "test-token",
+		OU:       "ou-123",
+		Token:    "test-token",
 		AvailableAttributes: []authnprovider.AvailableAttribute{
 			{Name: "email", DisplayName: "email", Verified: true},
 			{Name: "phone", DisplayName: "phone", Verified: true},
@@ -488,6 +502,10 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_SuccessfulAuth
 		userAttributePassword: "password123",
 	}, mock.Anything).Return(authenticatedUser, nil)
 
+	// Throw error to simulate userprovider interface not being implemented
+	suite.mockUserProvider.On("GetUser", testUserID).Return(nil,
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
+
 	result, err := suite.executor.getAuthenticatedUser(ctx, execResp)
 
 	assert.NoError(suite.T(), err)
@@ -499,6 +517,60 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_SuccessfulAuth
 	assert.Equal(suite.T(), "email", result.AvailableAttributes[0].Name)
 	assert.Equal(suite.T(), "phone", result.AvailableAttributes[1].Name)
 	suite.mockCredsService.AssertExpectations(suite.T())
+}
+
+func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_Success_WithFetchedAttributes() {
+	ctx := &core.NodeContext{
+		FlowID:   "flow-123",
+		FlowType: common.FlowTypeAuthentication,
+		UserInputs: map[string]string{
+			userAttributeUsername: "testuser",
+			userAttributePassword: "password123",
+		},
+	}
+
+	execResp := &common.ExecutorResponse{
+		RuntimeData: make(map[string]string),
+	}
+
+	authenticateResult := &authnprovider.AuthnResult{
+		UserID:   testUserID,
+		UserType: "person",
+		OU:       "ou-123",
+		Token:    "test-token",
+		AvailableAttributes: []authnprovider.AvailableAttribute{
+			{Name: "username", DisplayName: "username", Verified: true},
+			{Name: "email", DisplayName: "email", Verified: true},
+			{Name: "role", DisplayName: "role", Verified: true},
+		},
+	}
+
+	suite.mockCredsService.On("Authenticate", map[string]interface{}{
+		userAttributeUsername: "testuser",
+	}, map[string]interface{}{
+		userAttributePassword: "password123",
+	}, mock.Anything).Return(authenticateResult, nil)
+
+	// Mock UserProvider response
+	attrs := map[string]interface{}{"username": "testuser", "email": "fetched@example.com", "role": "admin"}
+	attrsJSON, _ := json.Marshal(attrs)
+	user := &userprovider.User{
+		UserID:     testUserID,
+		Attributes: attrsJSON,
+	}
+	suite.mockUserProvider.On("GetUser", testUserID).Return(user, nil)
+
+	result, err := suite.executor.getAuthenticatedUser(ctx, execResp)
+
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), result)
+	assert.True(suite.T(), result.IsAuthenticated)
+	assert.Equal(suite.T(), testUserID, result.UserID)
+	assert.Equal(suite.T(), "testuser", result.Attributes["username"])
+	assert.Equal(suite.T(), "fetched@example.com", result.Attributes["email"])
+	assert.Equal(suite.T(), "admin", result.Attributes["role"])
+	suite.mockCredsService.AssertExpectations(suite.T())
+	suite.mockUserProvider.AssertExpectations(suite.T())
 }
 
 func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_AuthenticationFlow_NoRedundantIdentifyUser() {
@@ -516,10 +588,10 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_Authentication
 	}
 
 	authenticatedUser := &authnprovider.AuthnResult{
-		UserID: testUserID,
+		UserID:   testUserID,
 		UserType: "person",
-		OU: "ou-123",
-		Token: "test-token",
+		OU:       "ou-123",
+		Token:    "test-token",
 		AvailableAttributes: []authnprovider.AvailableAttribute{
 			{Name: "email", DisplayName: "email", Verified: true},
 			{Name: "phone", DisplayName: "phone", Verified: true},
@@ -531,6 +603,10 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_Authentication
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
 	}, mock.Anything).Return(authenticatedUser, nil)
+
+	// Throw error to simulate userprovider interface not being implemented
+	suite.mockUserProvider.On("GetUser", testUserID).Return(nil,
+		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	result, err := suite.executor.getAuthenticatedUser(ctx, execResp)
 

@@ -21,6 +21,7 @@
 package executor
 
 import (
+	"encoding/json"
 	"errors"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
@@ -37,6 +38,7 @@ import (
 type basicAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
+	userProvider     userprovider.UserProviderInterface
 	credsAuthSvc     authncreds.CredentialsAuthnServiceInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
@@ -76,6 +78,7 @@ func newBasicAuthExecutor(
 	return &basicAuthExecutor{
 		ExecutorInterface:            base,
 		identifyingExecutorInterface: identifyExec,
+		userProvider:                 userProvider,
 		credsAuthSvc:                 credsAuthSvc,
 		observabilitySvc:             observabilitySvc,
 		logger:                       logger,
@@ -186,11 +189,24 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		return nil, errors.New("failed to authenticate user")
 	}
 
+	// Try to retrieve the user and get the attributes
+	userAttributes := map[string]interface{}{}
+	// If user provider is not implemented, attributes will be empty.
+	// Subsequent executors which require user attributes will fail.
+	user, err := b.userProvider.GetUser(authnResult.UserID)
+	if err == nil && user != nil {
+		if err := json.Unmarshal(user.Attributes, &userAttributes); err != nil {
+			logger.Error("Failed to unmarshal user attributes", log.Error(err))
+			return nil, errors.New("failed to unmarshal user attributes")
+		}
+	}
+
 	return &authncm.AuthenticatedUser{
 		IsAuthenticated:     true,
 		UserID:              authnResult.UserID,
 		OrganizationUnitID:  authnResult.OU,
 		UserType:            authnResult.UserType,
+		Attributes:          userAttributes,
 		AvailableAttributes: authnResult.AvailableAttributes,
 		Token:               authnResult.Token,
 	}, nil
