@@ -20,11 +20,28 @@ package userprovider
 
 import "encoding/json"
 
-type UserProviderInterface interface {
-	IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError)
-	GetUser(userID string) (*User, *UserProviderError)
-	GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse, *UserProviderError)
-	UpdateUser(userID string, user *User) (*User, *UserProviderError)
-	CreateUser(user *User) (*User, *UserProviderError)
-	UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError
+type User struct {
+	UserID     string          `json:"userID"`
+	UserType   string          `json:"userType"`
+	OU         string          `json:"ou"`
+	Attributes json.RawMessage `json:"attributes,omitempty"`
+}
+
+type Link struct {
+	Href string `json:"href"`
+	Rel  string `json:"rel"`
+}
+
+type UserGroup struct {
+	ID                 string `json:"id"`
+	Name               string `json:"name"`
+	OrganizationUnitID string `json:"organizationUnit"`
+}
+
+type UserGroupListResponse struct {
+	TotalResults int         `json:"totalResults"`
+	StartIndex   int         `json:"startIndex"`
+	Count        int         `json:"count"`
+	Groups       []UserGroup `json:"groups"`
+	Links        []Link      `json:"links"`
 }

@@ -18,40 +18,6 @@
 
 package authnprovider
 
-import "encoding/json"
-
-type AuthnMetadata struct {
-	// TODO: Application should have a extension metadata field
-	// Those values should be fetched from there and passed to the authn provider
-	AppMetadata map[string]interface{} `json:"appMetadata,omitempty"`
-}
-
-type AvailableAttribute struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
-	Verified    bool   `json:"verified"`
-}
-
-type AuthnResult struct {
-	UserID              string               `json:"userID"`
-	UserType            string               `json:"userType"`
-	OU                  string               `json:"ou"`
-	Token               string               `json:"token"`
-	AvailableAttributes []AvailableAttribute `json:"availableAttributes"`
-}
-
-type GetAttributesMetadata struct {
-	AppMetadata map[string]interface{} `json:"appMetadata,omitempty"`
-	Locale      string                 `json:"locale"`
-}
-
-type GetAttributesResult struct {
-	UserID     string          `json:"userID"`
-	UserType   string          `json:"userType"`
-	OU         string          `json:"ou"`
-	Attributes json.RawMessage `json:"attributes,omitempty"`
-}
-
 type AuthnProviderInterface interface {
 	Authenticate(identifiers, credentials map[string]interface{}, metadata *AuthnMetadata) (*AuthnResult, *AuthnProviderError)
 	GetAttributes(token string, reqestedAttributes []string, metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError)
