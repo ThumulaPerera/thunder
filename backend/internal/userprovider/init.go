@@ -18,8 +18,19 @@
 
 package userprovider
 
-import "github.com/asgardeo/thunder/internal/user"
+import (
+	"time"
+
+	"github.com/asgardeo/thunder/internal/user"
+)
 
 func InitializeDefaultUserProvider(userSvc user.UserServiceInterface) UserProviderInterface {
 	return NewDefaultUserProvider(userSvc)
+}
+
+func InitializeRestUserProvider(baseURL string, timeout time.Duration) UserProviderInterface {
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+	return NewRestUserProvider(baseURL, timeout)
 }
