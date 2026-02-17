@@ -139,7 +139,7 @@ func registerServices(mux *http.ServeMux, cfg *config.Config) jwt.JWTServiceInte
 	if cfg.AuthnProvider.Type == "rest" {
 		authnProvider = authnprovider.InitializeRestAuthnProvider(
 			cfg.AuthnProvider.Rest.BaseURL,
-			cfg.AuthnProvider.Rest.ApiKey,
+			cfg.AuthnProvider.Rest.APIKey,
 			time.Duration(cfg.AuthnProvider.Rest.Timeout)*time.Second,
 		)
 	} else {
@@ -151,7 +151,7 @@ func registerServices(mux *http.ServeMux, cfg *config.Config) jwt.JWTServiceInte
 	if cfg.UserProvider.Type == "rest" {
 		userProvider = userprovider.InitializeRestUserProvider(
 			cfg.UserProvider.Rest.BaseURL,
-			cfg.UserProvider.Rest.ApiKey,
+			cfg.UserProvider.Rest.APIKey,
 			time.Duration(cfg.UserProvider.Rest.Timeout)*time.Second,
 		)
 	} else {

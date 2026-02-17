@@ -259,7 +259,7 @@ type AuthnProviderConfig struct {
 type RestConfig struct {
 	BaseURL string `yaml:"base_url" json:"base_url"`
 	Timeout int    `yaml:"timeout" json:"timeout"`
-	ApiKey  string `yaml:"api_key" json:"api_key"`
+	APIKey  string `yaml:"api_key" json:"api_key"`
 }
 
 // Config holds the complete configuration details of the server.
