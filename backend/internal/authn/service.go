@@ -52,8 +52,8 @@ var crossAllowedIDPTypes = []idp.IDPType{idp.IDPTypeOAuth, idp.IDPTypeOIDC}
 
 // AuthenticationServiceInterface defines the interface for the authentication service.
 type AuthenticationServiceInterface interface {
-	AuthenticateWithCredentials(identifiers, credentials map[string]interface{}, skipAssertion bool, existingAssertion string) (
-		*common.AuthenticationResponse, *serviceerror.ServiceError)
+	AuthenticateWithCredentials(identifiers, credentials map[string]interface{},
+		skipAssertion bool, existingAssertion string) (*common.AuthenticationResponse, *serviceerror.ServiceError)
 	SendOTP(senderID string, channel notifcommon.ChannelType, recipient string) (
 		string, *serviceerror.ServiceError)
 	VerifyOTP(sessionToken string, skipAssertion bool, existingAssertion, otp string) (

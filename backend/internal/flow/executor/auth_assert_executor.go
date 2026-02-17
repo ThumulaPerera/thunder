@@ -294,8 +294,9 @@ func (a *authAssertExecutor) appendUserDetailsToClaims(ctx *core.NodeContext,
 		// For users with local accounts, fetch from user store
 		if ctx.AuthenticatedUser.UserID != "" && attrs == nil {
 			var err error
+			metadata := &authnprovider.GetAttributesMetadata{}
 			attrs, err = a.getUserAttributes(ctx.AuthenticatedUser.UserID, ctx.AuthenticatedUser.Token, userAttributes,
-				nil)
+				metadata)
 			if err != nil {
 				return err
 			}

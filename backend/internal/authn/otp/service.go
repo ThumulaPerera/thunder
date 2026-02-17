@@ -219,7 +219,6 @@ func (s *otpAuthnService) handleUserProviderError(upErr *userprovider.UserProvid
 	if upErr.Code == userprovider.ErrorCodeSystemError {
 		logger.Error("Error occurred while retrieving user", log.Any("error", upErr))
 		return &serviceerror.InternalServerError
-
 	}
 	return serviceerror.CustomServiceError(ErrorClientErrorWhileResolvingUser,
 		fmt.Sprintf("An error occurred while retrieving user: %s", upErr.Description))

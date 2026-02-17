@@ -16,6 +16,7 @@
  * under the License.
  */
 
+// Package userprovider provides user management functionality.
 package userprovider
 
 import (
@@ -29,6 +30,7 @@ type defaultUserProvider struct {
 	userSvc user.UserServiceInterface
 }
 
+// NewDefaultUserProvider creates a new default user provider.
 func NewDefaultUserProvider(userSvc user.UserServiceInterface) UserProviderInterface {
 	return &defaultUserProvider{
 		userSvc: userSvc,
@@ -60,7 +62,7 @@ func (p *defaultUserProvider) GetUser(userID string) (*User, *UserProviderError)
 		UserID:     userResult.ID,
 		UserType:   userResult.Type,
 		OU:         userResult.OrganizationUnit,
-		Attributes: json.RawMessage(userResult.Attributes),
+		Attributes: userResult.Attributes,
 	}, nil
 }
 
@@ -105,7 +107,7 @@ func (p *defaultUserProvider) UpdateUser(userID string, userUpdateConfig *User) 
 		ID:               userUpdateConfig.UserID,
 		OrganizationUnit: userUpdateConfig.OU,
 		Type:             userUpdateConfig.UserType,
-		Attributes:       json.RawMessage(userUpdateConfig.Attributes),
+		Attributes:       userUpdateConfig.Attributes,
 	}
 
 	userResult, err := p.userSvc.UpdateUser(context.Background(), userID, updatedUser)
@@ -127,7 +129,7 @@ func (p *defaultUserProvider) UpdateUser(userID string, userUpdateConfig *User) 
 		UserID:     userResult.ID,
 		UserType:   userResult.Type,
 		OU:         userResult.OrganizationUnit,
-		Attributes: json.RawMessage(userResult.Attributes),
+		Attributes: userResult.Attributes,
 	}, nil
 }
 
@@ -135,7 +137,7 @@ func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserPr
 	newUser := &user.User{
 		OrganizationUnit: userCreateConfig.OU,
 		Type:             userCreateConfig.UserType,
-		Attributes:       json.RawMessage(userCreateConfig.Attributes),
+		Attributes:       userCreateConfig.Attributes,
 	}
 
 	userResult, err := p.userSvc.CreateUser(context.Background(), newUser)
@@ -160,7 +162,7 @@ func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserPr
 		UserID:     userResult.ID,
 		UserType:   userResult.Type,
 		OU:         userResult.OrganizationUnit,
-		Attributes: json.RawMessage(userResult.Attributes),
+		Attributes: userResult.Attributes,
 	}, nil
 }
 

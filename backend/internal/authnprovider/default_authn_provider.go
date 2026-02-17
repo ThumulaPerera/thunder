@@ -16,6 +16,7 @@
  * under the License.
  */
 
+// Package authnprovider provides authentication provider implementations.
 package authnprovider
 
 import (
@@ -42,7 +43,6 @@ func (p *defaultAuthnProvider) Authenticate(
 	identifiers, credentials map[string]interface{},
 	metadata *AuthnMetadata,
 ) (*AuthnResult, *AuthnProviderError) {
-
 	request := make(user.AuthenticateUserRequest)
 	for k, v := range identifiers {
 		request[k] = v
@@ -98,7 +98,6 @@ func (p *defaultAuthnProvider) GetAttributes(
 	reqestedAttributes []string,
 	metadata *GetAttributesMetadata,
 ) (*GetAttributesResult, *AuthnProviderError) {
-
 	userID := token
 
 	userResult, authErr := p.userSvc.GetUser(context.Background(), userID)
@@ -131,7 +130,7 @@ func (p *defaultAuthnProvider) GetAttributes(
 			return nil, NewError(ErrorCodeSystemError, "System Error", "Failed to marshal filtered user attributes")
 		}
 	} else {
-		attributes = json.RawMessage(userResult.Attributes)
+		attributes = userResult.Attributes
 	}
 
 	return &GetAttributesResult{

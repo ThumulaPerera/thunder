@@ -137,7 +137,10 @@ func registerServices(mux *http.ServeMux, cfg *config.Config) jwt.JWTServiceInte
 	// Initialize authn provider based on configuration
 	var authnProvider authnprovider.AuthnProviderInterface
 	if cfg.AuthnProvider.Type == "rest" {
-		authnProvider = authnprovider.InitializeRestAuthnProvider(cfg.AuthnProvider.Rest.BaseURL, time.Duration(cfg.AuthnProvider.Rest.Timeout)*time.Second)
+		authnProvider = authnprovider.InitializeRestAuthnProvider(
+			cfg.AuthnProvider.Rest.BaseURL,
+			time.Duration(cfg.AuthnProvider.Rest.Timeout)*time.Second,
+		)
 	} else {
 		authnProvider = authnprovider.InitializeDefaultAuthnProvider(userService)
 	}
@@ -145,13 +148,19 @@ func registerServices(mux *http.ServeMux, cfg *config.Config) jwt.JWTServiceInte
 	// Initialize user provider based on configuration
 	var userProvider userprovider.UserProviderInterface
 	if cfg.UserProvider.Type == "rest" {
-		userProvider = userprovider.InitializeRestUserProvider(cfg.UserProvider.Rest.BaseURL, time.Duration(cfg.UserProvider.Rest.Timeout)*time.Second)
+		userProvider = userprovider.InitializeRestUserProvider(
+			cfg.UserProvider.Rest.BaseURL,
+			time.Duration(cfg.UserProvider.Rest.Timeout)*time.Second,
+		)
 	} else {
 		userProvider = userprovider.InitializeDefaultUserProvider(userService)
 	}
 
 	// Initialize authentication services.
-	_, authSvcRegistry := authn.Initialize(mux, mcpServer, idpService, jwtService, userService, userProvider, otpService, authnProvider)
+	_, authSvcRegistry := authn.Initialize(
+		mux, mcpServer, idpService, jwtService, userService,
+		userProvider, otpService, authnProvider,
+	)
 
 	// Initialize flow and executor services.
 	flowFactory, graphCache := flowcore.Initialize()

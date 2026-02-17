@@ -24,6 +24,7 @@ import (
 )
 
 // Initialize initializes the GitHub OAuth authentication service.
-func Initialize(idpSvc idp.IDPServiceInterface, userProvider userprovider.UserProviderInterface) GithubOAuthAuthnServiceInterface {
+func Initialize(idpSvc idp.IDPServiceInterface,
+	userProvider userprovider.UserProviderInterface) GithubOAuthAuthnServiceInterface {
 	return newGithubOAuthAuthnService(idpSvc, userProvider)
 }

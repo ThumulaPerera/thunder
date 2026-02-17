@@ -26,23 +26,27 @@ import (
 	"time"
 )
 
+// RestAuthnProvider is an authentication provider that communicates with an external service via REST.
 type RestAuthnProvider struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
+// AuthenticateRequest is the request body for the authentication endpoint.
 type AuthenticateRequest struct {
 	Identifiers map[string]interface{} `json:"identifiers"`
 	Credentials map[string]interface{} `json:"credentials"`
 	Metadata    *AuthnMetadata         `json:"metadata"`
 }
 
+// GetAttributesRequest is the request body for the attributes endpoint.
 type GetAttributesRequest struct {
 	Token               string                 `json:"token"`
 	RequestedAttributes []string               `json:"requestedAttributes"`
 	Metadata            *GetAttributesMetadata `json:"metadata"`
 }
 
+// NewRestAuthnProvider creates a new REST authentication provider.
 func NewRestAuthnProvider(baseURL string, timeout time.Duration) *RestAuthnProvider {
 	return &RestAuthnProvider{
 		baseURL: baseURL,
@@ -52,7 +56,9 @@ func NewRestAuthnProvider(baseURL string, timeout time.Duration) *RestAuthnProvi
 	}
 }
 
-func (p *RestAuthnProvider) Authenticate(identifiers, credentials map[string]interface{}, metadata *AuthnMetadata) (*AuthnResult, *AuthnProviderError) {
+// Authenticate authenticates a user.
+func (p *RestAuthnProvider) Authenticate(identifiers, credentials map[string]interface{},
+	metadata *AuthnMetadata) (*AuthnResult, *AuthnProviderError) {
 	reqBody := AuthenticateRequest{
 		Identifiers: identifiers,
 		Credentials: credentials,
@@ -68,7 +74,9 @@ func (p *RestAuthnProvider) Authenticate(identifiers, credentials map[string]int
 	if err != nil {
 		return nil, NewError(ErrorCodeSystemError, "Failed to send request", err.Error())
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var result AuthnResult
@@ -81,7 +89,9 @@ func (p *RestAuthnProvider) Authenticate(identifiers, credentials map[string]int
 	return nil, p.decodeError(resp.Body)
 }
 
-func (p *RestAuthnProvider) GetAttributes(token string, requestedAttributes []string, metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError) {
+// GetAttributes retrieves the attributes of a user.
+func (p *RestAuthnProvider) GetAttributes(token string, requestedAttributes []string,
+	metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError) {
 	reqBody := GetAttributesRequest{
 		Token:               token,
 		RequestedAttributes: requestedAttributes,
@@ -97,7 +107,9 @@ func (p *RestAuthnProvider) GetAttributes(token string, requestedAttributes []st
 	if err != nil {
 		return nil, NewError(ErrorCodeSystemError, "Failed to send request", err.Error())
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var result GetAttributesResult

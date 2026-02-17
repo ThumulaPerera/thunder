@@ -18,7 +18,16 @@
 
 package authnprovider
 
+// AuthnProviderInterface defines the interface for authentication providers.
 type AuthnProviderInterface interface {
-	Authenticate(identifiers, credentials map[string]interface{}, metadata *AuthnMetadata) (*AuthnResult, *AuthnProviderError)
-	GetAttributes(token string, reqestedAttributes []string, metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError)
+	Authenticate(
+		identifiers, credentials map[string]interface{},
+		metadata *AuthnMetadata,
+	) (*AuthnResult, *AuthnProviderError)
+
+	GetAttributes(
+		token string,
+		reqestedAttributes []string,
+		metadata *GetAttributesMetadata,
+	) (*GetAttributesResult, *AuthnProviderError)
 }

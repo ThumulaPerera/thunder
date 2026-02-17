@@ -20,18 +20,21 @@ package authnprovider
 
 import "encoding/json"
 
+// AuthnMetadata contains metadata for authentication.
 type AuthnMetadata struct {
 	// TODO: Application should have a extension metadata field
 	// Those values should be fetched from there and passed to the authn provider
 	AppMetadata map[string]interface{} `json:"appMetadata,omitempty"`
 }
 
+// AvailableAttribute represents an attribute available from the identity provider.
 type AvailableAttribute struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
 	Verified    bool   `json:"verified"`
 }
 
+// AuthnResult represents the result of an authentication attempt.
 type AuthnResult struct {
 	UserID              string               `json:"userID"`
 	UserType            string               `json:"userType"`
@@ -40,11 +43,13 @@ type AuthnResult struct {
 	AvailableAttributes []AvailableAttribute `json:"availableAttributes"`
 }
 
+// GetAttributesMetadata contains metadata for fetching attributes.
 type GetAttributesMetadata struct {
 	AppMetadata map[string]interface{} `json:"appMetadata,omitempty"`
 	Locale      string                 `json:"locale"`
 }
 
+// GetAttributesResult represents the result of fetching attributes.
 type GetAttributesResult struct {
 	UserID     string          `json:"userID"`
 	UserType   string          `json:"userType"`

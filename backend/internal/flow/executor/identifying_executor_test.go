@@ -35,8 +35,8 @@ import (
 type IdentifyingExecutorTestSuite struct {
 	suite.Suite
 	mockUserProvider *userprovidermock.UserProviderInterfaceMock
-	mockFlowFactory *coremock.FlowFactoryInterfaceMock
-	executor        *identifyingExecutor
+	mockFlowFactory  *coremock.FlowFactoryInterfaceMock
+	executor         *identifyingExecutor
 }
 
 func TestIdentifyingExecutorSuite(t *testing.T) {
@@ -60,7 +60,13 @@ func (suite *IdentifyingExecutorTestSuite) TestNewIdentifyingExecutor() {
 	assert.NotNil(suite.T(), suite.executor.userProvider)
 
 	// Test default name
-	exec := newIdentifyingExecutor("", []common.Input{}, []common.Input{}, suite.mockFlowFactory, suite.mockUserProvider)
+	exec := newIdentifyingExecutor(
+		"",
+		[]common.Input{},
+		[]common.Input{},
+		suite.mockFlowFactory,
+		suite.mockUserProvider,
+	)
 	assert.NotNil(suite.T(), exec)
 }
 
@@ -86,7 +92,7 @@ func (suite *IdentifyingExecutorTestSuite) TestIdentifyUser_UserNotFound() {
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, 
+	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil,
 		userprovider.NewUserProviderError(userprovider.ErrorCodeUserNotFound, "", ""))
 
 	result, err := suite.executor.IdentifyUser(filters, execResp)
@@ -104,7 +110,7 @@ func (suite *IdentifyingExecutorTestSuite) TestIdentifyUser_ServiceError() {
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil, 
+	suite.mockUserProvider.On("IdentifyUser", filters).Return(nil,
 		userprovider.NewUserProviderError(userprovider.ErrorCodeSystemError, "", ""))
 
 	result, err := suite.executor.IdentifyUser(filters, execResp)

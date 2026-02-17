@@ -20,6 +20,7 @@ package userprovider
 
 import "encoding/json"
 
+// User represents a user.
 type User struct {
 	UserID     string          `json:"userID"`
 	UserType   string          `json:"userType"`
@@ -27,17 +28,20 @@ type User struct {
 	Attributes json.RawMessage `json:"attributes,omitempty"`
 }
 
+// Link represents a link.
 type Link struct {
 	Href string `json:"href"`
 	Rel  string `json:"rel"`
 }
 
+// UserGroup represents a user group.
 type UserGroup struct {
 	ID                 string `json:"id"`
 	Name               string `json:"name"`
 	OrganizationUnitID string `json:"organizationUnit"`
 }
 
+// UserGroupListResponse represents a response containing a list of user groups.
 type UserGroupListResponse struct {
 	TotalResults int         `json:"totalResults"`
 	StartIndex   int         `json:"startIndex"`

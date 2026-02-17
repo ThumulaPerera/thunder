@@ -32,8 +32,10 @@ const (
 
 // CredentialsAuthnServiceInterface defines the contract for credentials-based authenticator services.
 type CredentialsAuthnServiceInterface interface {
-	Authenticate(identifiers, credentials map[string]interface{}, metadata *authnprovider.AuthnMetadata) (*authnprovider.AuthnResult, *serviceerror.ServiceError)
-	GetAttributes(token string, reqestedAttributes []string, metadata *authnprovider.GetAttributesMetadata) (*authnprovider.GetAttributesResult, *serviceerror.ServiceError)
+	Authenticate(identifiers, credentials map[string]interface{}, metadata *authnprovider.AuthnMetadata) (
+		*authnprovider.AuthnResult, *serviceerror.ServiceError)
+	GetAttributes(token string, reqestedAttributes []string, metadata *authnprovider.GetAttributesMetadata) (
+		*authnprovider.GetAttributesResult, *serviceerror.ServiceError)
 }
 
 // credentialsAuthnService is the default implementation of CredentialsAuthnServiceInterface.
@@ -53,7 +55,8 @@ func newCredentialsAuthnService(authnProvider authnprovider.AuthnProviderInterfa
 	return service
 }
 
-func (c *credentialsAuthnService) Authenticate(identifiers, credentials map[string]interface{}, metadata *authnprovider.AuthnMetadata) (*authnprovider.AuthnResult, *serviceerror.ServiceError) {
+func (c *credentialsAuthnService) Authenticate(identifiers, credentials map[string]interface{},
+	metadata *authnprovider.AuthnMetadata) (*authnprovider.AuthnResult, *serviceerror.ServiceError) {
 	if len(identifiers) == 0 || len(credentials) == 0 {
 		return nil, &ErrorEmptyAttributesOrCredentials
 	}
@@ -74,7 +77,8 @@ func (c *credentialsAuthnService) Authenticate(identifiers, credentials map[stri
 	return authnResult, nil
 }
 
-func (c *credentialsAuthnService) GetAttributes(token string, reqestedAttributes []string, metadata *authnprovider.GetAttributesMetadata) (*authnprovider.GetAttributesResult, *serviceerror.ServiceError) {
+func (c *credentialsAuthnService) GetAttributes(token string, reqestedAttributes []string,
+	metadata *authnprovider.GetAttributesMetadata) (*authnprovider.GetAttributesResult, *serviceerror.ServiceError) {
 	result, err := c.authnProvider.GetAttributes(token, reqestedAttributes, metadata)
 	if err != nil {
 		switch err.Code {

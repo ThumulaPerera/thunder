@@ -20,6 +20,7 @@ package userprovider
 
 import "encoding/json"
 
+// UserProviderInterface defines the interface for user providers.
 type UserProviderInterface interface {
 	IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError)
 	GetUser(userID string) (*User, *UserProviderError)

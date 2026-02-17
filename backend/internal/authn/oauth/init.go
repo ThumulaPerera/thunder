@@ -25,7 +25,8 @@ import (
 )
 
 // Initialize initializes the OAuth authentication service.
-func Initialize(idpSvc idp.IDPServiceInterface, userProvider userprovider.UserProviderInterface) OAuthAuthnServiceInterface {
+func Initialize(idpSvc idp.IDPServiceInterface,
+	userProvider userprovider.UserProviderInterface) OAuthAuthnServiceInterface {
 	httpClient := syshttp.NewHTTPClient()
 	return newOAuthAuthnService(httpClient, idpSvc, userProvider)
 }

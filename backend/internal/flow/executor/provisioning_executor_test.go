@@ -804,9 +804,10 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CreateUserFailures() {
 		expectedFailReason string
 	}{
 		{
-			name:               "ServiceReturnsError",
-			createdUser:        nil,
-			createUserError:    userprovider.NewUserProviderError(userprovider.ErrorCodeSystemError, "Database error", ""),
+			name:        "ServiceReturnsError",
+			createdUser: nil,
+			createUserError: userprovider.NewUserProviderError(
+				userprovider.ErrorCodeSystemError, "Database error", ""),
 			expectedFailReason: "Failed to create user",
 		},
 		{

@@ -33,6 +33,7 @@ import (
 
 const (
 	testUserID = "user123"
+	testToken  = "test_token"
 )
 
 type CredentialsAuthnServiceTestSuite struct {
@@ -125,7 +126,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithNilMetadata()
 		AvailableAttributes: availableAttributes,
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", identifiers, credentials, (*authnprovider.AuthnMetadata)(nil)).Return(providerResponse, nil)
+	suite.mockAuthnProvider.On("Authenticate", identifiers, credentials, (*authnprovider.AuthnMetadata)(nil)).
+		Return(providerResponse, nil)
 
 	result, err := suite.service.Authenticate(identifiers, credentials, nil)
 	suite.Nil(err)
@@ -161,7 +163,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateFailures() {
 			identifiers: map[string]interface{}{"username": "nonexistent"},
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *authnprovidermock.AuthnProviderInterfaceMock) {
-				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(authnprovider.ErrorCodeUserNotFound, "User not found", "user not found description"))
+				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(
+					authnprovider.ErrorCodeUserNotFound, "User not found", "user not found description"))
 			},
 			expectedErrorCode: common.ErrorUserNotFound.Code,
 		},
@@ -170,7 +173,9 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateFailures() {
 			identifiers: map[string]interface{}{"username": "testuser"},
 			credentials: map[string]interface{}{"password": "wrongpass"},
 			setupMock: func(m *authnprovidermock.AuthnProviderInterfaceMock) {
-				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(authnprovider.ErrorCodeAuthenticationFailed, "Invalid credentials", "invalid credentials description"))
+				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(
+					authnprovider.ErrorCodeAuthenticationFailed, "Invalid credentials",
+					"invalid credentials description"))
 			},
 			expectedErrorCode: ErrorInvalidCredentials.Code,
 		},
@@ -207,7 +212,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithServiceErrors
 			identifiers: map[string]interface{}{"username": "testuser"},
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *authnprovidermock.AuthnProviderInterfaceMock) {
-				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(authnprovider.ErrorCodeSystemError, "System error", "Database failure"))
+				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(
+					authnprovider.ErrorCodeSystemError, "System error", "Database failure"))
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},
@@ -216,7 +222,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithServiceErrors
 			identifiers: map[string]interface{}{"username": "testuser"},
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *authnprovidermock.AuthnProviderInterfaceMock) {
-				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError("UNKNOWN_CODE", "Unknown error", "Something went wrong"))
+				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(nil, authnprovider.NewError(
+					"UNKNOWN_CODE", "Unknown error", "Something went wrong"))
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},
@@ -240,7 +247,7 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithServiceErrors
 }
 
 func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesSuccess() {
-	token := "test_token"
+	token := testToken
 	requestedAttributes := []string{"attr1", "attr2"}
 	metadata := &authnprovider.GetAttributesMetadata{
 		AppMetadata: map[string]interface{}{"key": "value"},
@@ -271,7 +278,7 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesSuccess() {
 }
 
 func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesWithNilMetadata() {
-	token := "test_token"
+	token := testToken
 	requestedAttributes := []string{"attr1"}
 
 	expectedResult := &authnprovider.GetAttributesResult{
@@ -281,7 +288,9 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesWithNilMetadata(
 		Attributes: json.RawMessage(`{"attr1":"val1"}`),
 	}
 
-	suite.mockAuthnProvider.On("GetAttributes", token, requestedAttributes, (*authnprovider.GetAttributesMetadata)(nil)).Return(expectedResult, nil)
+	suite.mockAuthnProvider.On("GetAttributes", token, requestedAttributes,
+		(*authnprovider.GetAttributesMetadata)(nil)).
+		Return(expectedResult, nil)
 
 	result, err := suite.service.GetAttributes(token, requestedAttributes, nil)
 
@@ -292,7 +301,7 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesWithNilMetadata(
 }
 
 func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
-	token := "test_token"
+	token := testToken
 	requestedAttributes := []string{"attr1"}
 	metadata := &authnprovider.GetAttributesMetadata{}
 
@@ -305,7 +314,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
 			name: "InvalidToken",
 			setupMock: func() {
 				suite.mockAuthnProvider.On("GetAttributes", token, requestedAttributes, mock.Anything).
-					Return(nil, authnprovider.NewError(authnprovider.ErrorCodeInvalidToken, "Invalid token", "Token is expired or invalid"))
+					Return(nil, authnprovider.NewError(authnprovider.ErrorCodeInvalidToken, "Invalid token",
+						"Token is expired or invalid"))
 			},
 			expectedErrorCode: ErrorInvalidToken.Code,
 		},
@@ -313,7 +323,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
 			name: "SystemError",
 			setupMock: func() {
 				suite.mockAuthnProvider.On("GetAttributes", token, requestedAttributes, mock.Anything).
-					Return(nil, authnprovider.NewError(authnprovider.ErrorCodeSystemError, "System error", "DB connection failed"))
+					Return(nil, authnprovider.NewError(authnprovider.ErrorCodeSystemError, "System error",
+						"DB connection failed"))
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},
@@ -321,7 +332,6 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
 
 	for _, tc := range cases {
 		suite.T().Run(tc.name, func(t *testing.T) {
-
 			suite.mockAuthnProvider = authnprovidermock.NewAuthnProviderInterfaceMock(t)
 			suite.service = newCredentialsAuthnService(suite.mockAuthnProvider)
 

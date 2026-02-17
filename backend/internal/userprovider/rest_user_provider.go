@@ -28,19 +28,23 @@ import (
 	"time"
 )
 
+// RestUserProvider is a user provider that communicates with an external service via REST.
 type RestUserProvider struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
+// IdentifyUserRequest is the request body for the user identification endpoint.
 type IdentifyUserRequest struct {
 	Filters map[string]interface{} `json:"filters"`
 }
 
+// IdentifyUserResponse is the response body for the user identification endpoint.
 type IdentifyUserResponse struct {
 	UserID string `json:"userID"`
 }
 
+// NewRestUserProvider creates a new REST user provider.
 func NewRestUserProvider(baseURL string, timeout time.Duration) *RestUserProvider {
 	return &RestUserProvider{
 		baseURL: baseURL,
@@ -50,6 +54,7 @@ func NewRestUserProvider(baseURL string, timeout time.Duration) *RestUserProvide
 	}
 }
 
+// IdentifyUser identifies a user based on the provided filters.
 func (p *RestUserProvider) IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError) {
 	reqBody := IdentifyUserRequest{
 		Filters: filters,
@@ -64,7 +69,9 @@ func (p *RestUserProvider) IdentifyUser(filters map[string]interface{}) (*string
 	if err != nil {
 		return nil, p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var result IdentifyUserResponse
@@ -77,12 +84,15 @@ func (p *RestUserProvider) IdentifyUser(filters map[string]interface{}) (*string
 	return nil, p.decodeError(resp.Body)
 }
 
+// GetUser retrieves a user by their ID.
 func (p *RestUserProvider) GetUser(userID string) (*User, *UserProviderError) {
 	resp, err := p.httpClient.Get(fmt.Sprintf("%s/users/%s", p.baseURL, userID))
 	if err != nil {
 		return nil, p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var user User
@@ -95,7 +105,9 @@ func (p *RestUserProvider) GetUser(userID string) (*User, *UserProviderError) {
 	return nil, p.decodeError(resp.Body)
 }
 
-func (p *RestUserProvider) GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse, *UserProviderError) {
+// GetUserGroups retrieves the groups of a user.
+func (p *RestUserProvider) GetUserGroups(userID string,
+	limit, offset int) (*UserGroupListResponse, *UserProviderError) {
 	u, err := url.Parse(fmt.Sprintf("%s/users/%s/groups", p.baseURL, userID))
 	if err != nil {
 		return nil, p.createSystemError("Invalid URL", err)
@@ -110,7 +122,9 @@ func (p *RestUserProvider) GetUserGroups(userID string, limit, offset int) (*Use
 	if err != nil {
 		return nil, p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var result UserGroupListResponse
@@ -123,13 +137,18 @@ func (p *RestUserProvider) GetUserGroups(userID string, limit, offset int) (*Use
 	return nil, p.decodeError(resp.Body)
 }
 
+// UpdateUser updates a user.
 func (p *RestUserProvider) UpdateUser(userID string, user *User) (*User, *UserProviderError) {
 	jsonBody, err := json.Marshal(user)
 	if err != nil {
 		return nil, p.createSystemError("Failed to marshal request", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/users/%s", p.baseURL, userID), bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(
+		http.MethodPut,
+		fmt.Sprintf("%s/users/%s", p.baseURL, userID),
+		bytes.NewBuffer(jsonBody),
+	)
 	if err != nil {
 		return nil, p.createSystemError("Failed to create request", err)
 	}
@@ -139,7 +158,9 @@ func (p *RestUserProvider) UpdateUser(userID string, user *User) (*User, *UserPr
 	if err != nil {
 		return nil, p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		var updatedUser User
@@ -152,6 +173,7 @@ func (p *RestUserProvider) UpdateUser(userID string, user *User) (*User, *UserPr
 	return nil, p.decodeError(resp.Body)
 }
 
+// CreateUser creates a new user.
 func (p *RestUserProvider) CreateUser(user *User) (*User, *UserProviderError) {
 	jsonBody, err := json.Marshal(user)
 	if err != nil {
@@ -162,7 +184,9 @@ func (p *RestUserProvider) CreateUser(user *User) (*User, *UserProviderError) {
 	if err != nil {
 		return nil, p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
 		var createdUser User
@@ -175,8 +199,13 @@ func (p *RestUserProvider) CreateUser(user *User) (*User, *UserProviderError) {
 	return nil, p.decodeError(resp.Body)
 }
 
+// UpdateUserCredentials updates the credentials of a user.
 func (p *RestUserProvider) UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError {
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/users/%s/credentials", p.baseURL, userID), bytes.NewBuffer(credentials))
+	req, err := http.NewRequest(
+		http.MethodPut,
+		fmt.Sprintf("%s/users/%s/credentials", p.baseURL, userID),
+		bytes.NewBuffer(credentials),
+	)
 	if err != nil {
 		return p.createSystemError("Failed to create request", err)
 	}
@@ -186,7 +215,9 @@ func (p *RestUserProvider) UpdateUserCredentials(userID string, credentials json
 	if err != nil {
 		return p.createSystemError("Failed to send request", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusOK {
 		return nil

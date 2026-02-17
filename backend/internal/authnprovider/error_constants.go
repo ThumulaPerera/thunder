@@ -18,8 +18,10 @@
 
 package authnprovider
 
+// ErrorCode represents an error code.
 type ErrorCode string
 
+// AuthnProviderError represents an error returned by the authentication provider.
 type AuthnProviderError struct {
 	Code        ErrorCode `json:"code"`
 	Message     string    `json:"message"`
@@ -30,6 +32,7 @@ func (e *AuthnProviderError) Error() string {
 	return e.Message + ": " + e.Description
 }
 
+// Error codes.
 const (
 	ErrorCodeSystemError          ErrorCode = "AUP-0001"
 	ErrorCodeAuthenticationFailed ErrorCode = "AUP-0002"
@@ -37,6 +40,7 @@ const (
 	ErrorCodeInvalidToken         ErrorCode = "AUP-0004"
 )
 
+// NewError creates a new authentication provider error.
 func NewError(code ErrorCode, message string, description string) *AuthnProviderError {
 	return &AuthnProviderError{
 		Code:        code,

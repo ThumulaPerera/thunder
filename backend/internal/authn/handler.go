@@ -62,7 +62,8 @@ func (ah *authenticationHandler) HandleCredentialsAuthRequest(w http.ResponseWri
 		assertion = *authRequest.Assertion
 	}
 
-	authResponse, svcErr := ah.authService.AuthenticateWithCredentials(authRequest.Identifiers, authRequest.Credentials, skipAssertion, assertion)
+	authResponse, svcErr := ah.authService.AuthenticateWithCredentials(
+		authRequest.Identifiers, authRequest.Credentials, skipAssertion, assertion)
 	if svcErr != nil {
 		ah.handleServiceError(w, svcErr)
 		return
