@@ -1,0 +1,287 @@
+openapi: 3.0.0
+info:
+  title: User Provider API
+  description: API for the User Provider interface
+  version: 1.0.0
+
+security:
+  - ApiKeyAuth: []
+paths:
+  /identify:
+    post:
+      summary: Identify a user based on filters
+      operationId: identifyUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: User identified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userID:
+                    type: string
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+
+  /users:
+    post:
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+
+  /users/{userID}:
+    get:
+      summary: Get user details
+      operationId: getUser
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+    put:
+      summary: Update user details
+      operationId: updateUser
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+
+  /users/{userID}/groups:
+    get:
+      summary: Get user groups
+      operationId: getUserGroups
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User groups retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupListResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+
+  /users/{userID}/credentials:
+    put:
+      summary: Update user credentials
+      operationId: updateUserCredentials
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: User credentials updated successfully
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProviderError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+  schemas:
+    User:
+      type: object
+      properties:
+        userID:
+          type: string
+        userType:
+          type: string
+        ou:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+
+    UserGroupListResponse:
+      type: object
+      properties:
+        totalResults:
+          type: integer
+        startIndex:
+          type: integer
+        count:
+          type: integer
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroup'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+
+    UserGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        organizationUnit:
+          type: string
+
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        rel:
+          type: string
+
+    UserProviderError:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        description:
+          type: string
+
+    ErrorCode:
+      type: string
+      enum:
+        - UP-0001
+        - UP-0002
+        - UP-0003
+        - UP-0004
+        - UP-0005
+        - UP-0006
+        - UP-0007

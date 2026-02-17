@@ -19,7 +19,6 @@
 package executor
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +31,6 @@ import (
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/observability"
 	"github.com/asgardeo/thunder/internal/system/log"
-	"github.com/asgardeo/thunder/internal/user"
 	"github.com/asgardeo/thunder/internal/userprovider"
 )
 
@@ -55,7 +53,7 @@ var mobileNumberInput = common.Input{
 type smsOTPAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
-	userService      user.UserServiceInterface
+	userProvider     userprovider.UserProviderInterface
 	otpService       notification.OTPServiceInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
@@ -67,7 +65,6 @@ var _ identifyingExecutorInterface = (*smsOTPAuthExecutor)(nil)
 // newSMSOTPAuthExecutor creates a new instance of SMSOTPAuthExecutor.
 func newSMSOTPAuthExecutor(
 	flowFactory core.FlowFactoryInterface,
-	userService user.UserServiceInterface,
 	otpService notification.OTPServiceInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
 	userProvider userprovider.UserProviderInterface,
@@ -95,7 +92,7 @@ func newSMSOTPAuthExecutor(
 	return &smsOTPAuthExecutor{
 		ExecutorInterface:            base,
 		identifyingExecutorInterface: identifyExec,
-		userService:                  userService,
+		userProvider:                 userProvider,
 		otpService:                   otpService,
 		observabilitySvc:             observabilitySvc,
 		logger:                       logger,
@@ -421,9 +418,9 @@ func (s *smsOTPAuthExecutor) resolveUserIDFromAttribute(ctx *core.NodeContext,
 	}
 	if attributeValue != "" {
 		filters := map[string]interface{}{attributeName: attributeValue}
-		userID, svcErr := s.userService.IdentifyUser(context.TODO(), filters)
-		if svcErr != nil {
-			return false, fmt.Errorf("failed to identify user by %s: %s", attributeName, svcErr.Error)
+		userID, providerErr := s.userProvider.IdentifyUser(filters)
+		if providerErr != nil {
+			return false, fmt.Errorf("failed to identify user by %s: %s", attributeName, providerErr.Error())
 		}
 		if userID != nil && *userID != "" {
 			logger.Debug("User ID resolved from attribute", log.String("attributeName", attributeName),
@@ -454,9 +451,9 @@ func (s *smsOTPAuthExecutor) getUserMobileNumber(userID string, ctx *core.NodeCo
 
 	// Mobile number not in context, fetch from user store
 	logger.Debug("Mobile number not in context, fetching from user store")
-	user, svcErr := s.userService.GetUser(context.TODO(), userID)
-	if svcErr != nil {
-		return "", fmt.Errorf("failed to retrieve user details: %s", svcErr.Error)
+	user, providerErr := s.userProvider.GetUser(userID)
+	if providerErr != nil {
+		return "", fmt.Errorf("failed to retrieve user details: %s", providerErr.Error())
 	}
 
 	// Extract mobile number from user attributes
@@ -648,9 +645,9 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 
 	// User not available in context, fetch from user store
 	logger.Debug("Fetching user details from user store", log.String("userID", userID))
-	user, svcErr := s.userService.GetUser(context.TODO(), userID)
-	if svcErr != nil {
-		return nil, fmt.Errorf("failed to get user details: %s", svcErr.Error)
+	user, providerErr := s.userProvider.GetUser(userID)
+	if providerErr != nil {
+		return nil, fmt.Errorf("failed to get user details: %s", providerErr.Error())
 	}
 
 	// Extract user attributes
@@ -669,9 +666,9 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 
 	authenticatedUser := &authncm.AuthenticatedUser{
 		IsAuthenticated:    true,
-		UserID:             user.ID,
-		OrganizationUnitID: user.OrganizationUnit,
-		UserType:           user.Type,
+		UserID:             user.UserID,
+		OrganizationUnitID: user.OU,
+		UserType:           user.UserType,
 		Attributes:         attrs,
 	}
 

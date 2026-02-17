@@ -134,6 +134,7 @@ type PasskeyFinishRequestDTO struct {
 	Assertion           string                        `json:"assertion,omitempty"`
 }
 
+// AuthenticateWithCredentialsRequestDTO represents the request body for authenticating with credentials.
 type AuthenticateWithCredentialsRequestDTO struct {
 	Identifiers   map[string]interface{} `json:"identifiers"`
 	Credentials   map[string]interface{} `json:"credentials"`

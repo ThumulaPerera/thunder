@@ -20,14 +20,12 @@ package userprovider
 
 import "encoding/json"
 
-type User struct {
-	UserID     string          `json:"userID"`
-	UserType   string          `json:"userType"`
-	OU         string          `json:"ou"`
-	Attributes json.RawMessage `json:"attributes,omitempty"`
-}
-
+// UserProviderInterface defines the interface for user providers.
 type UserProviderInterface interface {
 	IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError)
 	GetUser(userID string) (*User, *UserProviderError)
+	GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse, *UserProviderError)
+	UpdateUser(userID string, user *User) (*User, *UserProviderError)
+	CreateUser(user *User) (*User, *UserProviderError)
+	UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError
 }

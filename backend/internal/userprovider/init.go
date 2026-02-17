@@ -18,8 +18,21 @@
 
 package userprovider
 
-import "github.com/asgardeo/thunder/internal/user"
+import (
+	"time"
 
+	"github.com/asgardeo/thunder/internal/user"
+)
+
+// InitializeDefaultUserProvider initializes the default user provider.
 func InitializeDefaultUserProvider(userSvc user.UserServiceInterface) UserProviderInterface {
 	return NewDefaultUserProvider(userSvc)
+}
+
+// InitializeRestUserProvider initializes the REST user provider.
+func InitializeRestUserProvider(baseURL, apiKey string, timeout time.Duration) UserProviderInterface {
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+	return NewRestUserProvider(baseURL, apiKey, timeout)
 }

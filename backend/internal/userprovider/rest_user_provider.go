@@ -1,0 +1,241 @@
+/*
+ * Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package userprovider
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"time"
+)
+
+// RestUserProvider is a user provider that communicates with an external service via REST.
+type RestUserProvider struct {
+	baseURL    string
+	apiKey     string
+	httpClient *http.Client
+}
+
+// IdentifyUserRequest is the request body for the user identification endpoint.
+type IdentifyUserRequest struct {
+	Filters map[string]interface{} `json:"filters"`
+}
+
+// IdentifyUserResponse is the response body for the user identification endpoint.
+type IdentifyUserResponse struct {
+	UserID string `json:"userID"`
+}
+
+// NewRestUserProvider creates a new REST user provider.
+func NewRestUserProvider(baseURL, apiKey string, timeout time.Duration) *RestUserProvider {
+	return &RestUserProvider{
+		baseURL: baseURL,
+		apiKey:  apiKey,
+		httpClient: &http.Client{
+			Timeout: timeout,
+		},
+	}
+}
+
+// IdentifyUser identifies a user based on the provided filters.
+func (p *RestUserProvider) IdentifyUser(filters map[string]interface{}) (*string, *UserProviderError) {
+	reqBody := IdentifyUserRequest{
+		Filters: filters,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, p.createSystemError("Failed to marshal request", err)
+	}
+
+	resp, err := p.doRequest(http.MethodPost, p.baseURL+"/identify", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		var result IdentifyUserResponse
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, p.createSystemError("Failed to decode response", err)
+		}
+		return &result.UserID, nil
+	}
+
+	return nil, p.decodeError(resp.Body)
+}
+
+// GetUser retrieves a user by their ID.
+func (p *RestUserProvider) GetUser(userID string) (*User, *UserProviderError) {
+	resp, err := p.doRequest(http.MethodGet, fmt.Sprintf("%s/users/%s", p.baseURL, userID), nil)
+	if err != nil {
+		return nil, p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		var user User
+		if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+			return nil, p.createSystemError("Failed to decode response", err)
+		}
+		return &user, nil
+	}
+
+	return nil, p.decodeError(resp.Body)
+}
+
+// GetUserGroups retrieves the groups of a user.
+func (p *RestUserProvider) GetUserGroups(userID string,
+	limit, offset int) (*UserGroupListResponse, *UserProviderError) {
+	u, err := url.Parse(fmt.Sprintf("%s/users/%s/groups", p.baseURL, userID))
+	if err != nil {
+		return nil, p.createSystemError("Invalid URL", err)
+	}
+
+	q := u.Query()
+	q.Set("limit", fmt.Sprintf("%d", limit))
+	q.Set("offset", fmt.Sprintf("%d", offset))
+	u.RawQuery = q.Encode()
+
+	resp, err := p.doRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		var result UserGroupListResponse
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, p.createSystemError("Failed to decode response", err)
+		}
+		return &result, nil
+	}
+
+	return nil, p.decodeError(resp.Body)
+}
+
+// UpdateUser updates a user.
+func (p *RestUserProvider) UpdateUser(userID string, user *User) (*User, *UserProviderError) {
+	jsonBody, err := json.Marshal(user)
+	if err != nil {
+		return nil, p.createSystemError("Failed to marshal request", err)
+	}
+
+	resp, err := p.doRequest(
+		http.MethodPut,
+		fmt.Sprintf("%s/users/%s", p.baseURL, userID),
+		bytes.NewBuffer(jsonBody),
+	)
+	if err != nil {
+		return nil, p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		var updatedUser User
+		if err := json.NewDecoder(resp.Body).Decode(&updatedUser); err != nil {
+			return nil, p.createSystemError("Failed to decode response", err)
+		}
+		return &updatedUser, nil
+	}
+
+	return nil, p.decodeError(resp.Body)
+}
+
+// CreateUser creates a new user.
+func (p *RestUserProvider) CreateUser(user *User) (*User, *UserProviderError) {
+	jsonBody, err := json.Marshal(user)
+	if err != nil {
+		return nil, p.createSystemError("Failed to marshal request", err)
+	}
+
+	resp, err := p.doRequest(http.MethodPost, p.baseURL+"/users", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+		var createdUser User
+		if err := json.NewDecoder(resp.Body).Decode(&createdUser); err != nil {
+			return nil, p.createSystemError("Failed to decode response", err)
+		}
+		return &createdUser, nil
+	}
+
+	return nil, p.decodeError(resp.Body)
+}
+
+// UpdateUserCredentials updates the credentials of a user.
+func (p *RestUserProvider) UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError {
+	resp, err := p.doRequest(
+		http.MethodPut,
+		fmt.Sprintf("%s/users/%s/credentials", p.baseURL, userID),
+		bytes.NewBuffer(credentials),
+	)
+	if err != nil {
+		return p.createSystemError("Failed to send request", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	return p.decodeError(resp.Body)
+}
+
+func (p *RestUserProvider) createSystemError(msg string, err error) *UserProviderError {
+	return NewUserProviderError(ErrorCodeSystemError, msg, err.Error())
+}
+
+func (p *RestUserProvider) decodeError(body io.Reader) *UserProviderError {
+	var userProviderError UserProviderError
+	if err := json.NewDecoder(body).Decode(&userProviderError); err != nil {
+		return p.createSystemError("Failed to decode error response", err)
+	}
+	return &userProviderError
+}
+
+func (p *RestUserProvider) doRequest(method, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if p.apiKey != "" {
+		req.Header.Set("X-API-KEY", p.apiKey)
+	}
+	return p.httpClient.Do(req)
+}

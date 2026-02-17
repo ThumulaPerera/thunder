@@ -21,6 +21,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/asgardeo/thunder/internal/application"
 	"github.com/asgardeo/thunder/internal/authn"
@@ -42,6 +43,7 @@ import (
 	"github.com/asgardeo/thunder/internal/ou"
 	"github.com/asgardeo/thunder/internal/resource"
 	"github.com/asgardeo/thunder/internal/role"
+	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/crypto/hash"
 	"github.com/asgardeo/thunder/internal/system/crypto/pki"
 	declarativeresource "github.com/asgardeo/thunder/internal/system/declarative_resource"
@@ -61,7 +63,7 @@ import (
 var observabilitySvc observability.ObservabilityServiceInterface
 
 // registerServices registers all the services with the provided HTTP multiplexer.
-func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
+func registerServices(mux *http.ServeMux, cfg *config.Config) jwt.JWTServiceInterface {
 	logger := log.GetLogger()
 
 	// Load the server's private key for signing JWTs.
@@ -132,18 +134,41 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 	// Initialize MCP server
 	mcpServer := mcp.Initialize(mux, jwtService)
 
-	authnProvider := authnprovider.InitializeDefaultAuthnProvider(userService)
+	// Initialize authn provider based on configuration
+	var authnProvider authnprovider.AuthnProviderInterface
+	if cfg.AuthnProvider.Type == "rest" {
+		authnProvider = authnprovider.InitializeRestAuthnProvider(
+			cfg.AuthnProvider.Rest.BaseURL,
+			cfg.AuthnProvider.Rest.ApiKey,
+			time.Duration(cfg.AuthnProvider.Rest.Timeout)*time.Second,
+		)
+	} else {
+		authnProvider = authnprovider.InitializeDefaultAuthnProvider(userService)
+	}
 
-	userProvider := userprovider.InitializeDefaultUserProvider(userService)
+	// Initialize user provider based on configuration
+	var userProvider userprovider.UserProviderInterface
+	if cfg.UserProvider.Type == "rest" {
+		userProvider = userprovider.InitializeRestUserProvider(
+			cfg.UserProvider.Rest.BaseURL,
+			cfg.UserProvider.Rest.ApiKey,
+			time.Duration(cfg.UserProvider.Rest.Timeout)*time.Second,
+		)
+	} else {
+		userProvider = userprovider.InitializeDefaultUserProvider(userService)
+	}
 
 	// Initialize authentication services.
-	_, authSvcRegistry := authn.Initialize(mux, mcpServer, idpService, jwtService, userService, otpService, authnProvider)
+	_, authSvcRegistry := authn.Initialize(
+		mux, mcpServer, idpService, jwtService, userService,
+		userProvider, otpService, authnProvider,
+	)
 
 	// Initialize flow and executor services.
 	flowFactory, graphCache := flowcore.Initialize()
-	execRegistry := executor.Initialize(flowFactory, userService, ouService,
+	execRegistry := executor.Initialize(flowFactory, ouService,
 		idpService, otpService, jwtService, authSvcRegistry, authZService, userSchemaService, observabilitySvc,
-		groupService, roleService, userProvider)
+		groupService, roleService, userProvider, authnProvider)
 
 	flowMgtService, flowMgtExporter, err := flowmgt.Initialize(mux, mcpServer, flowFactory, execRegistry, graphCache)
 	if err != nil {

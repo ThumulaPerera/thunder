@@ -73,7 +73,7 @@ func main() {
 	}
 
 	// Register the services.
-	jwtService := registerServices(mux)
+	jwtService := registerServices(mux, cfg)
 
 	// Register static file handlers for frontend applications.
 	registerStaticFileHandlers(logger, mux, thunderHome)

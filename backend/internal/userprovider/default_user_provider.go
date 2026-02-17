@@ -16,6 +16,7 @@
  * under the License.
  */
 
+// Package userprovider provides user management functionality.
 package userprovider
 
 import (
@@ -29,6 +30,7 @@ type defaultUserProvider struct {
 	userSvc user.UserServiceInterface
 }
 
+// NewDefaultUserProvider creates a new default user provider.
 func NewDefaultUserProvider(userSvc user.UserServiceInterface) UserProviderInterface {
 	return &defaultUserProvider{
 		userSvc: userSvc,
@@ -60,6 +62,126 @@ func (p *defaultUserProvider) GetUser(userID string) (*User, *UserProviderError)
 		UserID:     userResult.ID,
 		UserType:   userResult.Type,
 		OU:         userResult.OrganizationUnit,
-		Attributes: json.RawMessage(userResult.Attributes),
+		Attributes: userResult.Attributes,
 	}, nil
+}
+
+func (p *defaultUserProvider) GetUserGroups(userID string, limit, offset int) (*UserGroupListResponse,
+	*UserProviderError) {
+	userGroupListResponse, err := p.userSvc.GetUserGroups(context.Background(), userID, limit, offset)
+	if err != nil {
+		if err.Code == user.ErrorUserNotFound.Code || err.Code == user.ErrorMissingUserID.Code {
+			return nil, NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		}
+		return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+	}
+
+	groups := make([]UserGroup, len(userGroupListResponse.Groups))
+	for i, g := range userGroupListResponse.Groups {
+		groups[i] = UserGroup{
+			ID:                 g.ID,
+			Name:               g.Name,
+			OrganizationUnitID: g.OrganizationUnitID,
+		}
+	}
+
+	links := make([]Link, len(userGroupListResponse.Links))
+	for i, l := range userGroupListResponse.Links {
+		links[i] = Link{
+			Href: l.Href,
+			Rel:  l.Rel,
+		}
+	}
+
+	return &UserGroupListResponse{
+		TotalResults: userGroupListResponse.TotalResults,
+		StartIndex:   userGroupListResponse.StartIndex,
+		Count:        userGroupListResponse.Count,
+		Groups:       groups,
+		Links:        links,
+	}, nil
+}
+
+func (p *defaultUserProvider) UpdateUser(userID string, userUpdateConfig *User) (*User, *UserProviderError) {
+	updatedUser := &user.User{
+		ID:               userUpdateConfig.UserID,
+		OrganizationUnit: userUpdateConfig.OU,
+		Type:             userUpdateConfig.UserType,
+		Attributes:       userUpdateConfig.Attributes,
+	}
+
+	userResult, err := p.userSvc.UpdateUser(context.Background(), userID, updatedUser)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorUserNotFound.Code, user.ErrorMissingUserID.Code:
+			return nil, NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		case user.ErrorInvalidRequestFormat.Code:
+			return nil, NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitMismatch.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		case user.ErrorAttributeConflict.Code, user.ErrorEmailConflict.Code:
+			return nil, NewUserProviderError(ErrorCodeAttributeConflict, err.Error, err.ErrorDescription)
+		default:
+			return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+	return &User{
+		UserID:     userResult.ID,
+		UserType:   userResult.Type,
+		OU:         userResult.OrganizationUnit,
+		Attributes: userResult.Attributes,
+	}, nil
+}
+
+func (p *defaultUserProvider) CreateUser(userCreateConfig *User) (*User, *UserProviderError) {
+	newUser := &user.User{
+		OrganizationUnit: userCreateConfig.OU,
+		Type:             userCreateConfig.UserType,
+		Attributes:       userCreateConfig.Attributes,
+	}
+
+	userResult, err := p.userSvc.CreateUser(context.Background(), newUser)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorInvalidRequestFormat.Code:
+			return nil, NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitMismatch.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		case user.ErrorAttributeConflict.Code, user.ErrorEmailConflict.Code:
+			return nil, NewUserProviderError(ErrorCodeAttributeConflict, err.Error, err.ErrorDescription)
+		case user.ErrorMissingRequiredFields.Code:
+			return nil, NewUserProviderError(ErrorCodeMissingRequiredFields, err.Error, err.ErrorDescription)
+		case user.ErrorOrganizationUnitNotFound.Code:
+			return nil, NewUserProviderError(ErrorCodeOrganizationUnitMismatch, err.Error, err.ErrorDescription)
+		default:
+			return nil, NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+
+	return &User{
+		UserID:     userResult.ID,
+		UserType:   userResult.Type,
+		OU:         userResult.OrganizationUnit,
+		Attributes: userResult.Attributes,
+	}, nil
+}
+
+func (p *defaultUserProvider) UpdateUserCredentials(userID string, credentials json.RawMessage) *UserProviderError {
+	err := p.userSvc.UpdateUserCredentials(context.Background(), userID, credentials)
+	if err != nil {
+		switch err.Code {
+		case user.ErrorInvalidRequestFormat.Code:
+			return NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		case user.ErrorMissingCredentials.Code:
+			return NewUserProviderError(ErrorCodeMissingCredentials, err.Error, err.ErrorDescription)
+		case user.ErrorUserNotFound.Code, user.ErrorMissingUserID.Code:
+			return NewUserProviderError(ErrorCodeUserNotFound, err.Error, err.ErrorDescription)
+		case user.ErrorAuthenticationFailed.Code:
+			// Map auth failed (e.g. empty user ID) to invalid request or not found depending on semantics
+			return NewUserProviderError(ErrorCodeInvalidRequestFormat, err.Error, err.ErrorDescription)
+		default:
+			return NewUserProviderError(ErrorCodeSystemError, err.Error, err.ErrorDescription)
+		}
+	}
+	return nil
 }

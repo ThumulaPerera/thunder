@@ -18,8 +18,21 @@
 
 package authnprovider
 
-import "github.com/asgardeo/thunder/internal/user"
+import (
+	"time"
 
+	"github.com/asgardeo/thunder/internal/user"
+)
+
+// InitializeDefaultAuthnProvider initializes the default authentication provider.
 func InitializeDefaultAuthnProvider(userSvc user.UserServiceInterface) AuthnProviderInterface {
 	return NewDefaultAuthnProvider(userSvc)
+}
+
+// InitializeRestAuthnProvider initializes the REST authentication provider.
+func InitializeRestAuthnProvider(baseURL, apiKey string, timeout time.Duration) AuthnProviderInterface {
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+	return NewRestAuthnProvider(baseURL, apiKey, timeout)
 }
