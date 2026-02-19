@@ -18,28 +18,31 @@
 
 package application
 
+import "reflect"
+
 // Application represents the structure for application request and response in tests.
 type Application struct {
-	ID                        string              `json:"id,omitempty"`
-	Name                      string              `json:"name"`
-	Description               string              `json:"description,omitempty"`
-	ClientID                  string              `json:"client_id,omitempty"`
-	ClientSecret              string              `json:"client_secret,omitempty"`
-	AuthFlowID                string              `json:"auth_flow_id,omitempty"`
-	RegistrationFlowID        string              `json:"registration_flow_id,omitempty"`
-	IsRegistrationFlowEnabled bool                `json:"is_registration_flow_enabled"`
-	ThemeID                   string              `json:"theme_id,omitempty"`
-	LayoutID                  string              `json:"layout_id,omitempty"`
-	Template                  string              `json:"template,omitempty"`
-	URL                       string              `json:"url,omitempty"`
-	LogoURL                   string              `json:"logo_url,omitempty"`
-	Certificate               *ApplicationCert    `json:"certificate,omitempty"`
-	Assertion                 *AssertionConfig    `json:"assertion,omitempty"`
-	TosURI                    string              `json:"tos_uri,omitempty"`
-	PolicyURI                 string              `json:"policy_uri,omitempty"`
-	Contacts                  []string            `json:"contacts,omitempty"`
-	AllowedUserTypes          []string            `json:"allowed_user_types,omitempty"`
-	InboundAuthConfig         []InboundAuthConfig `json:"inbound_auth_config,omitempty"`
+	ID                        string                 `json:"id,omitempty"`
+	Name                      string                 `json:"name"`
+	Description               string                 `json:"description,omitempty"`
+	ClientID                  string                 `json:"client_id,omitempty"`
+	ClientSecret              string                 `json:"client_secret,omitempty"`
+	AuthFlowID                string                 `json:"auth_flow_id,omitempty"`
+	RegistrationFlowID        string                 `json:"registration_flow_id,omitempty"`
+	IsRegistrationFlowEnabled bool                   `json:"is_registration_flow_enabled"`
+	ThemeID                   string                 `json:"theme_id,omitempty"`
+	LayoutID                  string                 `json:"layout_id,omitempty"`
+	Template                  string                 `json:"template,omitempty"`
+	URL                       string                 `json:"url,omitempty"`
+	LogoURL                   string                 `json:"logo_url,omitempty"`
+	Certificate               *ApplicationCert       `json:"certificate,omitempty"`
+	Assertion                 *AssertionConfig       `json:"assertion,omitempty"`
+	TosURI                    string                 `json:"tos_uri,omitempty"`
+	PolicyURI                 string                 `json:"policy_uri,omitempty"`
+	Contacts                  []string               `json:"contacts,omitempty"`
+	AllowedUserTypes          []string               `json:"allowed_user_types,omitempty"`
+	InboundAuthConfig         []InboundAuthConfig    `json:"inbound_auth_config,omitempty"`
+	Metadata                  map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // ApplicationCert represents the certificate structure in the application.
@@ -159,6 +162,12 @@ func (app *Application) equals(expectedApp Application) bool {
 	// Metadata fields
 	if app.TosURI != expectedApp.TosURI ||
 		app.PolicyURI != expectedApp.PolicyURI {
+		return false
+	}
+
+	// Metadata map — treat nil and empty as equivalent (JSON round-trip can produce either)
+	if !(len(app.Metadata) == 0 && len(expectedApp.Metadata) == 0) &&
+		!reflect.DeepEqual(app.Metadata, expectedApp.Metadata) {
 		return false
 	}
 

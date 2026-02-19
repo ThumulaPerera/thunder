@@ -1913,3 +1913,118 @@ func (suite *ApplicationStoreTestSuite) TestGetApplicationByQuery_BuildApplicati
 	suite.Error(buildErr)
 	suite.Contains(buildErr.Error(), "failed to unmarshal app JSON")
 }
+
+func (suite *ApplicationStoreTestSuite) TestGetAppJSONDataBytes_WithMetadata() {
+	app := suite.createTestApplication()
+	app.Metadata = map[string]interface{}{
+		"env":  "production",
+		"team": "core",
+	}
+
+	jsonBytes, err := getAppJSONDataBytes(&app)
+
+	suite.NoError(err)
+	suite.NotNil(jsonBytes)
+
+	var result map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &result)
+	suite.NoError(err)
+
+	metadata, ok := result["metadata"].(map[string]interface{})
+	suite.True(ok)
+	suite.Equal("production", metadata["env"])
+	suite.Equal("core", metadata["team"])
+}
+
+func (suite *ApplicationStoreTestSuite) TestGetAppJSONDataBytes_NilMetadata() {
+	app := suite.createTestApplication()
+	app.Metadata = nil
+
+	jsonBytes, err := getAppJSONDataBytes(&app)
+
+	suite.NoError(err)
+	var result map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &result)
+	suite.NoError(err)
+	suite.Nil(result["metadata"])
+}
+
+func (suite *ApplicationStoreTestSuite) TestBuildApplicationFromResultRow_WithMetadata() {
+	appJSON := map[string]interface{}{
+		"url": "https://example.com",
+		"metadata": map[string]interface{}{
+			"version": "v1.0",
+			"owner":   "admin",
+		},
+	}
+	appJSONBytes, _ := json.Marshal(appJSON)
+
+	row := map[string]interface{}{
+		"app_id":                       "app1",
+		"app_name":                     "Test App 1",
+		"description":                  "Test description",
+		"auth_flow_id":                 "auth_flow_1",
+		"registration_flow_id":         "reg_flow_1",
+		"is_registration_flow_enabled": "1",
+		"app_json":                     string(appJSONBytes),
+	}
+
+	result, err := buildApplicationFromResultRow(row)
+
+	suite.NoError(err)
+	suite.Equal("app1", result.ID)
+	suite.NotNil(result.Metadata)
+	suite.Equal("v1.0", result.Metadata["version"])
+	suite.Equal("admin", result.Metadata["owner"])
+}
+
+func (suite *ApplicationStoreTestSuite) TestBuildApplicationFromResultRow_WithInvalidMetadataType() {
+	// If the stored metadata JSON value is not an object (e.g. a plain string),
+	// the type assertion should silently return nil rather than panicking.
+	appJSON := map[string]interface{}{
+		"url":      "https://example.com",
+		"metadata": "not-a-map", // invalid: string instead of object
+	}
+	appJSONBytes, _ := json.Marshal(appJSON)
+
+	row := map[string]interface{}{
+		"app_id":                       "app1",
+		"app_name":                     "Test App 1",
+		"description":                  "Test description",
+		"auth_flow_id":                 "auth_flow_1",
+		"registration_flow_id":         "reg_flow_1",
+		"is_registration_flow_enabled": "1",
+		"app_json":                     string(appJSONBytes),
+	}
+
+	result, err := buildApplicationFromResultRow(row)
+
+	suite.NoError(err)
+	suite.Nil(result.Metadata) // graceful: invalid type → nil
+}
+
+func (suite *ApplicationStoreTestSuite) TestMetadataRoundTrip() {
+	app := suite.createTestApplication()
+	app.Metadata = map[string]interface{}{
+		"key": "value",
+	}
+
+	// Write
+	jsonBytes, err := getAppJSONDataBytes(&app)
+	suite.NoError(err)
+
+	// Read
+	row := map[string]interface{}{
+		"app_id":                       app.ID,
+		"app_name":                     app.Name,
+		"description":                  app.Description,
+		"auth_flow_id":                 app.AuthFlowID,
+		"registration_flow_id":         app.RegistrationFlowID,
+		"is_registration_flow_enabled": "1",
+		"app_json":                     string(jsonBytes), // Use the JSON we just generated
+	}
+
+	result, err := buildApplicationFromResultRow(row)
+	suite.NoError(err)
+	suite.Equal("value", result.Metadata["key"])
+}

@@ -2335,3 +2335,99 @@ func (suite *HandlerTestSuite) TestHandleApplicationGetRequest_EmptyResponseType
 
 	mockService.AssertExpectations(suite.T())
 }
+
+func (suite *HandlerTestSuite) TestHandleApplicationPostRequest_WithMetadata() {
+	mockService := NewApplicationServiceInterfaceMock(suite.T())
+	handler := newApplicationHandler(mockService)
+
+	appRequest := model.ApplicationRequest{
+		Name: "TestApp",
+		Metadata: map[string]interface{}{
+			"env": "prod",
+		},
+	}
+
+	expectedApp := &model.ApplicationDTO{
+		ID:       "test-app-id",
+		Name:     "TestApp",
+		Metadata: map[string]interface{}{"env": "prod"},
+	}
+
+	mockService.On("CreateApplication", mock.MatchedBy(func(app *model.ApplicationDTO) bool {
+		return app.Metadata["env"] == "prod"
+	})).Return(expectedApp, nil)
+
+	body, _ := json.Marshal(appRequest)
+	req := httptest.NewRequest(http.MethodPost, "/applications", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	handler.HandleApplicationPostRequest(w, req)
+
+	assert.Equal(suite.T(), http.StatusCreated, w.Code)
+
+	var response model.ApplicationCompleteResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "prod", response.Metadata["env"])
+}
+
+func (suite *HandlerTestSuite) TestHandleApplicationGetRequest_WithMetadata() {
+	mockService := NewApplicationServiceInterfaceMock(suite.T())
+	handler := newApplicationHandler(mockService)
+
+	expectedApp := &model.Application{
+		ID:   "test-app-id",
+		Name: "TestApp",
+		Metadata: map[string]interface{}{
+			"team": "core",
+		},
+	}
+
+	mockService.On("GetApplication", "test-app-id").Return(expectedApp, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/applications/test-app-id", nil)
+	req.SetPathValue("id", "test-app-id")
+	w := httptest.NewRecorder()
+
+	handler.HandleApplicationGetRequest(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var response model.ApplicationGetResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "core", response.Metadata["team"])
+}
+
+func (suite *HandlerTestSuite) TestHandleApplicationPutRequest_WithMetadata() {
+	mockService := NewApplicationServiceInterfaceMock(suite.T())
+	handler := newApplicationHandler(mockService)
+
+	appRequest := model.ApplicationRequest{
+		Name: "UpdatedApp",
+		Metadata: map[string]interface{}{
+			"version": "v2",
+		},
+	}
+
+	expectedApp := &model.ApplicationDTO{
+		ID:       "test-app-id",
+		Name:     "UpdatedApp",
+		Metadata: map[string]interface{}{"version": "v2"},
+	}
+
+	mockService.On("UpdateApplication", "test-app-id", mock.MatchedBy(func(app *model.ApplicationDTO) bool {
+		return app.Metadata["version"] == "v2"
+	})).Return(expectedApp, nil)
+
+	body, _ := json.Marshal(appRequest)
+	req := httptest.NewRequest(http.MethodPut, "/applications/test-app-id", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", "test-app-id")
+	w := httptest.NewRecorder()
+
+	handler.HandleApplicationPutRequest(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+}

@@ -670,6 +670,13 @@ components:
             type: string
           description: Array of allowed user types for this application.
           example: ["employee", "customer", "partner"]
+        metadata:
+          type: object
+          description: Optional key-value pairs for storing custom metadata about the application.
+          additionalProperties: true
+          example:
+            department: "engineering"
+            cost_center: "12345"
 
     ApplicationCompleteResponse:
       type: object
@@ -758,6 +765,13 @@ components:
             type: string
           description: Array of allowed user types for this application.
           example: ["employee", "customer", "partner"]
+        metadata:
+          type: object
+          description: Optional key-value pairs for storing custom metadata about the application.
+          additionalProperties: true
+          example:
+            department: "engineering"
+            cost_center: "12345"
 
     ApplicationGetResponse:
       type: object
@@ -846,6 +860,13 @@ components:
             type: string
           description: Array of allowed user types for this application.
           example: ["employee", "customer", "partner"]
+        metadata:
+          type: object
+          description: Optional key-value pairs for storing custom metadata about the application.
+          additionalProperties: true
+          example:
+            department: "engineering"
+            cost_center: "12345"
 
     BasicApplicationResponse:
       type: object

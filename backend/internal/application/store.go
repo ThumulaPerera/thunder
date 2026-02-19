@@ -435,6 +435,11 @@ func getAppJSONDataBytes(app *model.ApplicationProcessedDTO) ([]byte, error) {
 		jsonData["allowed_user_types"] = app.AllowedUserTypes
 	}
 
+	// Include metadata if present
+	if app.Metadata != nil {
+		jsonData["metadata"] = app.Metadata
+	}
+
 	// Include assertion config if present
 	if app.Assertion != nil {
 		assertionData := map[string]interface{}{}
@@ -772,6 +777,9 @@ func buildApplicationFromResultRow(row map[string]interface{}) (model.Applicatio
 		return model.ApplicationProcessedDTO{}, err
 	}
 
+	// Extract metadata from app JSON if present
+	metadata, _ := appJSONData["metadata"].(map[string]interface{})
+
 	application := model.ApplicationProcessedDTO{
 		ID:                        basicApp.ID,
 		Name:                      basicApp.Name,
@@ -789,6 +797,7 @@ func buildApplicationFromResultRow(row map[string]interface{}) (model.Applicatio
 		PolicyURI:                 policyURI,
 		Contacts:                  contacts,
 		AllowedUserTypes:          allowedUserTypes,
+		Metadata:                  metadata,
 	}
 
 	if basicApp.ClientID != "" {

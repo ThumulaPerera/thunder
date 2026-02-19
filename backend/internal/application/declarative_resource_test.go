@@ -180,3 +180,25 @@ func (s *ApplicationExporterTestSuite) TestValidateResource_EmptyName() {
 func (s *ApplicationExporterTestSuite) TestApplicationExporterImplementsInterface() {
 	var _ declarativeresource.ResourceExporter = (*application.ApplicationExporter)(nil)
 }
+
+func (s *ApplicationExporterTestSuite) TestGetResourceByID_WithMetadata_Success() {
+	expectedApp := &model.Application{
+		ID:   "app1",
+		Name: "Test App",
+		Metadata: map[string]interface{}{
+			"env": "prod",
+		},
+	}
+
+	s.mockService.EXPECT().GetApplication("app1").Return(expectedApp, nil)
+
+	resource, name, err := s.exporter.GetResourceByID("app1")
+
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), "Test App", name)
+
+	app, ok := resource.(*model.Application)
+	assert.True(s.T(), ok)
+	assert.NotNil(s.T(), app.Metadata)
+	assert.Equal(s.T(), "prod", app.Metadata["env"])
+}

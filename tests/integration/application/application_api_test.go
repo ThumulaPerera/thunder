@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 	"time"
 
@@ -496,6 +497,94 @@ func (ts *ApplicationAPITestSuite) TestApplicationUpdate() {
 	}
 
 	retrieveAndValidateApplicationDetails(ts, appToUpdateWithID)
+}
+
+// Test application metadata lifecycle
+func (ts *ApplicationAPITestSuite) TestApplicationMetadata() {
+	// Set default flow IDs
+	appWithMetadata := appToCreate
+	appWithMetadata.Name = "App With Metadata"
+	appWithMetadata.AuthFlowID = defaultAuthFlowID
+	appWithMetadata.RegistrationFlowID = defaultRegistrationFlowID
+	appWithMetadata.Metadata = map[string]interface{}{
+		"env":     "test",
+		"team":    "blue",
+		"retries": float64(3),
+		"active":  true,
+		"tags":    []interface{}{"tag1", "tag2"},
+	}
+
+	// Create
+	appID, err := createApplication(appWithMetadata)
+	if err != nil {
+		ts.T().Fatalf("Failed to create application with metadata: %v", err)
+	}
+	defer func() {
+		if err := deleteApplication(appID); err != nil {
+			ts.T().Logf("Failed to delete application with metadata: %v", err)
+		}
+	}()
+
+	// Verify Create/Get
+	expectedApp := appWithMetadata
+	expectedApp.ID = appID
+	if len(expectedApp.InboundAuthConfig) > 0 && expectedApp.InboundAuthConfig[0].OAuthAppConfig != nil {
+		expectedApp.ClientID = expectedApp.InboundAuthConfig[0].OAuthAppConfig.ClientID
+	}
+
+	retrieveAndValidateApplicationDetails(ts, expectedApp)
+
+	// Update Metadata
+	appWithUpdatedMetadata := expectedApp
+	appWithUpdatedMetadata.Metadata = map[string]interface{}{
+		"env":     "prod",
+		"team":    "red",
+		"version": "v2",
+		"config": map[string]interface{}{
+			"timeout": float64(500),
+			"debug":   true,
+		},
+	}
+
+	// Marshal and send update
+	appJSON, err := json.Marshal(appWithUpdatedMetadata)
+	if err != nil {
+		ts.T().Fatalf("Failed to marshal update request: %v", err)
+	}
+
+	reqBody := bytes.NewReader(appJSON)
+	req, err := http.NewRequest("PUT", testServerURL+"/applications/"+appID, reqBody)
+	if err != nil {
+		ts.T().Fatalf("Failed to create update request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := testutils.GetHTTPClient()
+	resp, err := client.Do(req)
+	if err != nil {
+		ts.T().Fatalf("Failed to send update request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		responseBody, _ := io.ReadAll(resp.Body)
+		ts.T().Fatalf("Expected status 200, got %d. Response: %s", resp.StatusCode, string(responseBody))
+	}
+
+	// Verify Update response
+	var updatedApp Application
+	if err = json.NewDecoder(resp.Body).Decode(&updatedApp); err != nil {
+		ts.T().Fatalf("Failed to decode update response: %v", err)
+	}
+
+	// Verify Metadata in Update Response — treat nil and empty as equivalent
+	if !(len(updatedApp.Metadata) == 0 && len(appWithUpdatedMetadata.Metadata) == 0) &&
+		!reflect.DeepEqual(updatedApp.Metadata, appWithUpdatedMetadata.Metadata) {
+		ts.T().Fatalf("Metadata mismatch in update response. Expected %v, got %v", appWithUpdatedMetadata.Metadata, updatedApp.Metadata)
+	}
+
+	// Verify Get after Update
+	retrieveAndValidateApplicationDetails(ts, appWithUpdatedMetadata)
 }
 
 func retrieveAndValidateApplicationDetails(ts *ApplicationAPITestSuite, expectedApp Application) {
