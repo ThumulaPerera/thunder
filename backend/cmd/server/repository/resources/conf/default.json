@@ -128,5 +128,13 @@
         "key_file": "repository/resources/security/signing.key"
       }
     ]
+  },
+  "authn_provider": {
+    "type": "default",
+    "rest": {
+      "base_url": "",
+      "timeout": 10,
+      "api_key": ""
+    }
   }
 }
