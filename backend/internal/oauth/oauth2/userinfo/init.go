@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/asgardeo/thunder/internal/application"
+	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/tokenservice"
 	"github.com/asgardeo/thunder/internal/ou"
@@ -38,8 +39,10 @@ func Initialize(
 	applicationService application.ApplicationServiceInterface,
 	userService user.UserServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
+	attributeCacheSvc attributecache.AttributeCacheServiceInterface,
 ) userInfoServiceInterface {
-	userInfoService := newUserInfoService(jwtService, tokenValidator, applicationService, userService, ouService)
+	userInfoService := newUserInfoService(jwtService, tokenValidator, applicationService, userService, ouService,
+		attributeCacheSvc)
 	userInfoHandler := newUserInfoHandler(userInfoService)
 	registerRoutes(mux, userInfoHandler)
 	return userInfoService

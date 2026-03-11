@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/asgardeo/thunder/tests/mocks/applicationmock"
+	"github.com/asgardeo/thunder/tests/mocks/attributecachemock"
 	"github.com/asgardeo/thunder/tests/mocks/jose/jwtmock"
 	"github.com/asgardeo/thunder/tests/mocks/oauth/oauth2/tokenservicemock"
 	"github.com/asgardeo/thunder/tests/mocks/oumock"
@@ -35,11 +36,12 @@ import (
 
 type InitTestSuite struct {
 	suite.Suite
-	mockJWTService     *jwtmock.JWTServiceInterfaceMock
-	mockTokenValidator *tokenservicemock.TokenValidatorInterfaceMock
-	mockAppService     *applicationmock.ApplicationServiceInterfaceMock
-	mockUserService    *usersvcmock.UserServiceInterfaceMock
-	mockOUService      *oumock.OrganizationUnitServiceInterfaceMock
+	mockJWTService            *jwtmock.JWTServiceInterfaceMock
+	mockTokenValidator        *tokenservicemock.TokenValidatorInterfaceMock
+	mockAppService            *applicationmock.ApplicationServiceInterfaceMock
+	mockUserService           *usersvcmock.UserServiceInterfaceMock
+	mockOUService             *oumock.OrganizationUnitServiceInterfaceMock
+	mockAttributeCacheService *attributecachemock.AttributeCacheServiceInterfaceMock
 }
 
 func TestInitTestSuite(t *testing.T) {
@@ -52,6 +54,7 @@ func (suite *InitTestSuite) SetupTest() {
 	suite.mockAppService = applicationmock.NewApplicationServiceInterfaceMock(suite.T())
 	suite.mockUserService = usersvcmock.NewUserServiceInterfaceMock(suite.T())
 	suite.mockOUService = oumock.NewOrganizationUnitServiceInterfaceMock(suite.T())
+	suite.mockAttributeCacheService = attributecachemock.NewAttributeCacheServiceInterfaceMock(suite.T())
 }
 
 func (suite *InitTestSuite) TestInitialize() {
@@ -59,7 +62,7 @@ func (suite *InitTestSuite) TestInitialize() {
 
 	service := Initialize(mux, suite.mockJWTService,
 		suite.mockTokenValidator, suite.mockAppService,
-		suite.mockUserService, suite.mockOUService)
+		suite.mockUserService, suite.mockOUService, suite.mockAttributeCacheService)
 
 	assert.NotNil(suite.T(), service)
 }
@@ -69,7 +72,7 @@ func (suite *InitTestSuite) TestInitialize_RegistersRoutes() {
 
 	_ = Initialize(mux, suite.mockJWTService,
 		suite.mockTokenValidator, suite.mockAppService,
-		suite.mockUserService, suite.mockOUService)
+		suite.mockUserService, suite.mockOUService, suite.mockAttributeCacheService)
 
 	// Verify that the routes are registered by attempting to get a handler for them.
 	// The pattern includes the method because of CORS middleware wrapping.

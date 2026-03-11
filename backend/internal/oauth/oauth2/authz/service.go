@@ -225,9 +225,10 @@ func (as *authorizeService) HandleInitialAuthorizationRequest(msg *OAuthMessage)
 
 	// Initiate flow with OAuth context.
 	runtimeData := map[string]string{
-		flowcm.RuntimeKeyRequestedPermissions: utils.StringifyStringArray(nonOidcScopes, " "),
-		flowcm.RuntimeKeyRequiredAttributes:   requiredAttributes,
-		flowcm.RuntimeKeyRequiredLocales:      claimsLocales,
+		flowcm.RuntimeKeyRequestedPermissions:          utils.StringifyStringArray(nonOidcScopes, " "),
+		flowcm.RuntimeKeyRequiredAttributes:            requiredAttributes,
+		flowcm.RuntimeKeyRequiredLocales:               claimsLocales,
+		flowcm.RuntimeKeyUserAttributesCacheTTLSeconds: "86400", // TODO: calculate based on token expiry
 	}
 	flowInitCtx := &flowexec.FlowInitContext{
 		ApplicationID: app.AppID,

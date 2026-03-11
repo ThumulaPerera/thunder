@@ -35,12 +35,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	appmodel "github.com/asgardeo/thunder/internal/application/model"
+	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/tokenservice"
 	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/user"
 	"github.com/asgardeo/thunder/tests/mocks/applicationmock"
+	"github.com/asgardeo/thunder/tests/mocks/attributecachemock"
 	"github.com/asgardeo/thunder/tests/mocks/jose/jwtmock"
 	"github.com/asgardeo/thunder/tests/mocks/oauth/oauth2/tokenservicemock"
 	"github.com/asgardeo/thunder/tests/mocks/oumock"
@@ -49,13 +51,14 @@ import (
 
 type UserInfoServiceTestSuite struct {
 	suite.Suite
-	mockJWTService     *jwtmock.JWTServiceInterfaceMock
-	mockTokenValidator *tokenservicemock.TokenValidatorInterfaceMock
-	mockAppService     *applicationmock.ApplicationServiceInterfaceMock
-	mockUserService    *usermock.UserServiceInterfaceMock
-	mockOUService      *oumock.OrganizationUnitServiceInterfaceMock
-	userInfoService    userInfoServiceInterface
-	privateKey         *rsa.PrivateKey
+	mockJWTService            *jwtmock.JWTServiceInterfaceMock
+	mockTokenValidator        *tokenservicemock.TokenValidatorInterfaceMock
+	mockAppService            *applicationmock.ApplicationServiceInterfaceMock
+	mockUserService           *usermock.UserServiceInterfaceMock
+	mockOUService             *oumock.OrganizationUnitServiceInterfaceMock
+	mockAttributeCacheService *attributecachemock.AttributeCacheServiceInterfaceMock
+	userInfoService           userInfoServiceInterface
+	privateKey                *rsa.PrivateKey
 }
 
 func TestUserInfoServiceTestSuite(t *testing.T) {
@@ -68,9 +71,11 @@ func (s *UserInfoServiceTestSuite) SetupTest() {
 	s.mockAppService = applicationmock.NewApplicationServiceInterfaceMock(s.T())
 	s.mockUserService = usermock.NewUserServiceInterfaceMock(s.T())
 	s.mockOUService = oumock.NewOrganizationUnitServiceInterfaceMock(s.T())
+	s.mockAttributeCacheService = attributecachemock.NewAttributeCacheServiceInterfaceMock(s.T())
 	s.userInfoService = newUserInfoService(
 		s.mockJWTService, s.mockTokenValidator,
-		s.mockAppService, s.mockUserService, s.mockOUService)
+		s.mockAppService, s.mockUserService, s.mockOUService,
+		s.mockAttributeCacheService)
 
 	// Initialize Thunder runtime for tests
 	config.ResetThunderRuntime()
@@ -193,36 +198,36 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_NoScopesEmptyScopeString() {
 // TestGetUserInfo_ErrorFetchingUserAttributes tests error when fetching user attributes fails
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_ErrorFetchingUserAttributes() {
 	claims := map[string]interface{}{
-		"exp":   float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":   float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":   "user123",
-		"scope": "openid profile",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"attribute_cache_id": "cache-err-123",
 	}
 	token := s.createToken(claims)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(nil, &serviceerror.ServiceError{
-		Code:  "USER_NOT_FOUND",
-		Error: "User not found",
-	})
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-err-123").Return(
+		nil, &serviceerror.InternalServerErrorWithI18n)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
 	assert.NotNil(s.T(), svcErr)
 	assert.Equal(s.T(), serviceerror.InternalServerError.Code, svcErr.Code)
 	assert.Nil(s.T(), response)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_ErrorFetchingGroups tests error when fetching groups fails
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_ErrorFetchingGroups() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-groups-123",
 	}
 	token := s.createToken(claims)
 
@@ -230,14 +235,11 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_ErrorFetchingGroups() {
 		"name":  "John Doe",
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-groups-123").Return(
+		&attributecache.AttributeCache{ID: "cache-groups-123", Attributes: userAttrs}, nil)
 	// This test verifies error handling when groups are needed but fetching fails
 	// So we need an OAuth app with groups in UserAttributes
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
@@ -257,17 +259,19 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_ErrorFetchingGroups() {
 	assert.Equal(s.T(), serviceerror.InternalServerError.Code, svcErr.Code)
 	assert.Nil(s.T(), response)
 	s.mockTokenValidator.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockUserService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_StandardScopes tests successful response with standard OIDC scopes
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_StandardScopes() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile email",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile email",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-std-123",
 	}
 	token := s.createToken(claims)
 
@@ -275,7 +279,6 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_StandardScopes() {
 		"name":  "John Doe",
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -290,10 +293,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_StandardScopes() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-std-123").Return(
+		&attributecache.AttributeCache{ID: "cache-std-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -304,25 +305,25 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_StandardScopes() {
 	assert.Equal(s.T(), "John Doe", response.JSONBody["name"])
 	assert.Equal(s.T(), "john@example.com", response.JSONBody["email"])
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_WithGroups tests successful response with groups
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithGroups() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-grp-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -340,10 +341,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithGroups() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-grp-123").Return(
+		&attributecache.AttributeCache{ID: "cache-grp-123", Attributes: userAttrs}, nil)
 	s.mockUserService.On("GetUserGroups", mock.Anything, "user123",
 		constants.DefaultGroupListLimit, 0).Return(&user.UserGroupListResponse{
 		Groups: []user.UserGroup{
@@ -381,6 +380,7 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithGroups() {
 	assert.Contains(s.T(), groups, "users")
 	assert.Equal(s.T(), []string{"admin", "users"}, groups)
 	s.mockTokenValidator.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockUserService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
@@ -388,11 +388,12 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithGroups() {
 // TestGetUserInfo_Success_WithScopeClaimsMapping tests successful response with app-specific scope-to-claims mapping
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithScopeClaimsMapping() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid custom_scope",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid custom_scope",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-scope-123",
 	}
 	token := s.createToken(claims)
 
@@ -401,7 +402,6 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithScopeClaimsMappin
 		"email": "john@example.com",
 		"phone": "1234567890",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -419,10 +419,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithScopeClaimsMappin
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-scope-123").Return(
+		&attributecache.AttributeCache{ID: "cache-scope-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -434,17 +432,18 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_WithScopeClaimsMappin
 	assert.Equal(s.T(), "1234567890", response.JSONBody["phone"])
 	assert.NotContains(s.T(), response.JSONBody, "email") // email not in custom_scope mapping
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_NoAppConfig tests successful response without app config
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_NoAppConfig() {
 	claims := map[string]interface{}{
-		"exp":   float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":   float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":   "user123",
-		"scope": "openid profile",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"attribute_cache_id": "cache-noapp-123",
 		// No client_id
 	}
 	token := s.createToken(claims)
@@ -453,14 +452,11 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_NoAppConfig() {
 		"name":  "John Doe",
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-noapp-123").Return(
+		&attributecache.AttributeCache{ID: "cache-noapp-123", Attributes: userAttrs}, nil)
 
 	// When no app config, BuildClaims returns empty (no allowedUserAttributes)
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -471,31 +467,29 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_NoAppConfig() {
 	// No other claims because allowedUserAttributes is empty
 	assert.Len(s.T(), response.JSONBody, 1)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_AppNotFound tests successful response when app is not found
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_AppNotFound() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-anf-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-anf-123").Return(
+		&attributecache.AttributeCache{ID: "cache-anf-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(nil, &serviceerror.ServiceError{
 		Code:  "APP_NOT_FOUND",
 		Error: "App not found",
@@ -510,25 +504,25 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_AppNotFound() {
 	// No other claims because allowedUserAttributes is empty
 	assert.Len(s.T(), response.JSONBody, 1)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_GroupsNotInAllowedAttributes tests that groups are not included if not in allowed attributes
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_GroupsNotInAllowedAttributes() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-gnaa-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -543,10 +537,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_GroupsNotInAllowedAtt
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-gnaa-123").Return(
+		&attributecache.AttributeCache{ID: "cache-gnaa-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -557,18 +549,19 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_GroupsNotInAllowedAtt
 	assert.Equal(s.T(), "John Doe", response.JSONBody["name"])
 	assert.NotContains(s.T(), response.JSONBody, constants.UserAttributeGroups) // groups not included
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_Success_EmptyUserAttributes tests successful response with empty user attributes
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_EmptyUserAttributes() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-empty-123",
 	}
 	token := s.createToken(claims)
 
@@ -585,10 +578,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_EmptyUserAttributes()
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: nil, // No attributes
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-empty-123").Return(
+		&attributecache.AttributeCache{ID: "cache-empty-123", Attributes: nil}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -599,7 +590,7 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_Success_EmptyUserAttributes()
 	// No other claims because user has no attributes
 	assert.Len(s.T(), response.JSONBody, 1)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
@@ -646,25 +637,23 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_ScopeExistsButNotString() {
 // testGetUserInfoInvalidClientID is a helper function for testing invalid client_id scenarios
 func (s *UserInfoServiceTestSuite) testGetUserInfoInvalidClientID(clientIDValue interface{}, description string) {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": clientIDValue,
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          clientIDValue,
+		"attribute_cache_id": "cache-inv-cid-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-inv-cid-123").Return(
+		&attributecache.AttributeCache{ID: "cache-inv-cid-123", Attributes: userAttrs}, nil)
 
 	// When client_id is invalid, app lookup is skipped
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -675,7 +664,7 @@ func (s *UserInfoServiceTestSuite) testGetUserInfoInvalidClientID(clientIDValue 
 	// No other claims because allowedUserAttributes is empty
 	assert.Len(s.T(), response.JSONBody, 1, description)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_ClientIDNotString tests when client_id exists but is not a string
@@ -691,10 +680,11 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_ClientIDEmptyString() {
 // TestGetUserInfo_GroupsWithNilOAuthApp tests groups when oauthApp is nil
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilOAuthApp() {
 	claims := map[string]interface{}{
-		"exp":   float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":   float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":   "user123",
-		"scope": "openid profile",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"attribute_cache_id": "cache-nil-app-123",
 		// No client_id
 	}
 	token := s.createToken(claims)
@@ -702,14 +692,11 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilOAuthApp() {
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-nil-app-123").Return(
+		&attributecache.AttributeCache{ID: "cache-nil-app-123", Attributes: userAttrs}, nil)
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
 	assert.Nil(s.T(), svcErr)
 	assert.NotNil(s.T(), response)
@@ -718,24 +705,24 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilOAuthApp() {
 	// Groups not included because oauthApp is nil
 	assert.NotContains(s.T(), response.JSONBody, constants.UserAttributeGroups)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_GroupsWithNilToken tests groups when Token is nil
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilToken() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-nil-tok-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: nil, // Token is nil
@@ -743,10 +730,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilToken() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-nil-tok-123").Return(
+		&attributecache.AttributeCache{ID: "cache-nil-tok-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	// When Token is nil, groups are not added
@@ -758,25 +743,25 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilToken() {
 	// Groups not included because Token is nil
 	assert.NotContains(s.T(), response.JSONBody, constants.UserAttributeGroups)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_GroupsWithNilIDToken tests groups when IDToken is nil
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilIDToken() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-nil-idt-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -786,10 +771,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilIDToken() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-nil-idt-123").Return(
+		&attributecache.AttributeCache{ID: "cache-nil-idt-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	// When IDToken is nil, groups are not added
@@ -801,25 +784,25 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithNilIDToken() {
 	// Groups not included because IDToken is nil
 	assert.NotContains(s.T(), response.JSONBody, constants.UserAttributeGroups)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_GroupsWithEmptyGroups tests when groups list is empty
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithEmptyGroups() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-eg-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -837,10 +820,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithEmptyGroups() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-eg-123").Return(
+		&attributecache.AttributeCache{ID: "cache-eg-123", Attributes: userAttrs}, nil)
 	s.mockUserService.On("GetUserGroups", mock.Anything, "user123",
 		constants.DefaultGroupListLimit, 0).Return(&user.UserGroupListResponse{
 		Groups: []user.UserGroup{}, // Empty groups
@@ -857,6 +838,7 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_GroupsWithEmptyGroups() {
 	// Groups not included because len(userGroups) == 0
 	assert.NotContains(s.T(), response.JSONBody, constants.UserAttributeGroups)
 	s.mockTokenValidator.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockUserService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
@@ -889,11 +871,12 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_ClientCredentialsGrant_Reject
 // testGetUserInfoAllowedGrantType is a helper function for testing allowed grant types
 func (s *UserInfoServiceTestSuite) testGetUserInfoAllowedGrantType(grantTypeValue interface{}, description string) {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid profile",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid profile",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-agt-123",
 	}
 	if grantTypeValue != nil {
 		claims["grant_type"] = grantTypeValue
@@ -903,7 +886,6 @@ func (s *UserInfoServiceTestSuite) testGetUserInfoAllowedGrantType(grantTypeValu
 	userAttrs := map[string]interface{}{
 		"name": "John Doe",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{
@@ -918,10 +900,8 @@ func (s *UserInfoServiceTestSuite) testGetUserInfoAllowedGrantType(grantTypeValu
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-agt-123").Return(
+		&attributecache.AttributeCache{ID: "cache-agt-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -931,7 +911,7 @@ func (s *UserInfoServiceTestSuite) testGetUserInfoAllowedGrantType(grantTypeValu
 	assert.Equal(s.T(), "user123", response.JSONBody["sub"], description)
 	assert.Equal(s.T(), "John Doe", response.JSONBody["name"], description)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
@@ -1008,22 +988,18 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_CaseSensitive() {
 // TestGetUserInfo_OnlyOpenIDScope_Success tests that only openid scope returns sub claim
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_OnlyOpenIDScope_Success() {
 	claims := map[string]interface{}{
-		"exp":   float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":   float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":   "user123",
-		"scope": "openid", // Only openid scope
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid", // Only openid scope
+		"attribute_cache_id": "cache-oid-only-123",
 	}
 	token := s.createToken(claims)
 
-	userAttrs := map[string]interface{}{}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
-
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-oid-only-123").Return(
+		&attributecache.AttributeCache{ID: "cache-oid-only-123", Attributes: map[string]interface{}{}}, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
 	assert.Nil(s.T(), svcErr)
@@ -1033,17 +1009,18 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OnlyOpenIDScope_Success() {
 	// Only sub claim should be present
 	assert.Len(s.T(), response.JSONBody, 1)
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_OpenIDScope_InMiddleOfScopeString tests openid scope in middle position
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_InMiddleOfScopeString() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "profile openid email", // openid in middle
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "profile openid email", // openid in middle
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-mid-123",
 	}
 	token := s.createToken(claims)
 
@@ -1051,7 +1028,6 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_InMiddleOfScopeSt
 		"name":  "John Doe",
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		UserInfo: &appmodel.UserInfoConfig{
@@ -1061,10 +1037,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_InMiddleOfScopeSt
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-mid-123").Return(
+		&attributecache.AttributeCache{ID: "cache-mid-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -1075,25 +1049,25 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_InMiddleOfScopeSt
 	assert.Equal(s.T(), "John Doe", response.JSONBody["name"])
 	assert.Equal(s.T(), "john@example.com", response.JSONBody["email"])
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
 // TestGetUserInfo_OpenIDScope_AtEnd tests openid scope at end of scope string
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_AtEnd() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "profile email openid", // openid at end
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "profile email openid", // openid at end
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-end-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		UserInfo: &appmodel.UserInfoConfig{
@@ -1103,10 +1077,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_AtEnd() {
 
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-end-123").Return(
+		&attributecache.AttributeCache{ID: "cache-end-123", Attributes: userAttrs}, nil)
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
 	response, svcErr := s.userInfoService.GetUserInfo(context.Background(), token)
@@ -1117,7 +1089,7 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_AtEnd() {
 	assert.Equal(s.T(), "user123", response.JSONBody["sub"])
 	assert.Equal(s.T(), "john@example.com", response.JSONBody["email"])
 	s.mockTokenValidator.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
@@ -1126,18 +1098,18 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_OpenIDScope_AtEnd() {
 // and returns a signed JWT response instead of JSON.
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_ResponseType() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid email",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid email",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-jws-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{},
@@ -1153,11 +1125,9 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_ResponseType() {
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
 
-	// User fetch
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	// Attribute cache fetch
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-jws-123").Return(
+		&attributecache.AttributeCache{ID: "cache-jws-123", Attributes: userAttrs}, nil)
 
 	// App fetch
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
@@ -1183,7 +1153,7 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_ResponseType() {
 
 	s.mockTokenValidator.AssertExpectations(s.T())
 	s.mockJWTService.AssertExpectations(s.T())
-	s.mockUserService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 	s.mockAppService.AssertExpectations(s.T())
 }
 
@@ -1191,18 +1161,18 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_ResponseType() {
 // an internal server error is returned when JWT generation fails.
 func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_GenerateJWTFailure() {
 	claims := map[string]interface{}{
-		"exp":       float64(time.Now().Add(time.Hour).Unix()),
-		"nbf":       float64(time.Now().Add(-time.Minute).Unix()),
-		"sub":       "user123",
-		"scope":     "openid email",
-		"client_id": "client123",
+		"exp":                float64(time.Now().Add(time.Hour).Unix()),
+		"nbf":                float64(time.Now().Add(-time.Minute).Unix()),
+		"sub":                "user123",
+		"scope":              "openid email",
+		"client_id":          "client123",
+		"attribute_cache_id": "cache-jws-fail-123",
 	}
 	token := s.createToken(claims)
 
 	userAttrs := map[string]interface{}{
 		"email": "john@example.com",
 	}
-	userAttrsJSON, _ := json.Marshal(userAttrs)
 
 	oauthApp := &appmodel.OAuthAppConfigProcessedDTO{
 		Token: &appmodel.OAuthTokenConfig{},
@@ -1216,10 +1186,8 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_GenerateJWTFailure() {
 	s.mockTokenValidator.On("ValidateAccessToken", token).Return(
 		&tokenservice.AccessTokenClaims{Sub: "user123", Claims: claims}, nil)
 
-	s.mockUserService.On("GetUser", mock.Anything, "user123").Return(&user.User{
-		ID:         "user123",
-		Attributes: userAttrsJSON,
-	}, nil)
+	s.mockAttributeCacheService.On("GetAttributeCache", mock.Anything, "cache-jws-fail-123").Return(
+		&attributecache.AttributeCache{ID: "cache-jws-fail-123", Attributes: userAttrs}, nil)
 
 	s.mockAppService.On("GetOAuthApplication", "client123").Return(oauthApp, nil)
 
@@ -1248,4 +1216,5 @@ func (s *UserInfoServiceTestSuite) TestGetUserInfo_JWS_GenerateJWTFailure() {
 
 	s.mockTokenValidator.AssertExpectations(s.T())
 	s.mockJWTService.AssertExpectations(s.T())
+	s.mockAttributeCacheService.AssertExpectations(s.T())
 }

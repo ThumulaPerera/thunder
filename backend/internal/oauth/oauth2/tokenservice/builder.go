@@ -160,6 +160,12 @@ func (tb *tokenBuilder) buildAccessTokenUserAttributes(
 		accessTokenUserAttributes = oauthApp.Token.AccessToken.UserAttributes
 	}
 
+	if accessTokenUserAttributes == nil {
+		accessTokenUserAttributes = []string{}
+	}
+
+	accessTokenUserAttributes = append(accessTokenUserAttributes, "attribute_cache_id")
+
 	// If app config specifies which attributes to include, filter them
 	if len(accessTokenUserAttributes) > 0 {
 		for _, attr := range accessTokenUserAttributes {

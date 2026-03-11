@@ -23,6 +23,7 @@ import (
 	"net/http"
 
 	"github.com/asgardeo/thunder/internal/application"
+	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/flow/flowexec"
 	"github.com/asgardeo/thunder/internal/oauth/jwks"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/dcr"
@@ -50,6 +51,7 @@ func Initialize(
 	observabilitySvc observability.ObservabilityServiceInterface,
 	pkiService pki.PKIServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
+	attributeCacheSvc attributecache.AttributeCacheServiceInterface,
 ) {
 	jwks.Initialize(mux, pkiService)
 	tokenBuilder, tokenValidator := tokenservice.Initialize(jwtService)
@@ -60,6 +62,6 @@ func Initialize(
 	token.Initialize(mux, jwtService, applicationService, grantHandlerProvider,
 		scopeValidator, observabilitySvc, discoveryService)
 	introspect.Initialize(mux, jwtService, applicationService, discoveryService)
-	userinfo.Initialize(mux, jwtService, tokenValidator, applicationService, userService, ouService)
+	userinfo.Initialize(mux, jwtService, tokenValidator, applicationService, userService, ouService, attributeCacheSvc)
 	dcr.Initialize(mux, applicationService)
 }

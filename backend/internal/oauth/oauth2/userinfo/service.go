@@ -25,6 +25,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/application"
 	appmodel "github.com/asgardeo/thunder/internal/application/model"
+	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/model"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/tokenservice"
@@ -51,6 +52,7 @@ type userInfoService struct {
 	applicationService application.ApplicationServiceInterface
 	userService        user.UserServiceInterface
 	ouService          ou.OrganizationUnitServiceInterface
+	attributeCacheSvc  attributecache.AttributeCacheServiceInterface
 	logger             *log.Logger
 }
 
@@ -61,6 +63,7 @@ func newUserInfoService(
 	applicationService application.ApplicationServiceInterface,
 	userService user.UserServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
+	attributeCacheSvc attributecache.AttributeCacheServiceInterface,
 ) userInfoServiceInterface {
 	return &userInfoService{
 		jwtService:         jwtService,
@@ -68,6 +71,7 @@ func newUserInfoService(
 		applicationService: applicationService,
 		userService:        userService,
 		ouService:          ouService,
+		attributeCacheSvc:  attributeCacheSvc,
 		logger:             log.GetLogger().With(log.String(log.LoggerKeyComponentName, serviceLoggerComponentName)),
 	}
 }
@@ -107,9 +111,14 @@ func (s *userInfoService) GetUserInfo(
 		allowedUserAttributes = oauthApp.UserInfo.UserAttributes
 	}
 
+	attributeCacheID, ok := tokenClaims["attribute_cache_id"]
+	if !ok {
+		attributeCacheID = ""
+	}
+
 	// Fetch user attributes with groups and default claims
-	userAttributes, err := tokenservice.FetchUserAttributes(ctx, s.userService, s.ouService,
-		sub, allowedUserAttributes)
+	userAttributes, err := tokenservice.FetchUserAttributes(ctx, s.userService, s.ouService, s.attributeCacheSvc,
+		sub, allowedUserAttributes, attributeCacheID.(string))
 	if err != nil {
 		s.logger.Error("Failed to fetch user attributes", log.String("userID", sub), log.Error(err))
 		return nil, &serviceerror.InternalServerError

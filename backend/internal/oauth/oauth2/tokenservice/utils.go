@@ -20,12 +20,12 @@ package tokenservice
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
 
 	appmodel "github.com/asgardeo/thunder/internal/application/model"
+	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
 	"github.com/asgardeo/thunder/internal/oauth/oauth2/model"
 	"github.com/asgardeo/thunder/internal/ou"
@@ -221,24 +221,12 @@ func FetchUserAttributes(
 	ctx context.Context,
 	userService user.UserServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
+	attrCacheService attributecache.AttributeCacheServiceInterface,
 	userID string,
 	allowedClaims []string,
+	attributeCacheKey string,
 ) (map[string]interface{}, error) {
-	userData, svcErr := userService.GetUser(ctx, userID)
-	if svcErr != nil {
-		return nil, fmt.Errorf("failed to fetch user: %s", svcErr.Error)
-	}
-
-	// Parse user attributes from JSON
-	var attrs map[string]interface{}
-	if userData.Attributes != nil {
-		if err := json.Unmarshal(userData.Attributes, &attrs); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal user attributes: %w", err)
-		}
-	}
-	if attrs == nil {
-		attrs = make(map[string]interface{})
-	}
+	attrs := make(map[string]interface{})
 
 	// Helper to check if a claim should be included
 	shouldInclude := func(claimName string) bool {
@@ -248,21 +236,25 @@ func FetchUserAttributes(
 		return slices.Contains(allowedClaims, claimName)
 	}
 
-	// Add default claim - user type
-	if userData.Type != "" && shouldInclude(constants.ClaimUserType) {
-		attrs[constants.ClaimUserType] = userData.Type
+	if attributeCacheKey != "" {
+		attrCache, err := attrCacheService.GetAttributeCache(ctx, attributeCacheKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch attribute cache: %s", err.Error)
+		}
+		if attrCache != nil && attrCache.Attributes != nil {
+			for key, value := range attrCache.Attributes {
+				if shouldInclude(key) {
+					attrs[key] = value
+				}
+			}
+		}
 	}
 
-	if userData.OrganizationUnit != "" {
-		// Add default claim - ouId
-		if shouldInclude(constants.ClaimOUID) {
-			attrs[constants.ClaimOUID] = userData.OrganizationUnit
-		}
-
+	if attrs[constants.ClaimOUID] != nil {
 		// Only fetch OU details if ouHandle or ouName are requested
 		needsOUDetails := shouldInclude(constants.ClaimOUHandle) || shouldInclude(constants.ClaimOUName)
 		if needsOUDetails && ouService != nil {
-			ouDetails, ouErr := ouService.GetOrganizationUnit(ctx, userData.OrganizationUnit)
+			ouDetails, ouErr := ouService.GetOrganizationUnit(ctx, attrs[constants.ClaimOUID].(string))
 			if ouErr != nil {
 				return nil, fmt.Errorf("failed to fetch organization unit details: %s", ouErr.Error)
 			}

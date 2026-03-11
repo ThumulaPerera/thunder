@@ -226,7 +226,7 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 
 	// Initialize OAuth services.
 	oauth.Initialize(mux, applicationService, userService, jwtService, flowExecService, observabilitySvc,
-		pkiService, ouService)
+		pkiService, ouService, attributeCacheService)
 
 	// TODO: Legacy way of initializing services. These need to be refactored in the future aligning to the
 	// dependency injection pattern used above.
