@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package authnprovider
+package provider
 
 import (
 	"context"
@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/user"
 	"github.com/asgardeo/thunder/tests/mocks/usermock"
@@ -95,7 +96,7 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_UserNotFound() {
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(ErrorCodeUserNotFound, err.Code)
+	suite.Equal(authnprovidercm.ErrorCodeUserNotFound, err.Code)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_AuthenticationFailed() {
@@ -110,7 +111,7 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_AuthenticationFaile
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(ErrorCodeAuthenticationFailed, err.Code)
+	suite.Equal(authnprovidercm.ErrorCodeAuthenticationFailed, err.Code)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_SystemError_Prepare() {
@@ -125,7 +126,7 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_SystemError_Prepare
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(ErrorCodeSystemError, err.Code)
+	suite.Equal(authnprovidercm.ErrorCodeSystemError, err.Code)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestGetAttributes_Success_All() {
@@ -161,8 +162,8 @@ func (suite *DefaultAuthnProviderTestSuite) TestGetAttributes_Success_Filtered()
 	suite.mockService.On("GetUser", mock.Anything, token, false).
 		Return(userObj, (*serviceerror.ServiceError)(nil)).Once()
 
-	reqAttrs := &RequestedAttributes{
-		Attributes: map[string]*AttributeMetadataRequest{
+	reqAttrs := &authnprovidercm.RequestedAttributes{
+		Attributes: map[string]*authnprovidercm.AttributeMetadataRequest{
 			"email": nil,
 		},
 	}
@@ -185,7 +186,7 @@ func (suite *DefaultAuthnProviderTestSuite) TestGetAttributes_InvalidToken() {
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(ErrorCodeInvalidToken, err.Code)
+	suite.Equal(authnprovidercm.ErrorCodeInvalidToken, err.Code)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_GetUserNotFound() {
@@ -210,5 +211,5 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_GetUserNotFound() {
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(ErrorCodeUserNotFound, err.Code)
+	suite.Equal(authnprovidercm.ErrorCodeUserNotFound, err.Code)
 }

@@ -23,7 +23,8 @@ import (
 	"context"
 
 	"github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/system/log"
 )
@@ -35,23 +36,24 @@ const (
 // CredentialsAuthnServiceInterface defines the contract for credentials-based authenticator services.
 type CredentialsAuthnServiceInterface interface {
 	Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-		metadata *authnprovider.AuthnMetadata) (*authnprovider.AuthnResult, *serviceerror.ServiceError)
+		metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
 	GetAttributes(
 		ctx context.Context,
 		token string,
-		requestedAttributes *authnprovider.RequestedAttributes,
-		metadata *authnprovider.GetAttributesMetadata,
-	) (*authnprovider.GetAttributesResult, *serviceerror.ServiceError)
+		requestedAttributes *authnprovidercm.RequestedAttributes,
+		metadata *authnprovidercm.GetAttributesMetadata,
+	) (*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError)
 }
 
 // credentialsAuthnService is the default implementation of CredentialsAuthnServiceInterface.
 type credentialsAuthnService struct {
-	authnProvider authnprovider.AuthnProviderInterface
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface
 	logger        *log.Logger
 }
 
 // newCredentialsAuthnService creates a new instance of credentials authenticator service.
-func newCredentialsAuthnService(authnProvider authnprovider.AuthnProviderInterface) CredentialsAuthnServiceInterface {
+func newCredentialsAuthnService(
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface) CredentialsAuthnServiceInterface {
 	service := &credentialsAuthnService{
 		authnProvider: authnProvider,
 	}
@@ -62,7 +64,7 @@ func newCredentialsAuthnService(authnProvider authnprovider.AuthnProviderInterfa
 }
 
 func (c *credentialsAuthnService) Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-	metadata *authnprovider.AuthnMetadata) (*authnprovider.AuthnResult, *serviceerror.ServiceError) {
+	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
 	if len(identifiers) == 0 || len(credentials) == 0 {
 		return nil, &ErrorEmptyAttributesOrCredentials
 	}
@@ -70,9 +72,9 @@ func (c *credentialsAuthnService) Authenticate(ctx context.Context, identifiers,
 	authnResult, err := c.authnProvider.Authenticate(ctx, identifiers, credentials, metadata)
 	if err != nil {
 		switch err.Code {
-		case authnprovider.ErrorCodeAuthenticationFailed:
+		case authnprovidercm.ErrorCodeAuthenticationFailed:
 			return nil, &ErrorInvalidCredentials
-		case authnprovider.ErrorCodeUserNotFound:
+		case authnprovidercm.ErrorCodeUserNotFound:
 			return nil, &common.ErrorUserNotFound
 		default:
 			c.logger.Error("Error occurred while authenticating the user", log.String("errorCode", string(err.Code)),
@@ -84,12 +86,12 @@ func (c *credentialsAuthnService) Authenticate(ctx context.Context, identifiers,
 }
 
 func (c *credentialsAuthnService) GetAttributes(ctx context.Context, token string,
-	requestedAttributes *authnprovider.RequestedAttributes, metadata *authnprovider.GetAttributesMetadata) (
-	*authnprovider.GetAttributesResult, *serviceerror.ServiceError) {
+	requestedAttributes *authnprovidercm.RequestedAttributes, metadata *authnprovidercm.GetAttributesMetadata) (
+	*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError) {
 	result, err := c.authnProvider.GetAttributes(ctx, token, requestedAttributes, metadata)
 	if err != nil {
 		switch err.Code {
-		case authnprovider.ErrorCodeInvalidToken:
+		case authnprovidercm.ErrorCodeInvalidToken:
 			return nil, &ErrorInvalidToken
 		default:
 			c.logger.Error("Error occurred while getting attributes", log.String("errorCode", string(err.Code)),

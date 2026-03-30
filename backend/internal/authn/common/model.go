@@ -23,7 +23,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/idp"
 )
 
@@ -34,7 +34,7 @@ type AuthenticatedUser struct {
 	OUID                string
 	UserType            string
 	Attributes          map[string]interface{}
-	AvailableAttributes *authnprovider.AvailableAttributes
+	AvailableAttributes *authnprovidercm.AvailableAttributes
 	Token               string
 }
 

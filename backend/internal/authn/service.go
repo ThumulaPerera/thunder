@@ -36,7 +36,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/idp"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/config"
@@ -140,10 +140,10 @@ func (as *authenticationService) AuthenticateWithCredentials(ctx context.Context
 		return nil, &serviceerror.InternalServerError
 	}
 
-	var requestedAttributes *authnprovider.RequestedAttributes
+	var requestedAttributes *authnprovidercm.RequestedAttributes
 	if authenticateResp.AvailableAttributes != nil {
-		requestedAttributes = &authnprovider.RequestedAttributes{
-			Attributes:    make(map[string]*authnprovider.AttributeMetadataRequest),
+		requestedAttributes = &authnprovidercm.RequestedAttributes{
+			Attributes:    make(map[string]*authnprovidercm.AttributeMetadataRequest),
 			Verifications: nil,
 		}
 		for attrName := range authenticateResp.AvailableAttributes.Attributes {

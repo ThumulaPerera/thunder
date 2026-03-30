@@ -16,14 +16,15 @@
  * under the License.
  */
 
-package authnprovider
+package manager
 
-import "context"
+import (
+	"github.com/asgardeo/thunder/internal/authnprovider/provider"
+	"github.com/asgardeo/thunder/internal/user"
+)
 
-// AuthnProviderInterface defines the interface for authentication providers.
-type AuthnProviderInterface interface {
-	Authenticate(ctx context.Context, identifiers, credentials map[string]interface{}, metadata *AuthnMetadata) (
-		*AuthnResult, *AuthnProviderError)
-	GetAttributes(ctx context.Context, token string, requestedAttributes *RequestedAttributes,
-		metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError)
+// InitializeAuthnProviderManager initializes and returns an AuthnProviderManagerInterface.
+func InitializeAuthnProviderManager(userSvc user.UserServiceInterface) AuthnProviderManagerInterface {
+	p := provider.InitializeAuthnProvider(userSvc)
+	return newAuthnProviderManager(p)
 }

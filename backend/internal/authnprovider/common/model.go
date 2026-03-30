@@ -16,7 +16,8 @@
  * under the License.
  */
 
-package authnprovider
+// Package common provides common data models and error types shared across authnprovider sub-packages.
+package common
 
 // AuthnMetadata contains metadata for authentication.
 type AuthnMetadata struct {

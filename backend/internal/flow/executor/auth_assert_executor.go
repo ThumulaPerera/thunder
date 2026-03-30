@@ -31,7 +31,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/assert"
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	authncreds "github.com/asgardeo/thunder/internal/authn/credentials"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	oauth2const "github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
@@ -430,10 +430,10 @@ func (a *authAssertExecutor) appendComputedAttributes(
 
 // getUserAttributesFromAuthnProvider retrieves user attributes from the authentication provider.
 func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Context, token string,
-	requestedAttributes []string, metadata *authnprovider.GetAttributesMetadata) (map[string]interface{}, error) {
+	requestedAttributes []string, metadata *authnprovidercm.GetAttributesMetadata) (map[string]interface{}, error) {
 	// Convert requested attributes from []string to *RequestedAttributes
-	reqAttrs := &authnprovider.RequestedAttributes{
-		Attributes:    make(map[string]*authnprovider.AttributeMetadataRequest),
+	reqAttrs := &authnprovidercm.RequestedAttributes{
+		Attributes:    make(map[string]*authnprovidercm.AttributeMetadataRequest),
 		Verifications: nil,
 	}
 	for _, attrName := range requestedAttributes {
@@ -576,8 +576,8 @@ func (a *authAssertExecutor) appendRolesToClaims(
 }
 
 // buildGetAttributesMetadata constructs the metadata for fetching user attributes.
-func (a *authAssertExecutor) buildGetAttributesMetadata(ctx *core.NodeContext) *authnprovider.GetAttributesMetadata {
-	metadata := &authnprovider.GetAttributesMetadata{
+func (a *authAssertExecutor) buildGetAttributesMetadata(ctx *core.NodeContext) *authnprovidercm.GetAttributesMetadata {
+	metadata := &authnprovidercm.GetAttributesMetadata{
 		AppMetadata: make(map[string]interface{}),
 	}
 

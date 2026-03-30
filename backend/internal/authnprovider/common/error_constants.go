@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package authnprovider
+package common
 
 // ErrorCode represents an error code.
 type ErrorCode string

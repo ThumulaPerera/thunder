@@ -430,12 +430,20 @@ packages:
       pkgname: resourcemock
       filename: "{{.InterfaceName}}_mock.go"
 
-  github.com/asgardeo/thunder/internal/authnprovider:
+  github.com/asgardeo/thunder/internal/authnprovider/provider:
     config:
       all: true
-      dir: tests/mocks/authnprovidermock
+      dir: tests/mocks/authnprovider/providermock
       structname: '{{.InterfaceName}}Mock'
-      pkgname: authnprovidermock
+      pkgname: providermock
+      filename: "{{.InterfaceName}}_mock.go"
+
+  github.com/asgardeo/thunder/internal/authnprovider/manager:
+    config:
+      all: true
+      dir: tests/mocks/authnprovider/managermock
+      structname: '{{.InterfaceName}}Mock'
+      pkgname: managermock
       filename: "{{.InterfaceName}}_mock.go"
 
   github.com/asgardeo/thunder/internal/userprovider:

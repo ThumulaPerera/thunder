@@ -31,7 +31,7 @@ import (
 	"github.com/asgardeo/thunder/internal/attributecache"
 	authnassert "github.com/asgardeo/thunder/internal/authn/assert"
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	oauth2const "github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
@@ -458,17 +458,17 @@ func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromUserProvider_
 }
 
 func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromAuthnProvider_Success() {
-	reqAttrs := &authnprovider.RequestedAttributes{
-		Attributes: map[string]*authnprovider.AttributeMetadataRequest{
+	reqAttrs := &authnprovidercm.RequestedAttributes{
+		Attributes: map[string]*authnprovidercm.AttributeMetadataRequest{
 			"email": nil,
 			"name":  nil,
 		},
 		Verifications: nil,
 	}
 
-	res := authnprovider.GetAttributesResult{
-		AttributesResponse: &authnprovider.AttributesResponse{
-			Attributes: map[string]*authnprovider.AttributeResponse{
+	res := authnprovidercm.GetAttributesResult{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"email": {Value: testEmail},
 				"name":  {Value: "Test User"},
 			},
@@ -476,7 +476,7 @@ func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromAuthnProvider
 	}
 
 	suite.mockCredsAuthSvc.On("GetAttributes", mock.Anything, "token-123", reqAttrs,
-		(*authnprovider.GetAttributesMetadata)(nil)).Return(&res, nil)
+		(*authnprovidercm.GetAttributesMetadata)(nil)).Return(&res, nil)
 
 	resultAttrs, err := suite.executor.getUserAttributesFromAuthnProvider(context.Background(),
 		"token-123", []string{"email", "name"}, nil)
@@ -489,8 +489,8 @@ func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromAuthnProvider
 }
 
 func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromAuthnProvider_ServiceError() {
-	reqAttrs := &authnprovider.RequestedAttributes{
-		Attributes: map[string]*authnprovider.AttributeMetadataRequest{
+	reqAttrs := &authnprovidercm.RequestedAttributes{
+		Attributes: map[string]*authnprovidercm.AttributeMetadataRequest{
 			"email": nil,
 			"name":  nil,
 		},
@@ -498,7 +498,7 @@ func (suite *AuthAssertExecutorTestSuite) TestGetUserAttributesFromAuthnProvider
 	}
 
 	suite.mockCredsAuthSvc.On("GetAttributes", mock.Anything, "token-123", reqAttrs,
-		(*authnprovider.GetAttributesMetadata)(nil)).Return(nil, &serviceerror.ServiceError{
+		(*authnprovidercm.GetAttributesMetadata)(nil)).Return(nil, &serviceerror.ServiceError{
 		Type:             serviceerror.ServerErrorType,
 		Code:             "ATTRIBUTES_FETCH_FAILED",
 		Error:            "failed to fetch attributes",

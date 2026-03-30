@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package authnprovider
+package provider
 
 import (
 	"bytes"
@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	systemhttp "github.com/asgardeo/thunder/internal/system/http"
 )
 
@@ -37,16 +38,16 @@ type restAuthnProvider struct {
 
 // AuthenticateRequest is the request body for the authentication endpoint.
 type AuthenticateRequest struct {
-	Identifiers map[string]interface{} `json:"identifiers"`
-	Credentials map[string]interface{} `json:"credentials"`
-	Metadata    *AuthnMetadata         `json:"metadata"`
+	Identifiers map[string]interface{}         `json:"identifiers"`
+	Credentials map[string]interface{}         `json:"credentials"`
+	Metadata    *authnprovidercm.AuthnMetadata `json:"metadata"`
 }
 
 // GetAttributesRequest is the request body for the attributes endpoint.
 type GetAttributesRequest struct {
-	Token               string                 `json:"token"`
-	RequestedAttributes *RequestedAttributes   `json:"requestedAttributes"`
-	Metadata            *GetAttributesMetadata `json:"metadata"`
+	Token               string                                 `json:"token"`
+	RequestedAttributes *authnprovidercm.RequestedAttributes   `json:"requestedAttributes"`
+	Metadata            *authnprovidercm.GetAttributesMetadata `json:"metadata"`
 }
 
 // newRestAuthnProvider creates a new REST authentication provider.
@@ -60,63 +61,51 @@ func newRestAuthnProvider(baseURL, apiKey string, httpClient systemhttp.HTTPClie
 
 // Authenticate authenticates a user.
 func (p *restAuthnProvider) Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-	metadata *AuthnMetadata) (*AuthnResult, *AuthnProviderError) {
+	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError) {
 	reqBody := AuthenticateRequest{
 		Identifiers: identifiers,
 		Credentials: credentials,
 		Metadata:    metadata,
 	}
-
-	jsonBody, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, NewError(ErrorCodeSystemError, "Failed to marshal request", err.Error())
-	}
-
-	resp, err := p.doRequest(ctx, p.baseURL+"/authenticate", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, NewError(ErrorCodeSystemError, "Failed to send request", err.Error())
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode == http.StatusOK {
-		var result AuthnResult
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return nil, NewError(ErrorCodeSystemError, "Failed to decode response", err.Error())
-		}
-		return &result, nil
-	}
-
-	return nil, p.decodeError(resp.Body)
+	return postAndDecode[authnprovidercm.AuthnResult](p, ctx, p.baseURL+"/authenticate", reqBody)
 }
 
 // GetAttributes retrieves the attributes of a user.
-func (p *restAuthnProvider) GetAttributes(ctx context.Context, token string, requestedAttributes *RequestedAttributes,
-	metadata *GetAttributesMetadata) (*GetAttributesResult, *AuthnProviderError) {
+func (p *restAuthnProvider) GetAttributes(ctx context.Context, token string,
+	requestedAttributes *authnprovidercm.RequestedAttributes,
+	metadata *authnprovidercm.GetAttributesMetadata) (
+	*authnprovidercm.GetAttributesResult, *authnprovidercm.AuthnProviderError) {
 	reqBody := GetAttributesRequest{
 		Token:               token,
 		RequestedAttributes: requestedAttributes,
 		Metadata:            metadata,
 	}
+	return postAndDecode[authnprovidercm.GetAttributesResult](p, ctx, p.baseURL+"/attributes", reqBody)
+}
 
+// postAndDecode marshals reqBody as JSON, posts it to url, and decodes the response into T.
+func postAndDecode[T any](p *restAuthnProvider, ctx context.Context, url string,
+	reqBody interface{}) (*T, *authnprovidercm.AuthnProviderError) {
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, NewError(ErrorCodeSystemError, "Failed to marshal request", err.Error())
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, "Failed to marshal request", err.Error())
 	}
 
-	resp, err := p.doRequest(ctx, p.baseURL+"/attributes", bytes.NewBuffer(jsonBody))
+	resp, err := p.doRequest(ctx, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return nil, NewError(ErrorCodeSystemError, "Failed to send request", err.Error())
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, "Failed to send request", err.Error())
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
 	if resp.StatusCode == http.StatusOK {
-		var result GetAttributesResult
+		var result T
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return nil, NewError(ErrorCodeSystemError, "Failed to decode response", err.Error())
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeSystemError, "Failed to decode response", err.Error())
 		}
 		return &result, nil
 	}
@@ -124,10 +113,11 @@ func (p *restAuthnProvider) GetAttributes(ctx context.Context, token string, req
 	return nil, p.decodeError(resp.Body)
 }
 
-func (p *restAuthnProvider) decodeError(body io.Reader) *AuthnProviderError {
-	var authnError AuthnProviderError
+func (p *restAuthnProvider) decodeError(body io.Reader) *authnprovidercm.AuthnProviderError {
+	var authnError authnprovidercm.AuthnProviderError
 	if err := json.NewDecoder(body).Decode(&authnError); err != nil {
-		return NewError(ErrorCodeSystemError, "Failed to decode error response", err.Error())
+		return authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, "Failed to decode error response", err.Error())
 	}
 	return &authnError
 }

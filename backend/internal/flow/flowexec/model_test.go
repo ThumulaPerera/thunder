@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
@@ -421,20 +421,20 @@ func (s *ModelTestSuite) TestFromEngineContext_PreservesOtherFields() {
 
 func (s *ModelTestSuite) TestFromEngineContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovider.AvailableAttributes{
-		Attributes: map[string]*authnprovider.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
+		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
 			"email": {
-				AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
 				},
 			},
 			"phoneNumber": {
-				AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: false,
 				},
 			},
 		},
-		Verifications: map[string]*authnprovider.VerificationResponse{},
+		Verifications: map[string]*authnprovidercm.VerificationResponse{},
 	}
 	mockGraph := coremock.NewGraphInterfaceMock(s.T())
 	mockGraph.On("GetID").Return("test-graph-id")
@@ -527,20 +527,20 @@ func (s *ModelTestSuite) TestFromEngineContext_WithoutAvailableAttributes() {
 
 func (s *ModelTestSuite) TestToEngineContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovider.AvailableAttributes{
-		Attributes: map[string]*authnprovider.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
+		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
 			"email": {
-				AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
 				},
 			},
 			"address": {
-				AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: false,
 				},
 			},
 		},
-		Verifications: map[string]*authnprovider.VerificationResponse{},
+		Verifications: map[string]*authnprovidercm.VerificationResponse{},
 	}
 	mockGraph := coremock.NewGraphInterfaceMock(s.T())
 	mockGraph.On("GetID").Return("test-graph-id")
@@ -635,60 +635,60 @@ func (s *ModelTestSuite) TestAvailableAttributesSerializationRoundTrip() {
 	// Setup
 	testCases := []struct {
 		name       string
-		attributes *authnprovider.AvailableAttributes
+		attributes *authnprovidercm.AvailableAttributes
 	}{
 		{
 			name: "Single attribute",
-			attributes: &authnprovider.AvailableAttributes{
-				Attributes: map[string]*authnprovider.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AvailableAttributes{
+				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
 					"email": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
 						},
 					},
 				},
-				Verifications: map[string]*authnprovider.VerificationResponse{},
+				Verifications: map[string]*authnprovidercm.VerificationResponse{},
 			},
 		},
 		{
 			name: "Multiple attributes",
-			attributes: &authnprovider.AvailableAttributes{
-				Attributes: map[string]*authnprovider.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AvailableAttributes{
+				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
 					"email": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
 						},
 					},
 					"phone": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: false,
 						},
 					},
 					"address": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
 						},
 					},
 				},
-				Verifications: map[string]*authnprovider.VerificationResponse{},
+				Verifications: map[string]*authnprovidercm.VerificationResponse{},
 			},
 		},
 		{
 			name: "Special characters in names",
-			attributes: &authnprovider.AvailableAttributes{
-				Attributes: map[string]*authnprovider.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AvailableAttributes{
+				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
 					"custom-attr-1": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
 						},
 					},
 					"attr_with_underscore": {
-						AssuranceMetadataResponse: &authnprovider.AssuranceMetadataResponse{
+						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: false,
 						},
 					},
 				},
-				Verifications: map[string]*authnprovider.VerificationResponse{},
+				Verifications: map[string]*authnprovidercm.VerificationResponse{},
 			},
 		},
 	}

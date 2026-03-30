@@ -26,7 +26,7 @@ import (
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	authncreds "github.com/asgardeo/thunder/internal/authn/credentials"
-	"github.com/asgardeo/thunder/internal/authnprovider"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -234,8 +234,8 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 }
 
 // buildAuthnMetadata constructs the metadata for authentication.
-func (b *basicAuthExecutor) buildAuthnMetadata(ctx *core.NodeContext) *authnprovider.AuthnMetadata {
-	metadata := &authnprovider.AuthnMetadata{
+func (b *basicAuthExecutor) buildAuthnMetadata(ctx *core.NodeContext) *authnprovidercm.AuthnMetadata {
+	metadata := &authnprovidercm.AuthnMetadata{
 		AppMetadata: make(map[string]interface{}),
 	}
 

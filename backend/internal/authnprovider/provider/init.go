@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package authnprovider
+package provider
 
 import (
 	"time"

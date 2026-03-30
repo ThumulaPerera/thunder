@@ -16,13 +16,14 @@
  * under the License.
  */
 
-// Package authnprovider provides authentication provider implementations.
-package authnprovider
+// Package provider provides authentication provider implementations.
+package provider
 
 import (
 	"context"
 	"encoding/json"
 
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/user"
 )
@@ -42,48 +43,54 @@ func newDefaultAuthnProvider(userSvc user.UserServiceInterface) AuthnProviderInt
 func (p *defaultAuthnProvider) Authenticate(
 	ctx context.Context,
 	identifiers, credentials map[string]interface{},
-	metadata *AuthnMetadata,
-) (*AuthnResult, *AuthnProviderError) {
+	metadata *authnprovidercm.AuthnMetadata,
+) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError) {
 	authResponse, authErr := p.userSvc.AuthenticateUser(ctx, identifiers, credentials)
 	if authErr != nil {
 		if authErr.Type == serviceerror.ClientErrorType {
 			if authErr.Code == user.ErrorUserNotFound.Code {
-				return nil, NewError(ErrorCodeUserNotFound, authErr.Error, authErr.ErrorDescription)
+				return nil, authnprovidercm.NewError(
+					authnprovidercm.ErrorCodeUserNotFound, authErr.Error, authErr.ErrorDescription)
 			}
-			return nil, NewError(ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
 		}
-		return nil, NewError(ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
 	}
 
 	userResult, getUserErr := p.userSvc.GetUser(ctx, authResponse.ID, false)
 	if getUserErr != nil {
 		if getUserErr.Code == user.ErrorUserNotFound.Code {
-			return nil, NewError(ErrorCodeUserNotFound, getUserErr.Error, getUserErr.ErrorDescription)
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeUserNotFound, getUserErr.Error, getUserErr.ErrorDescription)
 		}
-		return nil, NewError(ErrorCodeSystemError, getUserErr.Error, getUserErr.ErrorDescription)
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, getUserErr.Error, getUserErr.ErrorDescription)
 	}
 
 	var attributes map[string]interface{}
 	if len(userResult.Attributes) > 0 {
 		if err := json.Unmarshal(userResult.Attributes, &attributes); err != nil {
-			return nil, NewError(ErrorCodeSystemError, "Failed to get allowed attributes", err.Error())
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeSystemError, "Failed to get allowed attributes", err.Error())
 		}
 	}
 
-	availableAttributes := &AvailableAttributes{
-		Attributes:    make(map[string]*AttributeMetadataResponse),
-		Verifications: make(map[string]*VerificationResponse),
+	availableAttributes := &authnprovidercm.AvailableAttributes{
+		Attributes:    make(map[string]*authnprovidercm.AttributeMetadataResponse),
+		Verifications: make(map[string]*authnprovidercm.VerificationResponse),
 	}
 	for k := range attributes {
-		availableAttributes.Attributes[k] = &AttributeMetadataResponse{
-			AssuranceMetadataResponse: &AssuranceMetadataResponse{
+		availableAttributes.Attributes[k] = &authnprovidercm.AttributeMetadataResponse{
+			AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 				IsVerified:     false,
 				VerificationID: "",
 			},
 		}
 	}
 
-	return &AuthnResult{
+	return &authnprovidercm.AuthnResult{
 		UserID:              authResponse.ID,
 		Token:               authResponse.ID,
 		UserType:            userResult.Type,
@@ -96,37 +103,40 @@ func (p *defaultAuthnProvider) Authenticate(
 func (p *defaultAuthnProvider) GetAttributes(
 	ctx context.Context,
 	token string,
-	requestedAttributes *RequestedAttributes,
-	metadata *GetAttributesMetadata,
-) (*GetAttributesResult, *AuthnProviderError) {
+	requestedAttributes *authnprovidercm.RequestedAttributes,
+	metadata *authnprovidercm.GetAttributesMetadata,
+) (*authnprovidercm.GetAttributesResult, *authnprovidercm.AuthnProviderError) {
 	userID := token
 
 	userResult, authErr := p.userSvc.GetUser(ctx, userID, false)
 	if authErr != nil {
 		if authErr.Type == serviceerror.ClientErrorType {
-			return nil, NewError(ErrorCodeInvalidToken, authErr.Error, authErr.ErrorDescription)
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeInvalidToken, authErr.Error, authErr.ErrorDescription)
 		}
-		return nil, NewError(ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
 	}
 
 	var allAttributes map[string]interface{}
 	if len(userResult.Attributes) > 0 {
 		if err := json.Unmarshal(userResult.Attributes, &allAttributes); err != nil {
-			return nil, NewError(ErrorCodeSystemError, "System Error", "Failed to unmarshal user attributes")
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeSystemError, "System Error", "Failed to unmarshal user attributes")
 		}
 	}
 
-	attributesResponse := &AttributesResponse{
-		Attributes:    make(map[string]*AttributeResponse),
-		Verifications: make(map[string]*VerificationResponse),
+	attributesResponse := &authnprovidercm.AttributesResponse{
+		Attributes:    make(map[string]*authnprovidercm.AttributeResponse),
+		Verifications: make(map[string]*authnprovidercm.VerificationResponse),
 	}
 
 	if requestedAttributes != nil && len(requestedAttributes.Attributes) > 0 {
 		for attrName := range requestedAttributes.Attributes {
 			if val, ok := allAttributes[attrName]; ok {
-				attributesResponse.Attributes[attrName] = &AttributeResponse{
+				attributesResponse.Attributes[attrName] = &authnprovidercm.AttributeResponse{
 					Value: val,
-					AssuranceMetadataResponse: &AssuranceMetadataResponse{
+					AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 						IsVerified:     false,
 						VerificationID: "",
 					},
@@ -135,9 +145,9 @@ func (p *defaultAuthnProvider) GetAttributes(
 		}
 	} else {
 		for attrName, val := range allAttributes {
-			attributesResponse.Attributes[attrName] = &AttributeResponse{
+			attributesResponse.Attributes[attrName] = &authnprovidercm.AttributeResponse{
 				Value: val,
-				AssuranceMetadataResponse: &AssuranceMetadataResponse{
+				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified:     false,
 					VerificationID: "",
 				},
@@ -145,7 +155,7 @@ func (p *defaultAuthnProvider) GetAttributes(
 		}
 	}
 
-	return &GetAttributesResult{
+	return &authnprovidercm.GetAttributesResult{
 		UserID:             userResult.ID,
 		UserType:           userResult.Type,
 		OUID:               userResult.OUID,
