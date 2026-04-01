@@ -32,6 +32,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
+	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	"github.com/asgardeo/thunder/internal/authn/reactsdk"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	consentmgt "github.com/asgardeo/thunder/internal/consent"
@@ -52,7 +53,7 @@ type AuthServiceRegistry struct {
 	GithubOAuthAuthnService github.GithubOAuthAuthnServiceInterface
 	GoogleOIDCAuthnService  google.GoogleOIDCAuthnServiceInterface
 	AuthAssertGenerator     assert.AuthAssertGeneratorInterface
-	PasskeyService          passkey.PasskeyServiceInterface
+	PasskeyService          passkeyauthn.PasskeyAuthnServiceInterface
 	ConsentEnforcerService  consent.ConsentEnforcerServiceInterface
 }
 
@@ -111,7 +112,7 @@ func createAuthServiceRegistry(
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),
 		GoogleOIDCAuthnService:  google.Initialize(idpSvc, userProvider, jwtSvc),
-		PasskeyService:          passkey.Initialize(userSvc),
+		PasskeyService:          passkeyauthn.Initialize(passkey.Initialize(userSvc)),
 		AuthAssertGenerator:     assert.Initialize(),
 		ConsentEnforcerService:  consent.Initialize(consentSvc, jwtSvc),
 	}

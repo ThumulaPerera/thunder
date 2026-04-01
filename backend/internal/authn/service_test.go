@@ -31,7 +31,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/assert"
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/oauth"
-	"github.com/asgardeo/thunder/internal/authn/passkey"
+	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/idp"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -79,7 +79,7 @@ type AuthenticationServiceTestSuite struct {
 	mockOIDCService        *oidcmock.OIDCAuthnServiceInterfaceMock
 	mockGoogleService      *googlemock.GoogleOIDCAuthnServiceInterfaceMock
 	mockGithubService      *githubmock.GithubOAuthAuthnServiceInterfaceMock
-	mockPasskeyService     *passkeymock.WebAuthnAuthnServiceInterfaceMock
+	mockPasskeyService     *passkeymock.PasskeyAuthnServiceInterfaceMock
 	service                *authenticationService
 }
 
@@ -129,7 +129,7 @@ func (suite *AuthenticationServiceTestSuite) SetupTest() {
 	suite.mockOIDCService = &oidcmock.OIDCAuthnServiceInterfaceMock{}
 	suite.mockGoogleService = &googlemock.GoogleOIDCAuthnServiceInterfaceMock{}
 	suite.mockGithubService = &githubmock.GithubOAuthAuthnServiceInterfaceMock{}
-	suite.mockPasskeyService = &passkeymock.WebAuthnAuthnServiceInterfaceMock{}
+	suite.mockPasskeyService = &passkeymock.PasskeyAuthnServiceInterfaceMock{}
 
 	suite.service = &authenticationService{
 		idpService:             suite.mockIDPService,
@@ -1733,7 +1733,7 @@ func (suite *AuthenticationServiceTestSuite) TestStartPasskeyRegistration_Succes
 		UserVerification:        "required",
 	}
 
-	expectedResponse := &passkey.PasskeyRegistrationStartData{
+	expectedResponse := &passkeyauthn.RegistrationStartData{
 		SessionToken: testSessionTkn,
 	}
 
@@ -1751,7 +1751,7 @@ func (suite *AuthenticationServiceTestSuite) TestStartPasskeyRegistration_Succes
 func (suite *AuthenticationServiceTestSuite) TestStartPasskeyRegistration_WithoutAuthSelection() {
 	attestation := ""
 
-	expectedResponse := &passkey.PasskeyRegistrationStartData{
+	expectedResponse := &passkeyauthn.RegistrationStartData{
 		SessionToken: testSessionTkn,
 	}
 
@@ -1797,7 +1797,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyRegistration_Succe
 	sessionToken := testSessionTkn
 	credentialName := "My Passkey"
 
-	expectedResponse := &passkey.PasskeyRegistrationFinishData{
+	expectedResponse := &passkeyauthn.RegistrationFinishData{
 		CredentialID:   "credential-id-123",
 		CredentialName: "My Passkey",
 	}
@@ -1825,7 +1825,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyRegistration_Witho
 	}
 	sessionToken := testSessionTkn
 
-	expectedResponse := &passkey.PasskeyRegistrationFinishData{
+	expectedResponse := &passkeyauthn.RegistrationFinishData{
 		CredentialID: "credential-id-123",
 	}
 
@@ -1868,12 +1868,12 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyRegistration_Servi
 }
 
 func (suite *AuthenticationServiceTestSuite) TestStartPasskeyAuthentication_Success() {
-	expectedResponse := &passkey.PasskeyAuthenticationStartData{
+	expectedResponse := &passkeyauthn.AuthenticationStartData{
 		SessionToken: testSessionTkn,
 	}
 
 	suite.mockPasskeyService.On(
-		"StartAuthentication", mock.Anything, mock.MatchedBy(func(req *passkey.PasskeyAuthenticationStartRequest) bool {
+		"StartAuthentication", mock.Anything, mock.MatchedBy(func(req *passkeyauthn.AuthenticationStartRequest) bool {
 			return req != nil && req.UserID == testUserID && req.RelyingPartyID == testRelyingPartyID
 		})).Return(expectedResponse, nil).Once()
 
@@ -1894,7 +1894,7 @@ func (suite *AuthenticationServiceTestSuite) TestStartPasskeyAuthentication_Serv
 	}
 
 	suite.mockPasskeyService.On(
-		"StartAuthentication", mock.Anything, mock.MatchedBy(func(req *passkey.PasskeyAuthenticationStartRequest) bool {
+		"StartAuthentication", mock.Anything, mock.MatchedBy(func(req *passkeyauthn.AuthenticationStartRequest) bool {
 			return req != nil && req.UserID == testUserID && req.RelyingPartyID == testRelyingPartyID
 		})).Return(nil, serviceError).Once()
 
@@ -1923,7 +1923,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Suc
 
 	suite.mockPasskeyService.On(
 		"FinishAuthentication", mock.Anything,
-		mock.MatchedBy(func(req *passkey.PasskeyAuthenticationFinishRequest) bool {
+		mock.MatchedBy(func(req *passkeyauthn.AuthenticationFinishRequest) bool {
 			return req != nil &&
 				req.CredentialID == testCredentialID &&
 				req.CredentialType == testCredentialType &&
@@ -1983,7 +1983,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 
 	suite.mockPasskeyService.On(
 		"FinishAuthentication", mock.Anything,
-		mock.MatchedBy(func(req *passkey.PasskeyAuthenticationFinishRequest) bool {
+		mock.MatchedBy(func(req *passkeyauthn.AuthenticationFinishRequest) bool {
 			return req != nil &&
 				req.CredentialID == testCredentialID &&
 				req.CredentialType == testCredentialType &&
@@ -2021,7 +2021,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 
 	suite.mockPasskeyService.On(
 		"FinishAuthentication", mock.Anything,
-		mock.MatchedBy(func(req *passkey.PasskeyAuthenticationFinishRequest) bool {
+		mock.MatchedBy(func(req *passkeyauthn.AuthenticationFinishRequest) bool {
 			return req != nil &&
 				req.CredentialID == testCredentialID &&
 				req.CredentialType == testCredentialType &&
@@ -2077,7 +2077,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Ser
 
 	suite.mockPasskeyService.On(
 		"FinishAuthentication", mock.Anything,
-		mock.MatchedBy(func(req *passkey.PasskeyAuthenticationFinishRequest) bool {
+		mock.MatchedBy(func(req *passkeyauthn.AuthenticationFinishRequest) bool {
 			return req != nil &&
 				req.CredentialID == testCredentialID &&
 				req.CredentialType == testCredentialType &&

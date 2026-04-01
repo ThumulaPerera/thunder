@@ -229,6 +229,15 @@ packages:
           pkgname: passkeymock
           filename: "WebAuthnAuthnServiceInterface_mock.go"
 
+  github.com/asgardeo/thunder/internal/authn/passkeyauthn:
+    interfaces:
+      PasskeyAuthnServiceInterface:
+        config:
+          dir: tests/mocks/authn/passkeymock
+          structname: 'PasskeyAuthnServiceInterfaceMock'
+          pkgname: passkeymock
+          filename: "PasskeyAuthnServiceInterface_mock.go"
+
   github.com/asgardeo/thunder/internal/authn/consent:
     interfaces:
       ConsentEnforcerServiceInterface:
