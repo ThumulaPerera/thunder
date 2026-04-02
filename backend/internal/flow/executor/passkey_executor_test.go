@@ -28,6 +28,7 @@ import (
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -277,8 +278,8 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_Success() {
 		inputUserHandle:        "user-handle",
 	}
 
-	authResp := &authncm.AuthenticationResponse{
-		ID: testPasskeyUserID,
+	authResp := &authnprovidercm.AuthnResult{
+		UserID: testPasskeyUserID,
 	}
 	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(authResp, nil)
 
@@ -918,8 +919,8 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_GetAuthenticatedUse
 		inputUserHandle:        "user-handle",
 	}
 
-	authResp := &authncm.AuthenticationResponse{
-		ID: testPasskeyUserID,
+	authResp := &authnprovidercm.AuthnResult{
+		UserID: testPasskeyUserID,
 	}
 	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(authResp, nil)
 

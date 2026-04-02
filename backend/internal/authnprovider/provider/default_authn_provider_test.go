@@ -40,7 +40,7 @@ type DefaultAuthnProviderTestSuite struct {
 
 func (suite *DefaultAuthnProviderTestSuite) SetupTest() {
 	suite.mockService = usermock.NewUserServiceInterfaceMock(suite.T())
-	suite.provider = newDefaultAuthnProvider(suite.mockService)
+	suite.provider = newDefaultAuthnProvider(suite.mockService, nil)
 }
 
 func TestDefaultAuthnProviderTestSuite(t *testing.T) {

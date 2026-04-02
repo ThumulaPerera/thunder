@@ -21,9 +21,13 @@ package passkeyauthn
 
 import (
 	"github.com/asgardeo/thunder/internal/authn/passkey"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 )
 
 // Initialize creates and returns a PasskeyAuthn service that wraps the given passkey service.
-func Initialize(passkeySvc passkey.PasskeyServiceInterface) PasskeyAuthnServiceInterface {
-	return newPasskeyAuthnService(passkeySvc)
+func Initialize(
+	passkeySvc passkey.PasskeyServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
+) PasskeyAuthnServiceInterface {
+	return newPasskeyAuthnService(passkeySvc, authnProvider)
 }

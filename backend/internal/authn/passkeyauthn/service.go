@@ -21,25 +21,34 @@ package passkeyauthn
 import (
 	"context"
 
-	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 )
 
 // PasskeyAuthnServiceInterface defines the interface for passkey authentication operations.
 type PasskeyAuthnServiceInterface interface {
-	StartRegistration(ctx context.Context, req *RegistrationStartRequest) (*RegistrationStartData, *serviceerror.ServiceError)
-	FinishRegistration(ctx context.Context, req *RegistrationFinishRequest) (*RegistrationFinishData, *serviceerror.ServiceError)
-	StartAuthentication(ctx context.Context, req *AuthenticationStartRequest) (*AuthenticationStartData, *serviceerror.ServiceError)
-	FinishAuthentication(ctx context.Context, req *AuthenticationFinishRequest) (*common.AuthenticationResponse, *serviceerror.ServiceError)
+	StartRegistration(ctx context.Context, req *RegistrationStartRequest) (
+		*RegistrationStartData, *serviceerror.ServiceError)
+	FinishRegistration(ctx context.Context, req *RegistrationFinishRequest) (
+		*RegistrationFinishData, *serviceerror.ServiceError)
+	StartAuthentication(ctx context.Context, req *AuthenticationStartRequest) (
+		*AuthenticationStartData, *serviceerror.ServiceError)
+	FinishAuthentication(ctx context.Context, req *AuthenticationFinishRequest) (
+		*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
 }
 
 type passkeyAuthnService struct {
 	passkeyService passkey.PasskeyServiceInterface
+	authnProvider  authnprovidermgr.AuthnProviderManagerInterface
 }
 
-func newPasskeyAuthnService(passkeySvc passkey.PasskeyServiceInterface) PasskeyAuthnServiceInterface {
-	return &passkeyAuthnService{passkeyService: passkeySvc}
+func newPasskeyAuthnService(
+	passkeySvc passkey.PasskeyServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
+) PasskeyAuthnServiceInterface {
+	return &passkeyAuthnService{passkeyService: passkeySvc, authnProvider: authnProvider}
 }
 
 func (s *passkeyAuthnService) StartRegistration(
@@ -126,8 +135,8 @@ func (s *passkeyAuthnService) StartAuthentication(
 
 func (s *passkeyAuthnService) FinishAuthentication(
 	ctx context.Context, req *AuthenticationFinishRequest,
-) (*common.AuthenticationResponse, *serviceerror.ServiceError) {
-	return s.passkeyService.FinishAuthentication(ctx, &passkey.PasskeyAuthenticationFinishRequest{
+) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
+	passkeyCredential := &passkey.PasskeyAuthenticationFinishRequest{
 		CredentialID:      req.CredentialID,
 		CredentialType:    req.CredentialType,
 		ClientDataJSON:    req.ClientDataJSON,
@@ -135,5 +144,19 @@ func (s *passkeyAuthnService) FinishAuthentication(
 		Signature:         req.Signature,
 		UserHandle:        req.UserHandle,
 		SessionToken:      req.SessionToken,
-	})
+	}
+	credentials := map[string]interface{}{
+		"passkey": passkeyCredential,
+	}
+
+	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
+	if err != nil {
+		return nil, &serviceerror.ServiceError{
+			Type:             serviceerror.ClientErrorType,
+			Code:             string(err.Code),
+			Error:            err.Message,
+			ErrorDescription: err.Description,
+		}
+	}
+	return authnResult, nil
 }

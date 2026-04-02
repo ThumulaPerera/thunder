@@ -25,6 +25,7 @@ import (
 	"github.com/asgardeo/thunder/internal/application"
 	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/authn"
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/authz"
 	"github.com/asgardeo/thunder/internal/cert"
@@ -174,16 +175,20 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 	// Initialize MCP server
 	mcpServer := mcp.Initialize(mux, jwtService)
 
+	// Initialize passkey service
+	passkeyService := passkey.Initialize(userService)
+
 	// Initialize authn provider
-	authnProvider := authnprovidermgr.InitializeAuthnProviderManager(userService)
+	authnProvider := authnprovidermgr.InitializeAuthnProviderManager(userService, passkeyService)
 
 	// Initialize user provider based on configuration
 	userProvider := userprovider.InitializeUserProvider(userService)
 
 	// Initialize authentication services.
 	_, authSvcRegistry := authn.Initialize(
-		mux, mcpServer, idpService, jwtService, userService,
+		mux, mcpServer, idpService, jwtService,
 		userProvider, otpService, authnProvider, consentService,
+		passkeyService,
 	)
 
 	attributeCacheService := attributecache.Initialize()

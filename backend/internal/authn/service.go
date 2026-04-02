@@ -796,18 +796,24 @@ func (as *authenticationService) FinishPasskeyAuthentication(ctx context.Context
 		UserHandle:        response.UserHandle,
 		SessionToken:      sessionToken,
 	}
-	authResponse, svcErr := as.passkeyService.FinishAuthentication(ctx, req)
+	authUser, svcErr := as.passkeyService.FinishAuthentication(ctx, req)
 	if svcErr != nil {
 		return nil, svcErr
+	}
+
+	authResponse := &common.AuthenticationResponse{
+		ID:   authUser.UserID,
+		Type: authUser.UserType,
+		OUID: authUser.OUID,
 	}
 
 	// Generate assertion if not skipped
 	if !skipAssertion {
 		// Create user object from authResponse for assertion generation
 		userForAssertion := &userprovider.User{
-			UserID:     authResponse.ID,
-			UserType:   authResponse.Type,
-			OUID:       authResponse.OUID,
+			UserID:     authUser.UserID,
+			UserType:   authUser.UserType,
+			OUID:       authUser.OUID,
 			Attributes: nil, // Attributes not needed for assertion generation from passkey finish
 		}
 

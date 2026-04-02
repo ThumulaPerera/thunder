@@ -19,12 +19,14 @@
 package manager
 
 import (
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/authnprovider/provider"
 	"github.com/asgardeo/thunder/internal/user"
 )
 
 // InitializeAuthnProviderManager initializes and returns an AuthnProviderManagerInterface.
-func InitializeAuthnProviderManager(userSvc user.UserServiceInterface) AuthnProviderManagerInterface {
-	p := provider.InitializeAuthnProvider(userSvc)
+func InitializeAuthnProviderManager(userSvc user.UserServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface) AuthnProviderManagerInterface {
+	p := provider.InitializeAuthnProvider(userSvc, passkeySvc)
 	return newAuthnProviderManager(p)
 }

@@ -23,19 +23,23 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/user"
 )
 
 type defaultAuthnProvider struct {
-	userSvc user.UserServiceInterface
+	userSvc        user.UserServiceInterface
+	passkeyService passkey.PasskeyServiceInterface
 }
 
 // newDefaultAuthnProvider creates a new internal user authn provider.
-func newDefaultAuthnProvider(userSvc user.UserServiceInterface) AuthnProviderInterface {
+func newDefaultAuthnProvider(userSvc user.UserServiceInterface,
+	passkeyService passkey.PasskeyServiceInterface) AuthnProviderInterface {
 	return &defaultAuthnProvider{
-		userSvc: userSvc,
+		userSvc:        userSvc,
+		passkeyService: passkeyService,
 	}
 }
 
@@ -45,21 +49,41 @@ func (p *defaultAuthnProvider) Authenticate(
 	identifiers, credentials map[string]interface{},
 	metadata *authnprovidercm.AuthnMetadata,
 ) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError) {
-	authResponse, authErr := p.userSvc.AuthenticateUser(ctx, identifiers, credentials)
-	if authErr != nil {
-		if authErr.Type == serviceerror.ClientErrorType {
-			if authErr.Code == user.ErrorUserNotFound.Code {
-				return nil, authnprovidercm.NewError(
-					authnprovidercm.ErrorCodeUserNotFound, authErr.Error, authErr.ErrorDescription)
-			}
+	if credentials == nil {
+		return nil, authnprovidercm.NewError(
+			authnprovidercm.ErrorCodeAuthenticationFailed,
+			"Credentials are required",
+			"Credentials are required for authentication")
+	}
+
+	authenticatedUserID := ""
+
+	if passkeyCredential, ok := credentials["passkey"]; ok {
+		passkeyCredential := passkeyCredential.(*passkey.PasskeyAuthenticationFinishRequest)
+		authResponse, authErr := p.passkeyService.FinishAuthentication(ctx, passkeyCredential)
+		if authErr != nil {
 			return nil, authnprovidercm.NewError(
 				authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
 		}
-		return nil, authnprovidercm.NewError(
-			authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		authenticatedUserID = authResponse.ID
+	} else {
+		authResponse, authErr := p.userSvc.AuthenticateUser(ctx, identifiers, credentials)
+		if authErr != nil {
+			if authErr.Type == serviceerror.ClientErrorType {
+				if authErr.Code == user.ErrorUserNotFound.Code {
+					return nil, authnprovidercm.NewError(
+						authnprovidercm.ErrorCodeUserNotFound, authErr.Error, authErr.ErrorDescription)
+				}
+				return nil, authnprovidercm.NewError(
+					authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+			}
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		}
+		authenticatedUserID = authResponse.ID
 	}
 
-	userResult, getUserErr := p.userSvc.GetUser(ctx, authResponse.ID, false)
+	userResult, getUserErr := p.userSvc.GetUser(ctx, authenticatedUserID, false)
 	if getUserErr != nil {
 		if getUserErr.Code == user.ErrorUserNotFound.Code {
 			return nil, authnprovidercm.NewError(
@@ -91,8 +115,8 @@ func (p *defaultAuthnProvider) Authenticate(
 	}
 
 	return &authnprovidercm.AuthnResult{
-		UserID:              authResponse.ID,
-		Token:               authResponse.ID,
+		UserID:              authenticatedUserID,
+		Token:               authenticatedUserID,
 		UserType:            userResult.Type,
 		OUID:                userResult.OUID,
 		AvailableAttributes: availableAttributes,

@@ -21,6 +21,7 @@ package provider
 import (
 	"time"
 
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/system/config"
 	systemhttp "github.com/asgardeo/thunder/internal/system/http"
 	"github.com/asgardeo/thunder/internal/system/log"
@@ -28,19 +29,25 @@ import (
 )
 
 // InitializeAuthnProvider initializes the authentication provider.
-func InitializeAuthnProvider(userSvc user.UserServiceInterface) AuthnProviderInterface {
+func InitializeAuthnProvider(
+	userSvc user.UserServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface,
+) AuthnProviderInterface {
 	authnProviderConfig := config.GetThunderRuntime().Config.AuthnProvider
 	switch authnProviderConfig.Type {
 	case "rest":
 		return initializeRestAuthnProvider()
 	default:
-		return initializeDefaultAuthnProvider(userSvc)
+		return initializeDefaultAuthnProvider(userSvc, passkeySvc)
 	}
 }
 
 // initializeDefaultAuthnProvider initializes the default authentication provider.
-func initializeDefaultAuthnProvider(userSvc user.UserServiceInterface) AuthnProviderInterface {
-	return newDefaultAuthnProvider(userSvc)
+func initializeDefaultAuthnProvider(
+	userSvc user.UserServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface,
+) AuthnProviderInterface {
+	return newDefaultAuthnProvider(userSvc, passkeySvc)
 }
 
 // initializeRestAuthnProvider initializes the REST authentication provider.

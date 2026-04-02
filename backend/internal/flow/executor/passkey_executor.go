@@ -320,8 +320,8 @@ func (p *passkeyAuthExecutor) validatePasskey(ctx *core.NodeContext, execResp *c
 	}
 
 	// Store authenticated user ID in runtime data
-	if authResp.ID != "" {
-		execResp.RuntimeData[userAttributeUserID] = authResp.ID
+	if authResp.UserID != "" {
+		execResp.RuntimeData[userAttributeUserID] = authResp.UserID
 	}
 
 	// Clear session token after successful verification

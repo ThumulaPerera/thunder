@@ -107,4 +107,3 @@ type AuthenticationFinishRequest struct {
 	UserHandle        string
 	SessionToken      string
 }
-

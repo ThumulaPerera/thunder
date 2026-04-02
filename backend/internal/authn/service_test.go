@@ -1915,10 +1915,10 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Suc
 	}
 	sessionToken := testSessionTkn
 
-	authResponseFromPasskey := &common.AuthenticationResponse{
-		ID:   testUserID,
-		Type: "person",
-		OUID: testOrgUnit,
+	authResultFromPasskey := &authnprovidercm.AuthnResult{
+		UserID:   testUserID,
+		UserType: "person",
+		OUID:     testOrgUnit,
 	}
 
 	suite.mockPasskeyService.On(
@@ -1932,7 +1932,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Suc
 				req.Signature == response.Signature &&
 				req.UserHandle == response.UserHandle &&
 				req.SessionToken == sessionToken
-		})).Return(authResponseFromPasskey, nil).Once()
+		})).Return(authResultFromPasskey, nil).Once()
 
 	// Mock assertion generation
 	mockAssertionResult := &assert.AssertionResult{
@@ -1974,11 +1974,10 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 	}
 	sessionToken := testSessionTkn
 
-	expectedResponse := &common.AuthenticationResponse{
-		ID:   testUserID,
-		Type: "person",
-		OUID: testOrgUnit,
-		// No Assertion when skipped
+	authResultFromPasskey := &authnprovidercm.AuthnResult{
+		UserID:   testUserID,
+		UserType: "person",
+		OUID:     testOrgUnit,
 	}
 
 	suite.mockPasskeyService.On(
@@ -1992,7 +1991,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 				req.Signature == response.Signature &&
 				req.UserHandle == response.UserHandle &&
 				req.SessionToken == sessionToken
-		})).Return(expectedResponse, nil).Once()
+		})).Return(authResultFromPasskey, nil).Once()
 
 	result, err := suite.service.FinishPasskeyAuthentication(
 		context.Background(), testCredentialID, testCredentialType, response, sessionToken, true, "")
@@ -2013,10 +2012,10 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 	sessionToken := testSessionTkn
 	existingAssertion := suite.createTestAssertion(testUserID)
 
-	authResponseFromPasskey := &common.AuthenticationResponse{
-		ID:   testUserID,
-		Type: "person",
-		OUID: testOrgUnit,
+	authResultFromPasskey := &authnprovidercm.AuthnResult{
+		UserID:   testUserID,
+		UserType: "person",
+		OUID:     testOrgUnit,
 	}
 
 	suite.mockPasskeyService.On(
@@ -2030,7 +2029,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 				req.Signature == response.Signature &&
 				req.UserHandle == response.UserHandle &&
 				req.SessionToken == sessionToken
-		})).Return(authResponseFromPasskey, nil).Once()
+		})).Return(authResultFromPasskey, nil).Once()
 
 	// Mock JWT verification for existing assertion
 	suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()

@@ -40,7 +40,6 @@ import (
 	"github.com/asgardeo/thunder/internal/notification"
 	"github.com/asgardeo/thunder/internal/system/jose/jwt"
 	"github.com/asgardeo/thunder/internal/system/middleware"
-	"github.com/asgardeo/thunder/internal/user"
 	"github.com/asgardeo/thunder/internal/userprovider"
 )
 
@@ -63,14 +62,14 @@ func Initialize(
 	mcpServer *mcp.Server,
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
-	userSvc user.UserServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 	otpSvc notification.OTPServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface,
 ) (AuthenticationServiceInterface, *AuthServiceRegistry) {
 	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc,
-		userSvc, userProvider, otpSvc, authnProvider, consentSvc)
+		userProvider, otpSvc, authnProvider, consentSvc, passkeySvc)
 	authnService := newAuthenticationService(
 		idpSvc,
 		jwtSvc,
@@ -99,11 +98,11 @@ func Initialize(
 func createAuthServiceRegistry(
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
-	userSvc user.UserServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 	otpSvc notification.OTPServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface,
 ) *AuthServiceRegistry {
 	return &AuthServiceRegistry{
 		CredentialsAuthnService: credentials.Initialize(authnProvider),
@@ -112,7 +111,7 @@ func createAuthServiceRegistry(
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),
 		GoogleOIDCAuthnService:  google.Initialize(idpSvc, userProvider, jwtSvc),
-		PasskeyService:          passkeyauthn.Initialize(passkey.Initialize(userSvc)),
+		PasskeyService:          passkeyauthn.Initialize(passkeySvc, authnProvider),
 		AuthAssertGenerator:     assert.Initialize(),
 		ConsentEnforcerService:  consent.Initialize(consentSvc, jwtSvc),
 	}
