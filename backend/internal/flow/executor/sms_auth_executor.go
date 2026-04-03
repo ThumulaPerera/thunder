@@ -25,9 +25,9 @@ import (
 	"strconv"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
-	"github.com/asgardeo/thunder/internal/notification"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/log"
 	"github.com/asgardeo/thunder/internal/system/observability"
@@ -47,7 +47,7 @@ type smsOTPAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
 	userProvider     userprovider.UserProviderInterface
-	otpService       notification.OTPServiceInterface
+	otpService       otp.OTPAuthnServiceInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
 }
@@ -58,7 +58,7 @@ var _ identifyingExecutorInterface = (*smsOTPAuthExecutor)(nil)
 // newSMSOTPAuthExecutor creates a new instance of SMSOTPAuthExecutor.
 func newSMSOTPAuthExecutor(
 	flowFactory core.FlowFactoryInterface,
-	otpService notification.OTPServiceInterface,
+	otpService otp.OTPAuthnServiceInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 ) *smsOTPAuthExecutor {
@@ -497,13 +497,7 @@ func (s *smsOTPAuthExecutor) generateAndSendOTP(mobileNumber string, ctx *core.N
 	}
 
 	// Send the OTP
-	sendOTPRequest := notifcommon.SendOTPDTO{
-		Recipient: mobileNumber,
-		SenderID:  senderID,
-		Channel:   string(notifcommon.ChannelTypeSMS),
-	}
-
-	sendResult, svcErr := s.otpService.SendOTP(ctx.Context, sendOTPRequest)
+	sessionToken, svcErr := s.otpService.SendOTP(ctx.Context, senderID, notifcommon.ChannelTypeSMS, mobileNumber)
 	if svcErr != nil {
 		return fmt.Errorf("failed to send OTP: %s", svcErr.ErrorDescription)
 	}
@@ -512,7 +506,7 @@ func (s *smsOTPAuthExecutor) generateAndSendOTP(mobileNumber string, ctx *core.N
 	if execResp.RuntimeData == nil {
 		execResp.RuntimeData = make(map[string]string)
 	}
-	execResp.RuntimeData["otpSessionToken"] = sendResult.SessionToken
+	execResp.RuntimeData["otpSessionToken"] = sessionToken
 	execResp.RuntimeData["attemptCount"] = strconv.Itoa(attemptCount + 1)
 
 	return nil
@@ -573,25 +567,16 @@ func (s *smsOTPAuthExecutor) validateOTP(ctx *core.NodeContext, execResp *common
 	}
 
 	// Use the OTP service to verify the OTP
-	verifyOTPRequest := notifcommon.VerifyOTPDTO{
-		SessionToken: sessionToken,
-		OTPCode:      providedOTP,
-	}
-
-	verifyResult, svcErr := s.otpService.VerifyOTP(ctx.Context, verifyOTPRequest)
+	svcErr := s.otpService.VerifyOTP(ctx.Context, sessionToken, providedOTP)
 	if svcErr != nil {
+		if svcErr.Code == otp.ErrorIncorrectOTP.Code {
+			logger.Debug("OTP verification failed", log.String("userID", userID))
+			execResp.Status = common.ExecFailure
+			execResp.FailureReason = failureReasonInvalidOTP
+			return nil
+		}
 		logger.Error("Failed to verify OTP", log.String("userID", userID), log.Any("serviceError", svcErr))
 		return fmt.Errorf("failed to verify OTP: %s", svcErr.ErrorDescription)
-	}
-
-	// Check verification result
-	if verifyResult.Status != notifcommon.OTPVerifyStatusVerified {
-		logger.Debug("OTP verification failed", log.String("userID", userID),
-			log.String("status", string(verifyResult.Status)))
-
-		execResp.Status = common.ExecFailure
-		execResp.FailureReason = failureReasonInvalidOTP
-		return nil
 	}
 
 	execResp.RuntimeData["otpSessionToken"] = ""

@@ -45,7 +45,8 @@ var supportedChannels = []notifcommon.ChannelType{notifcommon.ChannelTypeSMS}
 type OTPAuthnServiceInterface interface {
 	SendOTP(ctx context.Context, senderID string, channel notifcommon.ChannelType,
 		recipient string) (string, *serviceerror.ServiceError)
-	VerifyOTP(ctx context.Context, sessionToken, otp string) (*userprovider.User, *serviceerror.ServiceError)
+	VerifyOTP(ctx context.Context, sessionToken, otp string) *serviceerror.ServiceError
+	Authenticate(ctx context.Context, sessionToken, otp string) (*userprovider.User, *serviceerror.ServiceError)
 }
 
 // otpAuthnService is the default implementation of OTPAuthnServiceInterface.
@@ -91,8 +92,32 @@ func (s *otpAuthnService) SendOTP(ctx context.Context, senderID string, channel 
 	return result.SessionToken, nil
 }
 
-// VerifyOTP verifies the provided OTP against the session token and returns the authenticated user.
-func (s *otpAuthnService) VerifyOTP(ctx context.Context, sessionToken,
+// VerifyOTP verifies the provided OTP against the session token without resolving the user.
+func (s *otpAuthnService) VerifyOTP(ctx context.Context, sessionToken, otp string) *serviceerror.ServiceError {
+	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, loggerComponentName))
+	logger.Debug("Verifying OTP code")
+
+	if svcErr := s.validateOTPVerifyRequest(sessionToken, otp); svcErr != nil {
+		return svcErr
+	}
+
+	verifyData := notifcommon.VerifyOTPDTO{
+		SessionToken: sessionToken,
+		OTPCode:      otp,
+	}
+	result, svcErr := s.otpService.VerifyOTP(ctx, verifyData)
+	if svcErr != nil {
+		return s.handleOTPServiceError(svcErr, true, logger)
+	}
+
+	if result.Status != notifcommon.OTPVerifyStatusVerified {
+		return &ErrorIncorrectOTP
+	}
+	return nil
+}
+
+// Authenticate verifies the provided OTP against the session token and returns the authenticated user.
+func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
 	otp string) (*userprovider.User, *serviceerror.ServiceError) {
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, loggerComponentName))
 	logger.Debug("Verifying OTP for authentication")

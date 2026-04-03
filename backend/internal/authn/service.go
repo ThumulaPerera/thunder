@@ -209,7 +209,7 @@ func (as *authenticationService) VerifyOTP(ctx context.Context, sessionToken str
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Verifying OTP for authentication")
 
-	user, svcErr := as.otpService.VerifyOTP(ctx, sessionToken, otpCode)
+	user, svcErr := as.otpService.Authenticate(ctx, sessionToken, otpCode)
 	if svcErr != nil {
 		return nil, svcErr
 	}
