@@ -34,7 +34,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/google"
 	"github.com/asgardeo/thunder/internal/authn/oauth"
 	"github.com/asgardeo/thunder/internal/authn/oidc"
-	"github.com/asgardeo/thunder/internal/authn/otp"
+	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/idp"
@@ -88,7 +88,7 @@ type authenticationService struct {
 	jwtService             jwt.JWTServiceInterface
 	authAssertionGenerator assert.AuthAssertGeneratorInterface
 	credentialsService     credentials.CredentialsAuthnServiceInterface
-	otpService             otp.OTPAuthnServiceInterface
+	otpService             otpauthn.OTPAuthnInterface
 	oauthService           oauth.OAuthAuthnServiceInterface
 	oidcService            oidc.OIDCAuthnServiceInterface
 	googleService          google.GoogleOIDCAuthnServiceInterface
@@ -102,7 +102,7 @@ func newAuthenticationService(
 	jwtSvc jwt.JWTServiceInterface,
 	authAssertGen assert.AuthAssertGeneratorInterface,
 	credentialsAuthnSvc credentials.CredentialsAuthnServiceInterface,
-	otpAuthnSvc otp.OTPAuthnServiceInterface,
+	otpAuthnSvc otpauthn.OTPAuthnInterface,
 	oauthAuthnSvc oauth.OAuthAuthnServiceInterface,
 	oidcAuthnSvc oidc.OIDCAuthnServiceInterface,
 	googleAuthnSvc google.GoogleOIDCAuthnServiceInterface,

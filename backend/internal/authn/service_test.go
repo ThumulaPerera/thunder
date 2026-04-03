@@ -45,7 +45,7 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/authn/googlemock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/oauthmock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/oidcmock"
-	"github.com/asgardeo/thunder/tests/mocks/authn/otpmock"
+	"github.com/asgardeo/thunder/tests/mocks/authn/otpauthnmock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/passkeymock"
 	"github.com/asgardeo/thunder/tests/mocks/idp/idpmock"
 	"github.com/asgardeo/thunder/tests/mocks/jose/jwtmock"
@@ -74,7 +74,7 @@ type AuthenticationServiceTestSuite struct {
 	mockJWTService         *jwtmock.JWTServiceInterfaceMock
 	mockAssertGenerator    *assertmock.AuthAssertGeneratorInterfaceMock
 	mockCredentialsService *credentialsmock.CredentialsAuthnServiceInterfaceMock
-	mockOTPService         *otpmock.OTPAuthnServiceInterfaceMock
+	mockOTPService         *otpauthnmock.OTPAuthnInterfaceMock
 	mockOAuthService       *oauthmock.OAuthAuthnServiceInterfaceMock
 	mockOIDCService        *oidcmock.OIDCAuthnServiceInterfaceMock
 	mockGoogleService      *googlemock.GoogleOIDCAuthnServiceInterfaceMock
@@ -124,7 +124,7 @@ func (suite *AuthenticationServiceTestSuite) SetupTest() {
 	suite.mockJWTService = jwtmock.NewJWTServiceInterfaceMock(suite.T())
 	suite.mockAssertGenerator = &assertmock.AuthAssertGeneratorInterfaceMock{}
 	suite.mockCredentialsService = &credentialsmock.CredentialsAuthnServiceInterfaceMock{}
-	suite.mockOTPService = &otpmock.OTPAuthnServiceInterfaceMock{}
+	suite.mockOTPService = &otpauthnmock.OTPAuthnInterfaceMock{}
 	suite.mockOAuthService = &oauthmock.OAuthAuthnServiceInterfaceMock{}
 	suite.mockOIDCService = &oidcmock.OIDCAuthnServiceInterfaceMock{}
 	suite.mockGoogleService = &googlemock.GoogleOIDCAuthnServiceInterfaceMock{}

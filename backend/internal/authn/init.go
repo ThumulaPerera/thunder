@@ -31,6 +31,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oauth"
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
+	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	"github.com/asgardeo/thunder/internal/authn/reactsdk"
@@ -46,7 +47,7 @@ import (
 // AuthServiceRegistry holds references to all authentication services.
 type AuthServiceRegistry struct {
 	CredentialsAuthnService credentials.CredentialsAuthnServiceInterface
-	OTPAuthnService         otp.OTPAuthnServiceInterface
+	OTPAuthnService         otpauthn.OTPAuthnInterface
 	OAuthAuthnService       oauth.OAuthAuthnServiceInterface
 	OIDCAuthnService        oidc.OIDCAuthnServiceInterface
 	GithubOAuthAuthnService github.GithubOAuthAuthnServiceInterface
@@ -106,7 +107,7 @@ func createAuthServiceRegistry(
 ) *AuthServiceRegistry {
 	return &AuthServiceRegistry{
 		CredentialsAuthnService: credentials.Initialize(authnProvider),
-		OTPAuthnService:         otp.Initialize(otpSvc, userProvider),
+		OTPAuthnService:         otpauthn.Initialize(otp.Initialize(otpSvc, userProvider)),
 		OAuthAuthnService:       oauth.Initialize(idpSvc, userProvider),
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),

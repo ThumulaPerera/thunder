@@ -26,6 +26,7 @@ import (
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/otp"
+	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -47,7 +48,7 @@ type smsOTPAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
 	userProvider     userprovider.UserProviderInterface
-	otpService       otp.OTPAuthnServiceInterface
+	otpService       otpauthn.OTPAuthnInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
 }
@@ -58,7 +59,7 @@ var _ identifyingExecutorInterface = (*smsOTPAuthExecutor)(nil)
 // newSMSOTPAuthExecutor creates a new instance of SMSOTPAuthExecutor.
 func newSMSOTPAuthExecutor(
 	flowFactory core.FlowFactoryInterface,
-	otpService otp.OTPAuthnServiceInterface,
+	otpService otpauthn.OTPAuthnInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 ) *smsOTPAuthExecutor {

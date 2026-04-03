@@ -30,7 +30,7 @@ import (
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/userprovider"
-	"github.com/asgardeo/thunder/tests/mocks/authn/otpmock"
+	"github.com/asgardeo/thunder/tests/mocks/authn/otpauthnmock"
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
 	"github.com/asgardeo/thunder/tests/mocks/observability/observabilitymock"
 	"github.com/asgardeo/thunder/tests/mocks/userprovidermock"
@@ -38,7 +38,7 @@ import (
 
 type SMSAuthExecutorTestSuite struct {
 	suite.Suite
-	mockOTPService    *otpmock.OTPAuthnServiceInterfaceMock
+	mockOTPService    *otpauthnmock.OTPAuthnInterfaceMock
 	mockFlowFactory   *coremock.FlowFactoryInterfaceMock
 	mockObservability *observabilitymock.ObservabilityServiceInterfaceMock
 	mockUserProvider  *userprovidermock.UserProviderInterfaceMock
@@ -50,7 +50,7 @@ func TestSMSAuthExecutorSuite(t *testing.T) {
 }
 
 func (suite *SMSAuthExecutorTestSuite) SetupTest() {
-	suite.mockOTPService = otpmock.NewOTPAuthnServiceInterfaceMock(suite.T())
+	suite.mockOTPService = otpauthnmock.NewOTPAuthnInterfaceMock(suite.T())
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
 	suite.mockObservability = observabilitymock.NewObservabilityServiceInterfaceMock(suite.T())
 	suite.mockUserProvider = userprovidermock.NewUserProviderInterfaceMock(suite.T())
