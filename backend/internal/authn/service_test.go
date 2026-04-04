@@ -498,7 +498,7 @@ func (suite *AuthenticationServiceTestSuite) TestSendOTPServiceError() {
 func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 	sessionToken := testSessionTkn
 	otpCode := "123456"
-	testUser := &userprovider.User{
+	testAuthnResult := &authnprovidercm.AuthnResult{
 		UserID:   testUserID,
 		UserType: "person",
 		OUID:     testOrgUnit,
@@ -519,7 +519,7 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			expectAssertion:   false,
 			setupMocks: func() {
 				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode).
-					Return(testUser, nil).Once()
+					Return(testAuthnResult, nil).Once()
 			},
 			validateAssertion: func(result *common.AuthenticationResponse) {
 				suite.Empty(result.Assertion)
@@ -532,7 +532,7 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			expectAssertion:   true,
 			setupMocks: func() {
 				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode).
-					Return(testUser, nil).Once()
+					Return(testAuthnResult, nil).Once()
 				suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 					&assert.AssertionResult{
 						Context: &assert.AssuranceContext{
@@ -559,7 +559,7 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			setupMocks: func() {
 				existingAssertion := suite.createTestAssertion(testUserID)
 				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode).
-					Return(testUser, nil).Once()
+					Return(testAuthnResult, nil).Once()
 				suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()
 				suite.mockAssertGenerator.On("UpdateAssertion", mock.Anything, mock.Anything).Return(
 					&assert.AssertionResult{
@@ -1583,13 +1583,13 @@ func (suite *AuthenticationServiceTestSuite) TestExtractClaimsFromAssertionUnmar
 func (suite *AuthenticationServiceTestSuite) TestVerifyOTPJWTGenerationError() {
 	sessionToken := testSessionTkn
 	otpCode := "123456"
-	testUser := &userprovider.User{
+	testAuthnResult := &authnprovidercm.AuthnResult{
 		UserID:   testUserID,
 		UserType: "person",
 		OUID:     testOrgUnit,
 	}
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode).Return(testUser, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode).Return(testAuthnResult, nil)
 	suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 		&assert.AssertionResult{
 			Context: &assert.AssuranceContext{

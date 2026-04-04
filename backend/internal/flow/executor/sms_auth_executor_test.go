@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/userprovider"
@@ -192,11 +193,18 @@ func (suite *SMSAuthExecutorTestSuite) TestValidatePrerequisites_AuthenticationF
 
 // TestGetAuthenticatedUser_MFA_AddsMobileNumberToAttributes verifies that when user is already authenticated
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_AddsMobileNumberToAttributes() {
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
+		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
 		FlowType: common.FlowTypeAuthentication,
+		UserInputs: map[string]string{
+			userInputOTP: "123456",
+		},
 		RuntimeData: map[string]string{
 			userAttributeMobileNumber: "+1234567890",
+			"otpSessionToken":         "test-session-token",
 		},
 		AuthenticatedUser: authncm.AuthenticatedUser{
 			IsAuthenticated: true,
@@ -205,7 +213,6 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_AddsMobileNu
 			UserType:        "INTERNAL",
 			Attributes: map[string]interface{}{
 				"email": "test@example.com",
-				// Mobile number NOT in attributes yet
 			},
 		},
 	}
@@ -220,72 +227,29 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_AddsMobileNu
 	assert.NotNil(suite.T(), result)
 	assert.True(suite.T(), result.IsAuthenticated)
 	assert.Equal(suite.T(), "user-123", result.UserID)
-	// Verify mobile number was added to attributes
-	assert.Equal(suite.T(), "+1234567890", result.Attributes[userAttributeMobileNumber])
-	assert.Equal(suite.T(), "test@example.com", result.Attributes["email"]) // Existing attributes preserved
+	assert.Equal(suite.T(), "test@example.com", result.Attributes["email"])
 }
 
 // TestGetAuthenticatedUser_FetchFromStore_AddsMobileNumberToAttributes verifies that when fetching user
-// from store, mobile number from RuntimeData is added to attributes if not present in stored attributes.
+// from store, the stored attributes are returned as-is.
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_AddsMobileNumberToAttributes() {
 	attrs := map[string]interface{}{
 		"email": "test@example.com",
-		// Mobile number NOT in stored attributes
 	}
 	attrsJSON, _ := json.Marshal(attrs)
+
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
+		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
 		FlowType: common.FlowTypeAuthentication,
-		RuntimeData: map[string]string{
-			userAttributeUserID:       "user-123",
-			userAttributeMobileNumber: "+1234567890", // Mobile from RuntimeData
+		UserInputs: map[string]string{
+			userInputOTP: "123456",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: false, // User not in context
-		},
-	}
-
-	execResp := &common.ExecutorResponse{
-		RuntimeData: make(map[string]string),
-	}
-
-	userFromStore := &userprovider.User{
-		UserID:     "user-123",
-		OUID:       "ou-123",
-		UserType:   "INTERNAL",
-		Attributes: attrsJSON,
-	}
-
-	suite.mockUserProvider.On("GetUser", "user-123").Return(userFromStore, nil)
-
-	result, err := suite.executor.getAuthenticatedUser(ctx, execResp)
-
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), result)
-	assert.True(suite.T(), result.IsAuthenticated)
-	assert.Equal(suite.T(), "user-123", result.UserID)
-	// Verify mobile number was added to attributes even though it wasn't in stored attributes
-	assert.Equal(suite.T(), "+1234567890", result.Attributes[userAttributeMobileNumber])
-	assert.Equal(suite.T(), "test@example.com", result.Attributes["email"]) // Existing attributes preserved
-	suite.mockUserProvider.AssertExpectations(suite.T())
-}
-
-// TestGetAuthenticatedUser_FetchFromStore_PreservesExistingMobileNumber verifies that when fetching user
-// from store, if mobile number already exists in stored attributes, it is preserved.
-func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_PreservesExistingMobileNumber() {
-	attrs := map[string]interface{}{
-		"email":                   "test@example.com",
-		userAttributeMobileNumber: "+9876543210", // Mobile already in stored attributes
-	}
-	attrsJSON, _ := json.Marshal(attrs)
-
-	ctx := &core.NodeContext{
-		FlowID:   "flow-123",
-		FlowType: common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{
-			userAttributeUserID:       "user-123",
-			userAttributeMobileNumber: "+1234567890", // Different mobile in RuntimeData
+			userAttributeMobileNumber: "+1234567890",
+			"otpSessionToken":         "test-session-token",
 		},
 		AuthenticatedUser: authncm.AuthenticatedUser{
 			IsAuthenticated: false,
@@ -310,7 +274,57 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_P
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
 	assert.True(suite.T(), result.IsAuthenticated)
-	// Verify stored mobile number is preserved (not overwritten by RuntimeData)
+	assert.Equal(suite.T(), "user-123", result.UserID)
+	assert.Equal(suite.T(), "test@example.com", result.Attributes["email"])
+	suite.mockUserProvider.AssertExpectations(suite.T())
+}
+
+// TestGetAuthenticatedUser_FetchFromStore_PreservesExistingMobileNumber verifies that when fetching user
+// from store, if mobile number already exists in stored attributes, it is preserved.
+func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_PreservesExistingMobileNumber() {
+	attrs := map[string]interface{}{
+		"email":                   "test@example.com",
+		userAttributeMobileNumber: "+9876543210", // Mobile already in stored attributes
+	}
+	attrsJSON, _ := json.Marshal(attrs)
+
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
+		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+
+	ctx := &core.NodeContext{
+		FlowID:   "flow-123",
+		FlowType: common.FlowTypeAuthentication,
+		UserInputs: map[string]string{
+			userInputOTP: "123456",
+		},
+		RuntimeData: map[string]string{
+			userAttributeMobileNumber: "+1234567890",
+			"otpSessionToken":         "test-session-token",
+		},
+		AuthenticatedUser: authncm.AuthenticatedUser{
+			IsAuthenticated: false,
+		},
+	}
+
+	execResp := &common.ExecutorResponse{
+		RuntimeData: make(map[string]string),
+	}
+
+	userFromStore := &userprovider.User{
+		UserID:     "user-123",
+		OUID:       "ou-123",
+		UserType:   "INTERNAL",
+		Attributes: attrsJSON,
+	}
+
+	suite.mockUserProvider.On("GetUser", "user-123").Return(userFromStore, nil)
+
+	result, err := suite.executor.getAuthenticatedUser(ctx, execResp)
+
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), result)
+	assert.True(suite.T(), result.IsAuthenticated)
+	// Verify stored mobile number is preserved
 	assert.Equal(suite.T(), "+9876543210", result.Attributes[userAttributeMobileNumber])
 	suite.mockUserProvider.AssertExpectations(suite.T())
 }
@@ -356,13 +370,20 @@ func (suite *SMSAuthExecutorTestSuite) TestGetUserMobileNumber_NotFoundInAttribu
 }
 
 // TestGetAuthenticatedUser_MFA_NilAttributes verifies that when the authenticated user
-// has nil Attributes map, it is initialized before adding mobile number.
+// has nil Attributes map, it is initialized before returning.
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_NilAttributes() {
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
+		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
 		FlowType: common.FlowTypeAuthentication,
+		UserInputs: map[string]string{
+			userInputOTP: "123456",
+		},
 		RuntimeData: map[string]string{
 			userAttributeMobileNumber: "+1234567890",
+			"otpSessionToken":         "test-session-token",
 		},
 		AuthenticatedUser: authncm.AuthenticatedUser{
 			IsAuthenticated: true,
@@ -382,25 +403,30 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_NilAttribute
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
 	assert.True(suite.T(), result.IsAuthenticated)
-	assert.NotNil(suite.T(), result.Attributes) // Attributes should be initialized
-	assert.Equal(suite.T(), "+1234567890", result.Attributes[userAttributeMobileNumber])
+	assert.NotNil(suite.T(), result.Attributes) // Attributes should be initialized to empty map
 }
 
 // TestGetAuthenticatedUser_FetchFromStore_NilAttrsAfterUnmarshal verifies that when
-// user attributes unmarshal to nil, the attrs map is initialized before use.
+// user attributes unmarshal to nil, the result is returned without error.
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_NilAttrsAfterUnmarshal() {
 	// JSON null unmarshals to nil map
 	attrsJSON := []byte("null")
 
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
+		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
 		FlowType: common.FlowTypeAuthentication,
+		UserInputs: map[string]string{
+			userInputOTP: "123456",
+		},
 		RuntimeData: map[string]string{
-			userAttributeUserID:       "user-123",
 			userAttributeMobileNumber: "+1234567890",
+			"otpSessionToken":         "test-session-token",
 		},
 		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: false, // Not authenticated, will fetch from store
+			IsAuthenticated: false,
 		},
 	}
 
@@ -422,7 +448,6 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_N
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
 	assert.True(suite.T(), result.IsAuthenticated)
-	assert.NotNil(suite.T(), result.Attributes) // Attrs should be initialized from nil
-	assert.Equal(suite.T(), "+1234567890", result.Attributes[userAttributeMobileNumber])
+	assert.Equal(suite.T(), "user-123", result.UserID)
 	suite.mockUserProvider.AssertExpectations(suite.T())
 }

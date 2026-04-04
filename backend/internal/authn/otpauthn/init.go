@@ -18,9 +18,15 @@
 
 package otpauthn
 
-import "github.com/asgardeo/thunder/internal/authn/otp"
+import (
+	"github.com/asgardeo/thunder/internal/authn/otp"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
+)
 
 // Initialize initializes the OTP authentication proxy service.
-func Initialize(otpSvc otp.OTPAuthnServiceInterface) OTPAuthnInterface {
-	return newOTPAuthnService(otpSvc)
+func Initialize(
+	otpSvc otp.OTPAuthnServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
+) OTPAuthnInterface {
+	return newOTPAuthnService(otpSvc, authnProvider)
 }

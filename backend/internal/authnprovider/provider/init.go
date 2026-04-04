@@ -21,6 +21,7 @@ package provider
 import (
 	"time"
 
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/system/config"
 	systemhttp "github.com/asgardeo/thunder/internal/system/http"
@@ -32,13 +33,14 @@ import (
 func InitializeAuthnProvider(
 	userSvc user.UserServiceInterface,
 	passkeySvc passkey.PasskeyServiceInterface,
+	otpSvc otp.OTPAuthnServiceInterface,
 ) AuthnProviderInterface {
 	authnProviderConfig := config.GetThunderRuntime().Config.AuthnProvider
 	switch authnProviderConfig.Type {
 	case "rest":
 		return initializeRestAuthnProvider()
 	default:
-		return initializeDefaultAuthnProvider(userSvc, passkeySvc)
+		return initializeDefaultAuthnProvider(userSvc, passkeySvc, otpSvc)
 	}
 }
 
@@ -46,8 +48,9 @@ func InitializeAuthnProvider(
 func initializeDefaultAuthnProvider(
 	userSvc user.UserServiceInterface,
 	passkeySvc passkey.PasskeyServiceInterface,
+	otpSvc otp.OTPAuthnServiceInterface,
 ) AuthnProviderInterface {
-	return newDefaultAuthnProvider(userSvc, passkeySvc)
+	return newDefaultAuthnProvider(userSvc, passkeySvc, otpSvc)
 }
 
 // initializeRestAuthnProvider initializes the REST authentication provider.

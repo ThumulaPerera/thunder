@@ -209,20 +209,26 @@ func (as *authenticationService) VerifyOTP(ctx context.Context, sessionToken str
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Verifying OTP for authentication")
 
-	user, svcErr := as.otpService.Authenticate(ctx, sessionToken, otpCode)
+	authUser, svcErr := as.otpService.Authenticate(ctx, sessionToken, otpCode)
 	if svcErr != nil {
 		return nil, svcErr
 	}
 
 	authResponse := &common.AuthenticationResponse{
-		ID:   user.UserID,
-		Type: user.UserType,
-		OUID: user.OUID,
+		ID:   authUser.UserID,
+		Type: authUser.UserType,
+		OUID: authUser.OUID,
 	}
 
 	// Generate assertion if not skipped
 	if !skipAssertion {
-		svcErr = as.validateAndAppendAuthAssertion(authResponse, user, common.AuthenticatorSMSOTP,
+		userForAssertion := &userprovider.User{
+			UserID:     authUser.UserID,
+			UserType:   authUser.UserType,
+			OUID:       authUser.OUID,
+			Attributes: nil, // Attributes not needed for assertion generation from passkey finish
+		}
+		svcErr = as.validateAndAppendAuthAssertion(authResponse, userForAssertion, common.AuthenticatorSMSOTP,
 			existingAssertion, logger)
 		if svcErr != nil {
 			return nil, svcErr

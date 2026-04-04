@@ -19,6 +19,7 @@
 package manager
 
 import (
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/authnprovider/provider"
 	"github.com/asgardeo/thunder/internal/user"
@@ -26,7 +27,7 @@ import (
 
 // InitializeAuthnProviderManager initializes and returns an AuthnProviderManagerInterface.
 func InitializeAuthnProviderManager(userSvc user.UserServiceInterface,
-	passkeySvc passkey.PasskeyServiceInterface) AuthnProviderManagerInterface {
-	p := provider.InitializeAuthnProvider(userSvc, passkeySvc)
+	passkeySvc passkey.PasskeyServiceInterface, otpSvc otp.OTPAuthnServiceInterface) AuthnProviderManagerInterface {
+	p := provider.InitializeAuthnProvider(userSvc, passkeySvc, otpSvc)
 	return newAuthnProviderManager(p)
 }

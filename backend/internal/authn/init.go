@@ -38,7 +38,6 @@ import (
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	consentmgt "github.com/asgardeo/thunder/internal/consent"
 	"github.com/asgardeo/thunder/internal/idp"
-	"github.com/asgardeo/thunder/internal/notification"
 	"github.com/asgardeo/thunder/internal/system/jose/jwt"
 	"github.com/asgardeo/thunder/internal/system/middleware"
 	"github.com/asgardeo/thunder/internal/userprovider"
@@ -64,13 +63,13 @@ func Initialize(
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
 	userProvider userprovider.UserProviderInterface,
-	otpSvc notification.OTPServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
 	passkeySvc passkey.PasskeyServiceInterface,
+	otpSvc otp.OTPAuthnServiceInterface,
 ) (AuthenticationServiceInterface, *AuthServiceRegistry) {
 	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc,
-		userProvider, otpSvc, authnProvider, consentSvc, passkeySvc)
+		userProvider, authnProvider, consentSvc, passkeySvc, otpSvc)
 	authnService := newAuthenticationService(
 		idpSvc,
 		jwtSvc,
@@ -100,14 +99,14 @@ func createAuthServiceRegistry(
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
 	userProvider userprovider.UserProviderInterface,
-	otpSvc notification.OTPServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
 	passkeySvc passkey.PasskeyServiceInterface,
+	otpSvc otp.OTPAuthnServiceInterface,
 ) *AuthServiceRegistry {
 	return &AuthServiceRegistry{
 		CredentialsAuthnService: credentials.Initialize(authnProvider),
-		OTPAuthnService:         otpauthn.Initialize(otp.Initialize(otpSvc, userProvider)),
+		OTPAuthnService:         otpauthn.Initialize(otpSvc, authnProvider),
 		OAuthAuthnService:       oauth.Initialize(idpSvc, userProvider),
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),

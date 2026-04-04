@@ -23,6 +23,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -32,14 +33,16 @@ import (
 type defaultAuthnProvider struct {
 	userSvc        user.UserServiceInterface
 	passkeyService passkey.PasskeyServiceInterface
+	otpService     otp.OTPAuthnServiceInterface
 }
 
 // newDefaultAuthnProvider creates a new internal user authn provider.
 func newDefaultAuthnProvider(userSvc user.UserServiceInterface,
-	passkeyService passkey.PasskeyServiceInterface) AuthnProviderInterface {
+	passkeyService passkey.PasskeyServiceInterface, otpService otp.OTPAuthnServiceInterface) AuthnProviderInterface {
 	return &defaultAuthnProvider{
 		userSvc:        userSvc,
 		passkeyService: passkeyService,
+		otpService:     otpService,
 	}
 }
 
@@ -66,6 +69,24 @@ func (p *defaultAuthnProvider) Authenticate(
 				authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
 		}
 		authenticatedUserID = authResponse.ID
+	} else if otpCredential, ok := credentials["otp"]; ok {
+		otpCredential := otpCredential.(map[string]interface{})
+		sessionToken := otpCredential["sessionToken"].(string)
+		otpValue := otpCredential["otp"].(string)
+		authResponse, authErr := p.otpService.Authenticate(ctx, sessionToken, otpValue)
+		if authErr != nil {
+			if authErr.Type == serviceerror.ClientErrorType {
+				if authErr.Code == otp.ErrorIncorrectOTP.Code {
+					return nil, authnprovidercm.NewError(
+						authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+				}
+				return nil, authnprovidercm.NewError(
+					authnprovidercm.ErrorCodeInvalidRequest, authErr.Error, authErr.ErrorDescription)
+			}
+			return nil, authnprovidercm.NewError(
+				authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		}
+		authenticatedUserID = authResponse.UserID
 	} else {
 		authResponse, authErr := p.userSvc.AuthenticateUser(ctx, identifiers, credentials)
 		if authErr != nil {

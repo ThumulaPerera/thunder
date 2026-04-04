@@ -39,6 +39,7 @@ const (
 	ErrorCodeUserNotFound         ErrorCode = "AUP-0003"
 	ErrorCodeInvalidToken         ErrorCode = "AUP-0004"
 	ErrorCodeNotImplemented       ErrorCode = "AUP-0005"
+	ErrorCodeInvalidRequest       ErrorCode = "AUP-0006"
 )
 
 // NewError creates a new authentication provider error.

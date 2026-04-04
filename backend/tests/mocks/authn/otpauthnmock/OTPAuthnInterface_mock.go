@@ -7,9 +7,9 @@ package otpauthnmock
 import (
 	"context"
 
-	"github.com/asgardeo/thunder/internal/notification/common"
+	"github.com/asgardeo/thunder/internal/authnprovider/common"
+	common0 "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
-	"github.com/asgardeo/thunder/internal/userprovider"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,23 +41,23 @@ func (_m *OTPAuthnInterfaceMock) EXPECT() *OTPAuthnInterfaceMock_Expecter {
 }
 
 // Authenticate provides a mock function for the type OTPAuthnInterfaceMock
-func (_mock *OTPAuthnInterfaceMock) Authenticate(ctx context.Context, sessionToken string, otp string) (*userprovider.User, *serviceerror.ServiceError) {
+func (_mock *OTPAuthnInterfaceMock) Authenticate(ctx context.Context, sessionToken string, otp string) (*common.AuthnResult, *serviceerror.ServiceError) {
 	ret := _mock.Called(ctx, sessionToken, otp)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Authenticate")
 	}
 
-	var r0 *userprovider.User
+	var r0 *common.AuthnResult
 	var r1 *serviceerror.ServiceError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*userprovider.User, *serviceerror.ServiceError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*common.AuthnResult, *serviceerror.ServiceError)); ok {
 		return returnFunc(ctx, sessionToken, otp)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *userprovider.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *common.AuthnResult); ok {
 		r0 = returnFunc(ctx, sessionToken, otp)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*userprovider.User)
+			r0 = ret.Get(0).(*common.AuthnResult)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *serviceerror.ServiceError); ok {
@@ -106,18 +106,18 @@ func (_c *OTPAuthnInterfaceMock_Authenticate_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *OTPAuthnInterfaceMock_Authenticate_Call) Return(user *userprovider.User, serviceError *serviceerror.ServiceError) *OTPAuthnInterfaceMock_Authenticate_Call {
-	_c.Call.Return(user, serviceError)
+func (_c *OTPAuthnInterfaceMock_Authenticate_Call) Return(authnResult *common.AuthnResult, serviceError *serviceerror.ServiceError) *OTPAuthnInterfaceMock_Authenticate_Call {
+	_c.Call.Return(authnResult, serviceError)
 	return _c
 }
 
-func (_c *OTPAuthnInterfaceMock_Authenticate_Call) RunAndReturn(run func(ctx context.Context, sessionToken string, otp string) (*userprovider.User, *serviceerror.ServiceError)) *OTPAuthnInterfaceMock_Authenticate_Call {
+func (_c *OTPAuthnInterfaceMock_Authenticate_Call) RunAndReturn(run func(ctx context.Context, sessionToken string, otp string) (*common.AuthnResult, *serviceerror.ServiceError)) *OTPAuthnInterfaceMock_Authenticate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SendOTP provides a mock function for the type OTPAuthnInterfaceMock
-func (_mock *OTPAuthnInterfaceMock) SendOTP(ctx context.Context, senderID string, channel common.ChannelType, recipient string) (string, *serviceerror.ServiceError) {
+func (_mock *OTPAuthnInterfaceMock) SendOTP(ctx context.Context, senderID string, channel common0.ChannelType, recipient string) (string, *serviceerror.ServiceError) {
 	ret := _mock.Called(ctx, senderID, channel, recipient)
 
 	if len(ret) == 0 {
@@ -126,15 +126,15 @@ func (_mock *OTPAuthnInterfaceMock) SendOTP(ctx context.Context, senderID string
 
 	var r0 string
 	var r1 *serviceerror.ServiceError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, common.ChannelType, string) (string, *serviceerror.ServiceError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, common0.ChannelType, string) (string, *serviceerror.ServiceError)); ok {
 		return returnFunc(ctx, senderID, channel, recipient)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, common.ChannelType, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, common0.ChannelType, string) string); ok {
 		r0 = returnFunc(ctx, senderID, channel, recipient)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, common.ChannelType, string) *serviceerror.ServiceError); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, common0.ChannelType, string) *serviceerror.ServiceError); ok {
 		r1 = returnFunc(ctx, senderID, channel, recipient)
 	} else {
 		if ret.Get(1) != nil {
@@ -152,13 +152,13 @@ type OTPAuthnInterfaceMock_SendOTP_Call struct {
 // SendOTP is a helper method to define mock.On call
 //   - ctx context.Context
 //   - senderID string
-//   - channel common.ChannelType
+//   - channel common0.ChannelType
 //   - recipient string
 func (_e *OTPAuthnInterfaceMock_Expecter) SendOTP(ctx interface{}, senderID interface{}, channel interface{}, recipient interface{}) *OTPAuthnInterfaceMock_SendOTP_Call {
 	return &OTPAuthnInterfaceMock_SendOTP_Call{Call: _e.mock.On("SendOTP", ctx, senderID, channel, recipient)}
 }
 
-func (_c *OTPAuthnInterfaceMock_SendOTP_Call) Run(run func(ctx context.Context, senderID string, channel common.ChannelType, recipient string)) *OTPAuthnInterfaceMock_SendOTP_Call {
+func (_c *OTPAuthnInterfaceMock_SendOTP_Call) Run(run func(ctx context.Context, senderID string, channel common0.ChannelType, recipient string)) *OTPAuthnInterfaceMock_SendOTP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -168,9 +168,9 @@ func (_c *OTPAuthnInterfaceMock_SendOTP_Call) Run(run func(ctx context.Context, 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 common.ChannelType
+		var arg2 common0.ChannelType
 		if args[2] != nil {
-			arg2 = args[2].(common.ChannelType)
+			arg2 = args[2].(common0.ChannelType)
 		}
 		var arg3 string
 		if args[3] != nil {
@@ -191,7 +191,7 @@ func (_c *OTPAuthnInterfaceMock_SendOTP_Call) Return(s string, serviceError *ser
 	return _c
 }
 
-func (_c *OTPAuthnInterfaceMock_SendOTP_Call) RunAndReturn(run func(ctx context.Context, senderID string, channel common.ChannelType, recipient string) (string, *serviceerror.ServiceError)) *OTPAuthnInterfaceMock_SendOTP_Call {
+func (_c *OTPAuthnInterfaceMock_SendOTP_Call) RunAndReturn(run func(ctx context.Context, senderID string, channel common0.ChannelType, recipient string) (string, *serviceerror.ServiceError)) *OTPAuthnInterfaceMock_SendOTP_Call {
 	_c.Call.Return(run)
 	return _c
 }

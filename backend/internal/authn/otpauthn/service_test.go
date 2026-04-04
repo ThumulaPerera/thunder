@@ -22,18 +22,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
-	"github.com/asgardeo/thunder/internal/userprovider"
 	"github.com/asgardeo/thunder/tests/mocks/authn/otpmock"
+	"github.com/asgardeo/thunder/tests/mocks/authnprovider/managermock"
 )
 
 type OTPAuthnServiceTestSuite struct {
 	suite.Suite
-	mockOTPService *otpmock.OTPAuthnServiceInterfaceMock
-	service        OTPAuthnInterface
+	mockOTPService    *otpmock.OTPAuthnServiceInterfaceMock
+	mockAuthnProvider *managermock.AuthnProviderManagerInterfaceMock
+	service           OTPAuthnInterface
 }
 
 func TestOTPAuthnServiceTestSuite(t *testing.T) {
@@ -42,7 +45,8 @@ func TestOTPAuthnServiceTestSuite(t *testing.T) {
 
 func (suite *OTPAuthnServiceTestSuite) SetupTest() {
 	suite.mockOTPService = otpmock.NewOTPAuthnServiceInterfaceMock(suite.T())
-	suite.service = newOTPAuthnService(suite.mockOTPService)
+	suite.mockAuthnProvider = managermock.NewAuthnProviderManagerInterfaceMock(suite.T())
+	suite.service = newOTPAuthnService(suite.mockOTPService, suite.mockAuthnProvider)
 }
 
 func (suite *OTPAuthnServiceTestSuite) TestSendOTP_DelegatesToUnderlyingService() {
@@ -106,36 +110,39 @@ func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_ReturnsErrorFromUnderlyingS
 	suite.mockOTPService.AssertExpectations(suite.T())
 }
 
-func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DelegatesToUnderlyingService() {
+func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DelegatesToAuthnProvider() {
 	ctx := context.Background()
-	expectedUser := &userprovider.User{
-		UserID: "user-123",
+	expectedResult := &authnprovidercm.AuthnResult{
+		UserID:   "user-123",
+		UserType: "person",
+		OUID:     "ou-123",
 	}
 
-	suite.mockOTPService.On("Authenticate", ctx, "token123", "123456").
-		Return(expectedUser, (*serviceerror.ServiceError)(nil))
+	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
+		Return(expectedResult, (*authnprovidercm.AuthnProviderError)(nil))
 
-	user, svcErr := suite.service.Authenticate(ctx, "token123", "123456")
+	result, svcErr := suite.service.Authenticate(ctx, "token123", "123456")
 
 	suite.Nil(svcErr)
-	suite.Equal(expectedUser, user)
-	suite.mockOTPService.AssertExpectations(suite.T())
+	suite.Equal(expectedResult, result)
+	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
-func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromUnderlyingService() {
+func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromAuthnProvider() {
 	ctx := context.Background()
-	expectedErr := &serviceerror.ServiceError{
-		Type:  serviceerror.ClientErrorType,
-		Code:  "AUTHN-OTP-1006",
-		Error: "Incorrect OTP",
-	}
+	providerErr := authnprovidercm.NewError(
+		authnprovidercm.ErrorCodeAuthenticationFailed,
+		"Incorrect OTP",
+		"The provided OTP is incorrect",
+	)
 
-	suite.mockOTPService.On("Authenticate", ctx, "token123", "wrong").
-		Return((*userprovider.User)(nil), expectedErr)
+	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
+		Return((*authnprovidercm.AuthnResult)(nil), providerErr)
 
-	user, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
 
-	suite.Equal(expectedErr, svcErr)
-	suite.Nil(user)
-	suite.mockOTPService.AssertExpectations(suite.T())
+	suite.NotNil(svcErr)
+	suite.Nil(result)
+	suite.Equal(string(authnprovidercm.ErrorCodeAuthenticationFailed), svcErr.Code)
+	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }

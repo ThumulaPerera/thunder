@@ -23,9 +23,10 @@ import (
 	"context"
 
 	"github.com/asgardeo/thunder/internal/authn/otp"
+	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
-	"github.com/asgardeo/thunder/internal/userprovider"
 )
 
 // OTPAuthnInterface defines the interface for the OTP authentication proxy service.
@@ -33,17 +34,22 @@ type OTPAuthnInterface interface {
 	SendOTP(ctx context.Context, senderID string, channel notifcommon.ChannelType,
 		recipient string) (string, *serviceerror.ServiceError)
 	VerifyOTP(ctx context.Context, sessionToken, otp string) *serviceerror.ServiceError
-	Authenticate(ctx context.Context, sessionToken, otp string) (*userprovider.User, *serviceerror.ServiceError)
+	Authenticate(ctx context.Context, sessionToken, otp string) (*authnprovidercm.AuthnResult,
+		*serviceerror.ServiceError)
 }
 
 // otpAuthnService is the proxy implementation of OTPAuthnInterface.
 type otpAuthnService struct {
-	otpService otp.OTPAuthnServiceInterface
+	otpService    otp.OTPAuthnServiceInterface
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface
 }
 
 // newOTPAuthnService creates a new instance of otpAuthnService.
-func newOTPAuthnService(otpSvc otp.OTPAuthnServiceInterface) OTPAuthnInterface {
-	return &otpAuthnService{otpService: otpSvc}
+func newOTPAuthnService(
+	otpSvc otp.OTPAuthnServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
+) OTPAuthnInterface {
+	return &otpAuthnService{otpService: otpSvc, authnProvider: authnProvider}
 }
 
 // SendOTP delegates to the underlying otp service.
@@ -59,6 +65,37 @@ func (s *otpAuthnService) VerifyOTP(ctx context.Context, sessionToken, otpCode s
 
 // Authenticate delegates to the underlying otp service.
 func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
-	otpCode string) (*userprovider.User, *serviceerror.ServiceError) {
-	return s.otpService.Authenticate(ctx, sessionToken, otpCode)
+	otpCode string) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
+	credentials := map[string]interface{}{
+		"otp": map[string]interface{}{
+			"sessionToken": sessionToken,
+			"otp":          otpCode,
+		},
+	}
+	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
+	if err != nil {
+		if err.Code == authnprovidercm.ErrorCodeAuthenticationFailed {
+			return nil, &serviceerror.ServiceError{
+				Type:             serviceerror.ClientErrorType,
+				Code:             string(err.Code),
+				Error:            err.Message,
+				ErrorDescription: err.Description,
+			}
+		}
+		if err.Code == authnprovidercm.ErrorCodeSystemError {
+			return nil, &serviceerror.ServiceError{
+				Type:             serviceerror.ServerErrorType,
+				Code:             string(err.Code),
+				Error:            err.Message,
+				ErrorDescription: err.Description,
+			}
+		}
+		return nil, &serviceerror.ServiceError{
+			Type:             serviceerror.ClientErrorType,
+			Code:             string(err.Code),
+			Error:            err.Message,
+			ErrorDescription: err.Description,
+		}
+	}
+	return authnResult, nil
 }
