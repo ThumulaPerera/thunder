@@ -119,7 +119,7 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DelegatesToAuthnProvider
 	}
 
 	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return(expectedResult, (*authnprovidercm.AuthnProviderError)(nil))
+		Return(expectedResult, (*serviceerror.ServiceError)(nil))
 
 	result, svcErr := suite.service.Authenticate(ctx, "token123", "123456")
 
@@ -130,11 +130,12 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DelegatesToAuthnProvider
 
 func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromAuthnProvider() {
 	ctx := context.Background()
-	providerErr := authnprovidercm.NewError(
-		authnprovidercm.ErrorCodeAuthenticationFailed,
-		"Incorrect OTP",
-		"The provided OTP is incorrect",
-	)
+	providerErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             authnprovidercm.ErrorCodeAuthenticationFailed,
+		Error:            "Incorrect OTP",
+		ErrorDescription: "The provided OTP is incorrect",
+	}
 
 	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
 		Return((*authnprovidercm.AuthnResult)(nil), providerErr)
@@ -143,6 +144,6 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromAuthnPro
 
 	suite.NotNil(svcErr)
 	suite.Nil(result)
-	suite.Equal(string(authnprovidercm.ErrorCodeAuthenticationFailed), svcErr.Code)
+	suite.Equal(authnprovidercm.ErrorCodeAuthenticationFailed, svcErr.Code)
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }

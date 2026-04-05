@@ -23,13 +23,14 @@ import (
 	"context"
 
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 )
 
 // AuthnProviderManagerInterface defines the interface for the authentication provider manager.
 type AuthnProviderManagerInterface interface {
 	Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-		metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError)
+		metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
 	GetAttributes(ctx context.Context, token string, requestedAttributes *authnprovidercm.RequestedAttributes,
 		metadata *authnprovidercm.GetAttributesMetadata) (
-		*authnprovidercm.GetAttributesResult, *authnprovidercm.AuthnProviderError)
+		*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError)
 }

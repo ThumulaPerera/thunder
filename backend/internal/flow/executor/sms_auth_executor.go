@@ -597,7 +597,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 
 	authnResult, svcErr := s.otpService.Authenticate(ctx.Context, sessionToken, providedOTP)
 	if svcErr != nil {
-		if svcErr.Code == string(authnprovidercm.ErrorCodeAuthenticationFailed) {
+		if svcErr.Code == authnprovidercm.ErrorCodeAuthenticationFailed {
 			logger.Debug("OTP verification failed", log.String("userID", userID))
 			execResp.Status = common.ExecFailure
 			execResp.FailureReason = failureReasonInvalidOTP

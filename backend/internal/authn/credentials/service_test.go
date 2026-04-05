@@ -171,8 +171,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateFailures() {
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *managermock.AuthnProviderManagerInterfaceMock) {
 				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, authnprovidercm.NewError(
-						authnprovidercm.ErrorCodeUserNotFound, "User not found", "user not found description"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ClientErrorType, Code: authnprovidercm.ErrorCodeUserNotFound,
+						Error: "User not found", ErrorDescription: "user not found description",
+					})
 			},
 			expectedErrorCode: common.ErrorUserNotFound.Code,
 		},
@@ -182,9 +184,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateFailures() {
 			credentials: map[string]interface{}{"password": "wrongpass"},
 			setupMock: func(m *managermock.AuthnProviderManagerInterfaceMock) {
 				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, authnprovidercm.NewError(
-						authnprovidercm.ErrorCodeAuthenticationFailed, "Invalid credentials",
-						"invalid credentials description"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ClientErrorType, Code: authnprovidercm.ErrorCodeAuthenticationFailed,
+						Error: "Invalid credentials", ErrorDescription: "invalid credentials description",
+					})
 			},
 			expectedErrorCode: ErrorInvalidCredentials.Code,
 		},
@@ -222,8 +225,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithServiceErrors
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *managermock.AuthnProviderManagerInterfaceMock) {
 				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, authnprovidercm.NewError(
-						authnprovidercm.ErrorCodeSystemError, "System error", "Database failure"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ServerErrorType, Code: authnprovidercm.ErrorCodeSystemError,
+						Error: "System error", ErrorDescription: "Database failure",
+					})
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},
@@ -233,8 +238,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithServiceErrors
 			credentials: map[string]interface{}{"password": "testpass"},
 			setupMock: func(m *managermock.AuthnProviderManagerInterfaceMock) {
 				m.On("Authenticate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, authnprovidercm.NewError(
-						"UNKNOWN_CODE", "Unknown error", "Something went wrong"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ServerErrorType, Code: "UNKNOWN_CODE",
+						Error: "Unknown error", ErrorDescription: "Something went wrong",
+					})
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},
@@ -350,8 +357,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
 			name: "InvalidToken",
 			setupMock: func() {
 				suite.mockAuthnProvider.On("GetAttributes", mock.Anything, token, requestedAttributes, mock.Anything).
-					Return(nil, authnprovidercm.NewError(authnprovidercm.ErrorCodeInvalidToken, "Invalid token",
-						"Token is expired or invalid"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ClientErrorType, Code: authnprovidercm.ErrorCodeInvalidToken,
+						Error: "Invalid token", ErrorDescription: "Token is expired or invalid",
+					})
 			},
 			expectedErrorCode: ErrorInvalidToken.Code,
 		},
@@ -359,8 +368,10 @@ func (suite *CredentialsAuthnServiceTestSuite) TestGetAttributesFailures() {
 			name: "SystemError",
 			setupMock: func() {
 				suite.mockAuthnProvider.On("GetAttributes", mock.Anything, token, requestedAttributes, mock.Anything).
-					Return(nil, authnprovidercm.NewError(authnprovidercm.ErrorCodeSystemError, "System error",
-						"DB connection failed"))
+					Return(nil, &serviceerror.ServiceError{
+						Type: serviceerror.ServerErrorType, Code: authnprovidercm.ErrorCodeSystemError,
+						Error: "System error", ErrorDescription: "DB connection failed",
+					})
 			},
 			expectedErrorCode: serviceerror.InternalServerError.Code,
 		},

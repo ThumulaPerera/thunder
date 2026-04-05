@@ -23,6 +23,7 @@ import (
 
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/authnprovider/provider"
+	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 )
 
 // authnProviderManager is a proxy struct that implements AuthnProviderManagerInterface by delegating
@@ -38,7 +39,7 @@ func newAuthnProviderManager(p provider.AuthnProviderInterface) AuthnProviderMan
 
 // Authenticate delegates to the underlying provider.
 func (m *authnProviderManager) Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError) {
+	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
 	return m.provider.Authenticate(ctx, identifiers, credentials, metadata)
 }
 
@@ -46,6 +47,6 @@ func (m *authnProviderManager) Authenticate(ctx context.Context, identifiers, cr
 func (m *authnProviderManager) GetAttributes(ctx context.Context, token string,
 	requestedAttributes *authnprovidercm.RequestedAttributes,
 	metadata *authnprovidercm.GetAttributesMetadata) (
-	*authnprovidercm.GetAttributesResult, *authnprovidercm.AuthnProviderError) {
+	*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError) {
 	return m.provider.GetAttributes(ctx, token, requestedAttributes, metadata)
 }

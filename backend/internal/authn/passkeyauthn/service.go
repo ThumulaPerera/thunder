@@ -151,12 +151,7 @@ func (s *passkeyAuthnService) FinishAuthentication(
 
 	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
 	if err != nil {
-		return nil, &serviceerror.ServiceError{
-			Type:             serviceerror.ClientErrorType,
-			Code:             string(err.Code),
-			Error:            err.Message,
-			ErrorDescription: err.Description,
-		}
+		return nil, err
 	}
 	return authnResult, nil
 }

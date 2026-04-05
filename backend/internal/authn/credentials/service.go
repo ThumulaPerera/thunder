@@ -77,8 +77,8 @@ func (c *credentialsAuthnService) Authenticate(ctx context.Context, identifiers,
 		case authnprovidercm.ErrorCodeUserNotFound:
 			return nil, &common.ErrorUserNotFound
 		default:
-			c.logger.Error("Error occurred while authenticating the user", log.String("errorCode", string(err.Code)),
-				log.String("errorDescription", err.Description))
+			c.logger.Error("Error occurred while authenticating the user", log.String("errorCode", err.Code),
+				log.String("errorDescription", err.ErrorDescription))
 			return nil, &serviceerror.InternalServerError
 		}
 	}
@@ -94,8 +94,8 @@ func (c *credentialsAuthnService) GetAttributes(ctx context.Context, token strin
 		case authnprovidercm.ErrorCodeInvalidToken:
 			return nil, &ErrorInvalidToken
 		default:
-			c.logger.Error("Error occurred while getting attributes", log.String("errorCode", string(err.Code)),
-				log.String("errorDescription", err.Description))
+			c.logger.Error("Error occurred while getting attributes", log.String("errorCode", err.Code),
+				log.String("errorDescription", err.ErrorDescription))
 			return nil, &serviceerror.InternalServerError
 		}
 	}

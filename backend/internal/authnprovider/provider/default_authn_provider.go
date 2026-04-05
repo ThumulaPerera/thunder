@@ -27,6 +27,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/internal/system/log"
 	"github.com/asgardeo/thunder/internal/user"
 )
 
@@ -34,6 +35,7 @@ type defaultAuthnProvider struct {
 	userSvc        user.UserServiceInterface
 	passkeyService passkey.PasskeyServiceInterface
 	otpService     otp.OTPAuthnServiceInterface
+	logger         *log.Logger
 }
 
 // newDefaultAuthnProvider creates a new internal user authn provider.
@@ -43,6 +45,7 @@ func newDefaultAuthnProvider(userSvc user.UserServiceInterface,
 		userSvc:        userSvc,
 		passkeyService: passkeyService,
 		otpService:     otpService,
+		logger:         log.GetLogger().With(log.String(log.LoggerKeyComponentName, "DefaultAuthnProvider")),
 	}
 }
 
@@ -51,12 +54,10 @@ func (p *defaultAuthnProvider) Authenticate(
 	ctx context.Context,
 	identifiers, credentials map[string]interface{},
 	metadata *authnprovidercm.AuthnMetadata,
-) (*authnprovidercm.AuthnResult, *authnprovidercm.AuthnProviderError) {
+) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
 	if credentials == nil {
-		return nil, authnprovidercm.NewError(
-			authnprovidercm.ErrorCodeAuthenticationFailed,
-			"Credentials are required",
-			"Credentials are required for authentication")
+		return nil, newClientError(authnprovidercm.ErrorCodeAuthenticationFailed,
+			"Credentials are required", "Credentials are required for authentication")
 	}
 
 	authenticatedUserID := ""
@@ -65,8 +66,8 @@ func (p *defaultAuthnProvider) Authenticate(
 		passkeyCredential := passkeyCredential.(*passkey.PasskeyAuthenticationFinishRequest)
 		authResponse, authErr := p.passkeyService.FinishAuthentication(ctx, passkeyCredential)
 		if authErr != nil {
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+			return nil, newClientError(authnprovidercm.ErrorCodeAuthenticationFailed,
+				authErr.Error, authErr.ErrorDescription)
 		}
 		authenticatedUserID = authResponse.ID
 	} else if otpCredential, ok := credentials["otp"]; ok {
@@ -77,14 +78,14 @@ func (p *defaultAuthnProvider) Authenticate(
 		if authErr != nil {
 			if authErr.Type == serviceerror.ClientErrorType {
 				if authErr.Code == otp.ErrorIncorrectOTP.Code {
-					return nil, authnprovidercm.NewError(
-						authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+					return nil, newClientError(authnprovidercm.ErrorCodeAuthenticationFailed,
+						authErr.Error, authErr.ErrorDescription)
 				}
-				return nil, authnprovidercm.NewError(
-					authnprovidercm.ErrorCodeInvalidRequest, authErr.Error, authErr.ErrorDescription)
+				return nil, newClientError(authnprovidercm.ErrorCodeInvalidRequest,
+					authErr.Error, authErr.ErrorDescription)
 			}
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+			return nil, p.logAndReturnServerError("OTP authentication failed with server error",
+				log.String("error", authErr.Error), log.String("errorDescription", authErr.ErrorDescription))
 		}
 		authenticatedUserID = authResponse.UserID
 	} else {
@@ -92,14 +93,18 @@ func (p *defaultAuthnProvider) Authenticate(
 		if authErr != nil {
 			if authErr.Type == serviceerror.ClientErrorType {
 				if authErr.Code == user.ErrorUserNotFound.Code {
-					return nil, authnprovidercm.NewError(
-						authnprovidercm.ErrorCodeUserNotFound, authErr.Error, authErr.ErrorDescription)
+					return nil, newClientError(authnprovidercm.ErrorCodeUserNotFound,
+						authErr.Error, authErr.ErrorDescription)
 				}
-				return nil, authnprovidercm.NewError(
-					authnprovidercm.ErrorCodeAuthenticationFailed, authErr.Error, authErr.ErrorDescription)
+				if authErr.Code == user.ErrorAuthenticationFailed.Code {
+					return nil, newClientError(authnprovidercm.ErrorCodeAuthenticationFailed,
+						authErr.Error, authErr.ErrorDescription)
+				}
+				return nil, newClientError(authnprovidercm.ErrorCodeInvalidRequest,
+					authErr.Error, authErr.ErrorDescription)
 			}
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+			return nil, p.logAndReturnServerError("Basic authentication failed with server error",
+				log.String("error", authErr.Error), log.String("errorDescription", authErr.ErrorDescription))
 		}
 		authenticatedUserID = authResponse.ID
 	}
@@ -107,18 +112,17 @@ func (p *defaultAuthnProvider) Authenticate(
 	userResult, getUserErr := p.userSvc.GetUser(ctx, authenticatedUserID, false)
 	if getUserErr != nil {
 		if getUserErr.Code == user.ErrorUserNotFound.Code {
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeUserNotFound, getUserErr.Error, getUserErr.ErrorDescription)
+			return nil, newClientError(authnprovidercm.ErrorCodeUserNotFound,
+				getUserErr.Error, getUserErr.ErrorDescription)
 		}
-		return nil, authnprovidercm.NewError(
-			authnprovidercm.ErrorCodeSystemError, getUserErr.Error, getUserErr.ErrorDescription)
+		return nil, p.logAndReturnServerError("Failed to get user after authentication",
+			log.String("error", getUserErr.Error), log.String("errorDescription", getUserErr.ErrorDescription))
 	}
 
 	var attributes map[string]interface{}
 	if len(userResult.Attributes) > 0 {
 		if err := json.Unmarshal(userResult.Attributes, &attributes); err != nil {
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeSystemError, "Failed to get allowed attributes", err.Error())
+			return nil, p.logAndReturnServerError("Failed to get allowed attributes", log.String("error", err.Error()))
 		}
 	}
 
@@ -150,24 +154,24 @@ func (p *defaultAuthnProvider) GetAttributes(
 	token string,
 	requestedAttributes *authnprovidercm.RequestedAttributes,
 	metadata *authnprovidercm.GetAttributesMetadata,
-) (*authnprovidercm.GetAttributesResult, *authnprovidercm.AuthnProviderError) {
+) (*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError) {
 	userID := token
 
 	userResult, authErr := p.userSvc.GetUser(ctx, userID, false)
 	if authErr != nil {
 		if authErr.Type == serviceerror.ClientErrorType {
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeInvalidToken, authErr.Error, authErr.ErrorDescription)
+			return nil, newClientError(authnprovidercm.ErrorCodeInvalidToken,
+				authErr.Error, authErr.ErrorDescription)
 		}
-		return nil, authnprovidercm.NewError(
-			authnprovidercm.ErrorCodeSystemError, authErr.Error, authErr.ErrorDescription)
+		return nil, p.logAndReturnServerError("Failed to get user attributes",
+			log.String("error", authErr.Error), log.String("errorDescription", authErr.ErrorDescription))
 	}
 
 	var allAttributes map[string]interface{}
 	if len(userResult.Attributes) > 0 {
 		if err := json.Unmarshal(userResult.Attributes, &allAttributes); err != nil {
-			return nil, authnprovidercm.NewError(
-				authnprovidercm.ErrorCodeSystemError, "System Error", "Failed to unmarshal user attributes")
+			return nil, p.logAndReturnServerError("Failed to unmarshal user attributes",
+				log.String("error", err.Error()))
 		}
 	}
 
@@ -206,4 +210,23 @@ func (p *defaultAuthnProvider) GetAttributes(
 		OUID:               userResult.OUID,
 		AttributesResponse: attributesResponse,
 	}, nil
+}
+
+func newClientError(code, msg, desc string) *serviceerror.ServiceError {
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             code,
+		Error:            msg,
+		ErrorDescription: desc,
+	}
+}
+
+func (p *defaultAuthnProvider) logAndReturnServerError(msg string, fields ...log.Field) *serviceerror.ServiceError {
+	p.logger.Error(msg, fields...)
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             authnprovidercm.ErrorCodeSystemError,
+		Error:            "System error",
+		ErrorDescription: "An internal server error occurred",
+	}
 }

@@ -74,28 +74,7 @@ func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
 	}
 	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
 	if err != nil {
-		if err.Code == authnprovidercm.ErrorCodeAuthenticationFailed {
-			return nil, &serviceerror.ServiceError{
-				Type:             serviceerror.ClientErrorType,
-				Code:             string(err.Code),
-				Error:            err.Message,
-				ErrorDescription: err.Description,
-			}
-		}
-		if err.Code == authnprovidercm.ErrorCodeSystemError {
-			return nil, &serviceerror.ServiceError{
-				Type:             serviceerror.ServerErrorType,
-				Code:             string(err.Code),
-				Error:            err.Message,
-				ErrorDescription: err.Description,
-			}
-		}
-		return nil, &serviceerror.ServiceError{
-			Type:             serviceerror.ClientErrorType,
-			Code:             string(err.Code),
-			Error:            err.Message,
-			ErrorDescription: err.Description,
-		}
+		return nil, err
 	}
 	return authnResult, nil
 }

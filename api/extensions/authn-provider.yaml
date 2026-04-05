@@ -309,12 +309,14 @@ components:
         - AUP-0003: User Not Found
         - AUP-0004: Invalid Token
         - AUP-0005: Not Implemented
+        - AUP-0006: Invalid Request
       enum:
         - AUP-0001
         - AUP-0002
         - AUP-0003
         - AUP-0004
         - AUP-0005
+        - AUP-0006
 
     AuthnProviderError:
       type: object

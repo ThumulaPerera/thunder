@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/tests/mocks/httpmock"
 )
 
@@ -84,7 +85,7 @@ func (suite *RestAuthnProviderTestSuite) TestAuthenticate_Success() {
 func (suite *RestAuthnProviderTestSuite) TestAuthenticate_Failure() {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(authnprovidercm.AuthnProviderError{
+		_ = json.NewEncoder(w).Encode(apiErrorResponse{
 			Code:    authnprovidercm.ErrorCodeAuthenticationFailed,
 			Message: "Auth Failed",
 		})
@@ -141,7 +142,7 @@ func (suite *RestAuthnProviderTestSuite) TestGetAttributes_Success() {
 func (suite *RestAuthnProviderTestSuite) TestGetAttributes_InvalidToken() {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(authnprovidercm.AuthnProviderError{
+		_ = json.NewEncoder(w).Encode(apiErrorResponse{
 			Code: authnprovidercm.ErrorCodeInvalidToken,
 		})
 	}))
@@ -168,5 +169,6 @@ func (suite *RestAuthnProviderTestSuite) TestSystemError_Decoding() {
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Contains(err.Message, "Failed to decode response")
+	suite.Equal(authnprovidercm.ErrorCodeSystemError, err.Code)
+	suite.Equal(serviceerror.ServerErrorType, err.Type)
 }
