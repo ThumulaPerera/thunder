@@ -70,14 +70,11 @@ func newPasskeyService(userSvc user.UserServiceInterface, sessionStore sessionSt
 		userSvc = user.GetUserService()
 	}
 
-	service := &passkeyService{
+	return &passkeyService{
 		userService:  userSvc,
 		sessionStore: sessionStore,
 		logger:       log.GetLogger().With(log.String(log.LoggerKeyComponentName, loggerComponentName)),
 	}
-	common.RegisterAuthenticator(service.getMetadata())
-
-	return service
 }
 
 // StartRegistration initiates passkey credential registration for a user.
@@ -534,14 +531,6 @@ func (w *passkeyService) FinishAuthentication(ctx context.Context, req *PasskeyA
 		log.String("userID", log.MaskString(userID)))
 
 	return authResponse, nil
-}
-
-// getMetadata returns the metadata for passkey authenticator.
-func (w *passkeyService) getMetadata() common.AuthenticatorMeta {
-	return common.AuthenticatorMeta{
-		Name:    common.AuthenticatorPasskey,
-		Factors: []common.AuthenticationFactor{common.FactorPossession, common.FactorInherence},
-	}
 }
 
 // getStoredPasskeyCredentials retrieves passkey credentials for a user from the database.

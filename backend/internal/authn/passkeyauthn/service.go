@@ -21,6 +21,7 @@ package passkeyauthn
 import (
 	"context"
 
+	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
@@ -50,11 +51,13 @@ func newPasskeyAuthnService(
 	passkeySvc passkey.PasskeyServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 ) PasskeyAuthnServiceInterface {
-	return &passkeyAuthnService{
+	service := &passkeyAuthnService{
 		passkeyService: passkeySvc,
 		authnProvider:  authnProvider,
 		logger:         log.GetLogger().With(log.String(log.LoggerKeyComponentName, "PasskeyAuthnService")),
 	}
+	common.RegisterAuthenticator(service.getMetadata())
+	return service
 }
 
 func (s *passkeyAuthnService) StartRegistration(
@@ -236,5 +239,12 @@ func (s *passkeyAuthnService) logAndReturnServerError(msg string, fields ...log.
 		Code:             "AUTHN-PSKAUTHN-0001",
 		Error:            "System error",
 		ErrorDescription: "An internal server error occurred",
+	}
+}
+
+func (s *passkeyAuthnService) getMetadata() common.AuthenticatorMeta {
+	return common.AuthenticatorMeta{
+		Name:    common.AuthenticatorPasskey,
+		Factors: []common.AuthenticationFactor{common.FactorPossession, common.FactorInherence},
 	}
 }

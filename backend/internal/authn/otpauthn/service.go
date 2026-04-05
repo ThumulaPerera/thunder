@@ -22,6 +22,7 @@ package otpauthn
 import (
 	"context"
 
+	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
@@ -51,32 +52,13 @@ func newOTPAuthnService(
 	otpSvc otp.OTPAuthnServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 ) OTPAuthnInterface {
-	return &otpAuthnService{
+	service := &otpAuthnService{
 		otpService:    otpSvc,
 		authnProvider: authnProvider,
 		logger:        log.GetLogger().With(log.String(log.LoggerKeyComponentName, "OTPAuthnService")),
 	}
-}
-
-// newClientError creates a new client ServiceError with the given code, message, and description.
-func newClientError(code, msg, desc string) *serviceerror.ServiceError {
-	return &serviceerror.ServiceError{
-		Type:             serviceerror.ClientErrorType,
-		Code:             code,
-		Error:            msg,
-		ErrorDescription: desc,
-	}
-}
-
-// logAndReturnServerError logs the error and returns a generic server error.
-func (s *otpAuthnService) logAndReturnServerError(msg string, fields ...log.Field) *serviceerror.ServiceError {
-	s.logger.Error(msg, fields...)
-	return &serviceerror.ServiceError{
-		Type:             serviceerror.ServerErrorType,
-		Code:             "AUTHN-OTPAUTHN-0001",
-		Error:            "System error",
-		ErrorDescription: "An internal server error occurred",
-	}
+	common.RegisterAuthenticator(service.getMetadata())
+	return service
 }
 
 // SendOTP delegates to the underlying otp service.
@@ -153,4 +135,33 @@ func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
 		return nil, s.logAndReturnServerError("Authenticate failed with server error")
 	}
 	return authnResult, nil
+}
+
+// getMetadata returns the authenticator metadata for OTP authenticator.
+func (s *otpAuthnService) getMetadata() common.AuthenticatorMeta {
+	return common.AuthenticatorMeta{
+		Name:    common.AuthenticatorSMSOTP,
+		Factors: []common.AuthenticationFactor{common.FactorPossession},
+	}
+}
+
+// newClientError creates a new client ServiceError with the given code, message, and description.
+func newClientError(code, msg, desc string) *serviceerror.ServiceError {
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             code,
+		Error:            msg,
+		ErrorDescription: desc,
+	}
+}
+
+// logAndReturnServerError logs the error and returns a generic server error.
+func (s *otpAuthnService) logAndReturnServerError(msg string, fields ...log.Field) *serviceerror.ServiceError {
+	s.logger.Error(msg, fields...)
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-OTPAUTHN-0001",
+		Error:            "System error",
+		ErrorDescription: "An internal server error occurred",
+	}
 }

@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/crypto/hash"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -494,14 +493,6 @@ func (suite *WebAuthnServiceTestSuite) TestFinishAuthentication_EmptySessionToke
 	suite.Nil(result)
 	suite.NotNil(svcErr)
 	suite.Equal(ErrorEmptySessionToken.Code, svcErr.Code)
-}
-
-func (suite *WebAuthnServiceTestSuite) TestGetMetadata() {
-	metadata := suite.service.getMetadata()
-
-	suite.Equal(common.AuthenticatorPasskey, metadata.Name)
-	suite.NotEmpty(metadata.Factors)
-	suite.Contains(metadata.Factors, common.FactorPossession)
 }
 
 func (suite *WebAuthnServiceTestSuite) TestGetWebAuthnCredentialsFromDB_Success() {

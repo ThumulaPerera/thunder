@@ -58,13 +58,10 @@ type otpAuthnService struct {
 // newOTPAuthnService creates a new instance of OTPAuthnService.
 func newOTPAuthnService(otpSvc notification.OTPServiceInterface,
 	userProvider userprovider.UserProviderInterface) OTPAuthnServiceInterface {
-	service := &otpAuthnService{
+	return &otpAuthnService{
 		otpService:   otpSvc,
 		userProvider: userProvider,
 	}
-	common.RegisterAuthenticator(service.getMetadata())
-
-	return service
 }
 
 // SendOTP sends an OTP to the specified recipient using the provided sender.
@@ -250,12 +247,4 @@ func (s *otpAuthnService) handleUserProviderError(upErr *userprovider.UserProvid
 	}
 	return serviceerror.CustomServiceError(ErrorClientErrorWhileResolvingUser,
 		fmt.Sprintf("An error occurred while retrieving user: %s", upErr.Description))
-}
-
-// getMetadata returns the authenticator metadata for OTP authenticator.
-func (s *otpAuthnService) getMetadata() common.AuthenticatorMeta {
-	return common.AuthenticatorMeta{
-		Name:    common.AuthenticatorSMSOTP,
-		Factors: []common.AuthenticationFactor{common.FactorPossession},
-	}
 }

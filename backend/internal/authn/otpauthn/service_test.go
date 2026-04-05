@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -48,6 +49,11 @@ func (suite *OTPAuthnServiceTestSuite) SetupTest() {
 	suite.mockOTPService = otpmock.NewOTPAuthnServiceInterfaceMock(suite.T())
 	suite.mockAuthnProvider = managermock.NewAuthnProviderManagerInterfaceMock(suite.T())
 	suite.service = newOTPAuthnService(suite.mockOTPService, suite.mockAuthnProvider)
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestRegistersAuthenticatorOnInit() {
+	factors := common.GetAuthenticatorFactors(common.AuthenticatorSMSOTP)
+	suite.Contains(factors, common.FactorPossession)
 }
 
 func (suite *OTPAuthnServiceTestSuite) TestSendOTP_DelegatesToUnderlyingService() {
