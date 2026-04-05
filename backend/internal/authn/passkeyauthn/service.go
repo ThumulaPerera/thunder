@@ -25,6 +25,7 @@ import (
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/internal/system/log"
 )
 
 // PasskeyAuthnServiceInterface defines the interface for passkey authentication operations.
@@ -42,13 +43,18 @@ type PasskeyAuthnServiceInterface interface {
 type passkeyAuthnService struct {
 	passkeyService passkey.PasskeyServiceInterface
 	authnProvider  authnprovidermgr.AuthnProviderManagerInterface
+	logger         *log.Logger
 }
 
 func newPasskeyAuthnService(
 	passkeySvc passkey.PasskeyServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 ) PasskeyAuthnServiceInterface {
-	return &passkeyAuthnService{passkeyService: passkeySvc, authnProvider: authnProvider}
+	return &passkeyAuthnService{
+		passkeyService: passkeySvc,
+		authnProvider:  authnProvider,
+		logger:         log.GetLogger().With(log.String(log.LoggerKeyComponentName, "PasskeyAuthnService")),
+	}
 }
 
 func (s *passkeyAuthnService) StartRegistration(
@@ -71,7 +77,22 @@ func (s *passkeyAuthnService) StartRegistration(
 		Attestation:            req.Attestation,
 	})
 	if svcErr != nil {
-		return nil, svcErr
+		if svcErr.Type == serviceerror.ClientErrorType {
+			switch svcErr.Code {
+			case passkey.ErrorInvalidFinishData.Code:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorEmptyUserIdentifier.Code:
+				return nil, newClientError(ErrorEmptyUserIdentifier.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorEmptyRelyingPartyID.Code:
+				return nil, newClientError(ErrorEmptyRelyingPartyID.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorUserNotFound.Code:
+				return nil, newClientError(ErrorUserNotFound.Code, svcErr.Error, svcErr.ErrorDescription)
+			default:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			}
+		}
+		return nil, s.logAndReturnServerError("StartRegistration failed with server error",
+			log.String("relyingPartyID", req.RelyingPartyID))
 	}
 	return &RegistrationStartData{
 		SessionToken: data.SessionToken,
@@ -101,7 +122,23 @@ func (s *passkeyAuthnService) FinishRegistration(
 		CredentialName:    req.CredentialName,
 	})
 	if svcErr != nil {
-		return nil, svcErr
+		if svcErr.Type == serviceerror.ClientErrorType {
+			switch svcErr.Code {
+			case passkey.ErrorInvalidFinishData.Code:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorEmptySessionToken.Code:
+				return nil, newClientError(ErrorEmptySessionToken.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorInvalidAttestationResponse.Code:
+				return nil, newClientError(ErrorInvalidAttestationResponse.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorInvalidSessionToken.Code:
+				return nil, newClientError(ErrorInvalidSessionToken.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorSessionExpired.Code:
+				return nil, newClientError(ErrorSessionExpired.Code, svcErr.Error, svcErr.ErrorDescription)
+			default:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			}
+		}
+		return nil, s.logAndReturnServerError("FinishRegistration failed with server error")
 	}
 	return &RegistrationFinishData{
 		CredentialID:   data.CredentialID,
@@ -118,7 +155,22 @@ func (s *passkeyAuthnService) StartAuthentication(
 		RelyingPartyID: req.RelyingPartyID,
 	})
 	if svcErr != nil {
-		return nil, svcErr
+		if svcErr.Type == serviceerror.ClientErrorType {
+			switch svcErr.Code {
+			case passkey.ErrorInvalidFinishData.Code:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorEmptyRelyingPartyID.Code:
+				return nil, newClientError(ErrorEmptyRelyingPartyID.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorUserNotFound.Code:
+				return nil, newClientError(ErrorUserNotFound.Code, svcErr.Error, svcErr.ErrorDescription)
+			case passkey.ErrorNoCredentialsFound.Code:
+				return nil, newClientError(ErrorNoCredentialsFound.Code, svcErr.Error, svcErr.ErrorDescription)
+			default:
+				return nil, newClientError(ErrorInvalidFinishData.Code, svcErr.Error, svcErr.ErrorDescription)
+			}
+		}
+		return nil, s.logAndReturnServerError("StartAuthentication failed with server error",
+			log.String("relyingPartyID", req.RelyingPartyID))
 	}
 	return &AuthenticationStartData{
 		SessionToken: data.SessionToken,
@@ -151,7 +203,38 @@ func (s *passkeyAuthnService) FinishAuthentication(
 
 	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
 	if err != nil {
-		return nil, err
+		if err.Type == serviceerror.ClientErrorType {
+			switch err.Code {
+			case authnprovidercm.ErrorCodeAuthenticationFailed:
+				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+			case authnprovidercm.ErrorCodeInvalidRequest:
+				return nil, newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
+			case authnprovidercm.ErrorCodeUserNotFound:
+				return nil, newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
+			default:
+				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+			}
+		}
+		return nil, s.logAndReturnServerError("FinishAuthentication failed with server error")
 	}
 	return authnResult, nil
+}
+
+func newClientError(code, msg, desc string) *serviceerror.ServiceError {
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             code,
+		Error:            msg,
+		ErrorDescription: desc,
+	}
+}
+
+func (s *passkeyAuthnService) logAndReturnServerError(msg string, fields ...log.Field) *serviceerror.ServiceError {
+	s.logger.Error(msg, fields...)
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-PSKAUTHN-0001",
+		Error:            "System error",
+		ErrorDescription: "An internal server error occurred",
+	}
 }
