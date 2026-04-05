@@ -27,6 +27,7 @@ import (
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/internal/system/log"
 )
 
 // OTPAuthnInterface defines the interface for the OTP authentication proxy service.
@@ -42,6 +43,7 @@ type OTPAuthnInterface interface {
 type otpAuthnService struct {
 	otpService    otp.OTPAuthnServiceInterface
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface
+	logger        *log.Logger
 }
 
 // newOTPAuthnService creates a new instance of otpAuthnService.
@@ -49,18 +51,80 @@ func newOTPAuthnService(
 	otpSvc otp.OTPAuthnServiceInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 ) OTPAuthnInterface {
-	return &otpAuthnService{otpService: otpSvc, authnProvider: authnProvider}
+	return &otpAuthnService{
+		otpService:    otpSvc,
+		authnProvider: authnProvider,
+		logger:        log.GetLogger().With(log.String(log.LoggerKeyComponentName, "OTPAuthnService")),
+	}
+}
+
+// newClientError creates a new client ServiceError with the given code, message, and description.
+func newClientError(code, msg, desc string) *serviceerror.ServiceError {
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             code,
+		Error:            msg,
+		ErrorDescription: desc,
+	}
+}
+
+// logAndReturnServerError logs the error and returns a generic server error.
+func (s *otpAuthnService) logAndReturnServerError(msg string, fields ...log.Field) *serviceerror.ServiceError {
+	s.logger.Error(msg, fields...)
+	return &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-OTPAUTHN-0001",
+		Error:            "System error",
+		ErrorDescription: "An internal server error occurred",
+	}
 }
 
 // SendOTP delegates to the underlying otp service.
 func (s *otpAuthnService) SendOTP(ctx context.Context, senderID string, channel notifcommon.ChannelType,
 	recipient string) (string, *serviceerror.ServiceError) {
-	return s.otpService.SendOTP(ctx, senderID, channel, recipient)
+	sessionToken, err := s.otpService.SendOTP(ctx, senderID, channel, recipient)
+	if err != nil {
+		if err.Type == serviceerror.ClientErrorType {
+			switch err.Code {
+			case otp.ErrorInvalidSenderID.Code:
+				return "", newClientError(ErrorInvalidSenderID.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorInvalidRecipient.Code:
+				return "", newClientError(ErrorInvalidRecipient.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorUnsupportedChannel.Code:
+				return "", newClientError(ErrorUnsupportedChannel.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorClientErrorFromOTPService.Code:
+				return "", newClientError(ErrorSendOTPFailed.Code, err.Error, err.ErrorDescription)
+			default:
+				return "", newClientError(ErrorSendOTPFailed.Code, err.Error, err.ErrorDescription)
+			}
+		}
+		return "", s.logAndReturnServerError("SendOTP failed with server error",
+			log.String("channel", string(channel)))
+	}
+	return sessionToken, nil
 }
 
 // VerifyOTP delegates to the underlying otp service.
 func (s *otpAuthnService) VerifyOTP(ctx context.Context, sessionToken, otpCode string) *serviceerror.ServiceError {
-	return s.otpService.VerifyOTP(ctx, sessionToken, otpCode)
+	err := s.otpService.VerifyOTP(ctx, sessionToken, otpCode)
+	if err != nil {
+		if err.Type == serviceerror.ClientErrorType {
+			switch err.Code {
+			case otp.ErrorInvalidSessionToken.Code:
+				return newClientError(ErrorInvalidSessionToken.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorInvalidOTP.Code:
+				return newClientError(ErrorInvalidOTP.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorIncorrectOTP.Code:
+				return newClientError(ErrorIncorrectOTP.Code, err.Error, err.ErrorDescription)
+			case otp.ErrorClientErrorFromOTPService.Code:
+				return newClientError(ErrorVerifyOTPFailed.Code, err.Error, err.ErrorDescription)
+			default:
+				return newClientError(ErrorVerifyOTPFailed.Code, err.Error, err.ErrorDescription)
+			}
+		}
+		return s.logAndReturnServerError("VerifyOTP failed with server error")
+	}
+	return nil
 }
 
 // Authenticate delegates to the underlying otp service.
@@ -74,7 +138,19 @@ func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
 	}
 	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
 	if err != nil {
-		return nil, err
+		if err.Type == serviceerror.ClientErrorType {
+			switch err.Code {
+			case authnprovidercm.ErrorCodeAuthenticationFailed:
+				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+			case authnprovidercm.ErrorCodeInvalidRequest:
+				return nil, newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
+			case authnprovidercm.ErrorCodeUserNotFound:
+				return nil, newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
+			default:
+				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+			}
+		}
+		return nil, s.logAndReturnServerError("Authenticate failed with server error")
 	}
 	return authnResult, nil
 }

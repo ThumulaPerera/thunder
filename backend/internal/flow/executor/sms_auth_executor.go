@@ -25,9 +25,7 @@ import (
 	"strconv"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/otpauthn"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -575,7 +573,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		// So we just validate the OTP and return an authenticated user with the mobile number as an attribute.
 		svcErr := s.otpService.VerifyOTP(ctx.Context, sessionToken, providedOTP)
 		if svcErr != nil {
-			if svcErr.Code == otp.ErrorIncorrectOTP.Code {
+			if svcErr.Code == otpauthn.ErrorIncorrectOTP.Code {
 				logger.Debug("OTP verification failed", log.String("userID", userID))
 				execResp.Status = common.ExecFailure
 				execResp.FailureReason = failureReasonInvalidOTP
@@ -597,7 +595,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 
 	authnResult, svcErr := s.otpService.Authenticate(ctx.Context, sessionToken, providedOTP)
 	if svcErr != nil {
-		if svcErr.Code == authnprovidercm.ErrorCodeAuthenticationFailed {
+		if svcErr.Code == otpauthn.ErrorAuthenticationFailed.Code {
 			logger.Debug("OTP verification failed", log.String("userID", userID))
 			execResp.Status = common.ExecFailure
 			execResp.FailureReason = failureReasonInvalidOTP

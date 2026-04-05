@@ -30,7 +30,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/credentials"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/idp"
 	"github.com/asgardeo/thunder/internal/system/error/apierror"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -429,7 +429,7 @@ func (suite *AuthenticationHandlerTestSuite) TestHandleVerifySMSOTPRequestServic
 	}
 	serviceError := &serviceerror.ServiceError{
 		Type:             serviceerror.ClientErrorType,
-		Code:             string(authnprovidercm.ErrorCodeAuthenticationFailed),
+		Code:             otpauthn.ErrorAuthenticationFailed.Code,
 		Error:            "Authentication failed",
 		ErrorDescription: "The provided OTP is incorrect or has expired",
 	}
@@ -447,7 +447,7 @@ func (suite *AuthenticationHandlerTestSuite) TestHandleVerifySMSOTPRequestServic
 	var errResp apierror.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &errResp)
 	suite.NoError(err)
-	suite.Equal(string(authnprovidercm.ErrorCodeAuthenticationFailed), errResp.Code)
+	suite.Equal(otpauthn.ErrorAuthenticationFailed.Code, errResp.Code)
 }
 
 func (suite *AuthenticationHandlerTestSuite) TestHandleGoogleAuthStartRequestSuccess() {

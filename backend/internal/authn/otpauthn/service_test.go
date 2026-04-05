@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -65,19 +66,69 @@ func (suite *OTPAuthnServiceTestSuite) TestSendOTP_DelegatesToUnderlyingService(
 
 func (suite *OTPAuthnServiceTestSuite) TestSendOTP_ReturnsErrorFromUnderlyingService() {
 	ctx := context.Background()
-	expectedErr := &serviceerror.ServiceError{
-		Type:  serviceerror.ClientErrorType,
-		Code:  "AUTHN-OTP-1001",
-		Error: "Invalid sender ID",
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             otp.ErrorInvalidSenderID.Code,
+		Error:            "Invalid sender ID",
+		ErrorDescription: "The provided sender ID is invalid or empty",
 	}
 
 	suite.mockOTPService.On("SendOTP", ctx, "", notifcommon.ChannelTypeSMS, "recipient1").
-		Return("", expectedErr)
+		Return("", mockErr)
 
 	token, svcErr := suite.service.SendOTP(ctx, "", notifcommon.ChannelTypeSMS, "recipient1")
 
-	suite.Equal(expectedErr, svcErr)
 	suite.Empty(token)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorInvalidSenderID.Code, svcErr.Code)
+	suite.Equal(mockErr.Error, svcErr.Error)
+	suite.Equal(mockErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.Equal(serviceerror.ClientErrorType, svcErr.Type)
+	suite.mockOTPService.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestSendOTP_DefaultClientError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "UNKNOWN-CODE",
+		Error:            "some error",
+		ErrorDescription: "some description",
+	}
+
+	suite.mockOTPService.On("SendOTP", ctx, "sender1", notifcommon.ChannelTypeSMS, "recipient1").
+		Return("", mockErr)
+
+	token, svcErr := suite.service.SendOTP(ctx, "sender1", notifcommon.ChannelTypeSMS, "recipient1")
+
+	suite.Empty(token)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorSendOTPFailed.Code, svcErr.Code)
+	suite.Equal(mockErr.Error, svcErr.Error)
+	suite.Equal(mockErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.mockOTPService.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestSendOTP_ServerError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-OTP-9999",
+		Error:            "internal error",
+		ErrorDescription: "something broke",
+	}
+
+	suite.mockOTPService.On("SendOTP", ctx, "sender1", notifcommon.ChannelTypeSMS, "recipient1").
+		Return("", mockErr)
+
+	token, svcErr := suite.service.SendOTP(ctx, "sender1", notifcommon.ChannelTypeSMS, "recipient1")
+
+	suite.Empty(token)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(serviceerror.ServerErrorType, svcErr.Type)
+	suite.Equal("AUTHN-OTPAUTHN-0001", svcErr.Code)
+	suite.Equal("System error", svcErr.Error)
+	suite.Equal("An internal server error occurred", svcErr.ErrorDescription)
 	suite.mockOTPService.AssertExpectations(suite.T())
 }
 
@@ -95,18 +146,66 @@ func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_DelegatesToUnderlyingServic
 
 func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_ReturnsErrorFromUnderlyingService() {
 	ctx := context.Background()
-	expectedErr := &serviceerror.ServiceError{
-		Type:  serviceerror.ClientErrorType,
-		Code:  "AUTHN-OTP-1006",
-		Error: "Incorrect OTP",
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             otp.ErrorIncorrectOTP.Code,
+		Error:            "Incorrect OTP",
+		ErrorDescription: "The provided OTP is incorrect or has expired",
 	}
 
 	suite.mockOTPService.On("VerifyOTP", ctx, "token123", "wrong").
-		Return(expectedErr)
+		Return(mockErr)
 
 	svcErr := suite.service.VerifyOTP(ctx, "token123", "wrong")
 
-	suite.Equal(expectedErr, svcErr)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorIncorrectOTP.Code, svcErr.Code)
+	suite.Equal(mockErr.Error, svcErr.Error)
+	suite.Equal(mockErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.Equal(serviceerror.ClientErrorType, svcErr.Type)
+	suite.mockOTPService.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_DefaultClientError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "UNKNOWN-CODE",
+		Error:            "some error",
+		ErrorDescription: "some description",
+	}
+
+	suite.mockOTPService.On("VerifyOTP", ctx, "token123", "wrong").
+		Return(mockErr)
+
+	svcErr := suite.service.VerifyOTP(ctx, "token123", "wrong")
+
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorVerifyOTPFailed.Code, svcErr.Code)
+	suite.Equal(mockErr.Error, svcErr.Error)
+	suite.Equal(mockErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.mockOTPService.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_ServerError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-OTP-9999",
+		Error:            "internal error",
+		ErrorDescription: "something broke",
+	}
+
+	suite.mockOTPService.On("VerifyOTP", ctx, "token123", "wrong").
+		Return(mockErr)
+
+	svcErr := suite.service.VerifyOTP(ctx, "token123", "wrong")
+
+	suite.Require().NotNil(svcErr)
+	suite.Equal(serviceerror.ServerErrorType, svcErr.Type)
+	suite.Equal("AUTHN-OTPAUTHN-0001", svcErr.Code)
+	suite.Equal("System error", svcErr.Error)
+	suite.Equal("An internal server error occurred", svcErr.ErrorDescription)
 	suite.mockOTPService.AssertExpectations(suite.T())
 }
 
@@ -142,8 +241,56 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromAuthnPro
 
 	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
 
-	suite.NotNil(svcErr)
 	suite.Nil(result)
-	suite.Equal(authnprovidercm.ErrorCodeAuthenticationFailed, svcErr.Code)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorAuthenticationFailed.Code, svcErr.Code)
+	suite.Equal(providerErr.Error, svcErr.Error)
+	suite.Equal(providerErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.Equal(serviceerror.ClientErrorType, svcErr.Type)
+	suite.mockAuthnProvider.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DefaultClientError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "UNKNOWN-CODE",
+		Error:            "some error",
+		ErrorDescription: "some description",
+	}
+
+	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
+		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+
+	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+
+	suite.Nil(result)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(ErrorAuthenticationFailed.Code, svcErr.Code)
+	suite.Equal(mockErr.Error, svcErr.Error)
+	suite.Equal(mockErr.ErrorDescription, svcErr.ErrorDescription)
+	suite.mockAuthnProvider.AssertExpectations(suite.T())
+}
+
+func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ServerError() {
+	ctx := context.Background()
+	mockErr := &serviceerror.ServiceError{
+		Type:             serviceerror.ServerErrorType,
+		Code:             "AUTHN-OTP-9999",
+		Error:            "internal error",
+		ErrorDescription: "something broke",
+	}
+
+	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
+		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+
+	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+
+	suite.Nil(result)
+	suite.Require().NotNil(svcErr)
+	suite.Equal(serviceerror.ServerErrorType, svcErr.Type)
+	suite.Equal("AUTHN-OTPAUTHN-0001", svcErr.Code)
+	suite.Equal("System error", svcErr.Error)
+	suite.Equal("An internal server error occurred", svcErr.ErrorDescription)
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
