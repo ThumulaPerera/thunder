@@ -34,7 +34,7 @@ type AuthenticatedUser struct {
 	OUID                string
 	UserType            string
 	Attributes          map[string]interface{}
-	AvailableAttributes *authnprovidercm.AvailableAttributes
+	AvailableAttributes *authnprovidercm.AttributesResponse
 	Token               string
 }
 

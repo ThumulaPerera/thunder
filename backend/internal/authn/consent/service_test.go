@@ -304,8 +304,8 @@ func (s *ConsentEnforcerServiceTestSuite) TestResolveConsent_UserProfileFilter()
 			},
 		},
 	}
-	availableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	availableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {},
 		},
 	}
@@ -1016,8 +1016,8 @@ func (s *ConsentEnforcerServiceTestSuite) TestBuildUserAttributeSet_Nil() {
 }
 
 func (s *ConsentEnforcerServiceTestSuite) TestBuildUserAttributeSet_Empty() {
-	available := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{},
+	available := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{},
 	}
 
 	result := buildUserAttributeSet(available)
@@ -1025,8 +1025,8 @@ func (s *ConsentEnforcerServiceTestSuite) TestBuildUserAttributeSet_Empty() {
 }
 
 func (s *ConsentEnforcerServiceTestSuite) TestBuildUserAttributeSet_WithAttributes() {
-	available := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	available := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {},
 			"phone": {},
 		},

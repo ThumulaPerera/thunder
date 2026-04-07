@@ -228,7 +228,7 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		OUID:                authnResult.OUID,
 		UserType:            authnResult.UserType,
 		Attributes:          userAttributes,
-		AvailableAttributes: authnResult.AvailableAttributes,
+		AvailableAttributes: authnResult.AttributesResponse,
 		Token:               authnResult.Token,
 	}, nil
 }

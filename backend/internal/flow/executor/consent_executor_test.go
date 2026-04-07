@@ -93,8 +93,8 @@ func buildConsentNodeContext() *core.NodeContext {
 		AuthenticatedUser: authncm.AuthenticatedUser{
 			IsAuthenticated: true,
 			UserID:          testUserID,
-			AvailableAttributes: &authnprovidercm.AvailableAttributes{
-				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+			AvailableAttributes: &authnprovidercm.AttributesResponse{
+				Attributes: map[string]*authnprovidercm.AttributeResponse{
 					"email": nil,
 					"phone": nil,
 					"name":  nil,
@@ -943,7 +943,7 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 	suite.mockConsentEnforcer.On("ResolveConsent",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything,
-		mock.MatchedBy(func(aa *authnprovidercm.AvailableAttributes) bool {
+		mock.MatchedBy(func(aa *authnprovidercm.AttributesResponse) bool {
 			if aa == nil || len(aa.Attributes) == 0 {
 				return false
 			}
@@ -970,7 +970,7 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 	suite.mockConsentEnforcer.On("ResolveConsent",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything,
-		mock.MatchedBy(func(aa *authnprovidercm.AvailableAttributes) bool {
+		mock.MatchedBy(func(aa *authnprovidercm.AttributesResponse) bool {
 			if aa == nil {
 				return false
 			}
@@ -999,7 +999,7 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 	suite.mockConsentEnforcer.On("ResolveConsent",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything,
-		mock.MatchedBy(func(aa *authnprovidercm.AvailableAttributes) bool {
+		mock.MatchedBy(func(aa *authnprovidercm.AttributesResponse) bool {
 			return aa != nil && func() bool { _, ok := aa.Attributes["userType"]; return ok }()
 		})).
 		Return(nil, nil)
@@ -1025,7 +1025,7 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 	suite.mockConsentEnforcer.On("ResolveConsent",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything,
-		mock.MatchedBy(func(aa *authnprovidercm.AvailableAttributes) bool {
+		mock.MatchedBy(func(aa *authnprovidercm.AttributesResponse) bool {
 			if aa == nil {
 				return false
 			}
@@ -1174,8 +1174,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Nil
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_EmptyAttributes() {
 	ctx := buildConsentNodeContext()
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{},
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{},
 	}
 	ctx.AuthenticatedUser.UserType = testUserTypeInternal
 	ctx.AuthenticatedUser.OUID = "ou-123"
@@ -1200,8 +1200,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_NoS
 	ctx.AuthenticatedUser.UserType = ""
 	ctx.AuthenticatedUser.OUID = ""
 	ctx.AuthenticatedUser.UserID = ""
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": nil,
 			"phone": nil,
 		},
@@ -1250,8 +1250,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 			ctx.AuthenticatedUser.UserType = tc.userType
 			ctx.AuthenticatedUser.OUID = tc.ouID
 			ctx.AuthenticatedUser.UserID = tc.userID
-			ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+			ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+				Attributes: map[string]*authnprovidercm.AttributeResponse{
 					"email": nil,
 				},
 			}
@@ -1274,8 +1274,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 	ctx.AuthenticatedUser.UserType = ""
 	ctx.AuthenticatedUser.OUID = ""
 	ctx.AuthenticatedUser.UserID = "user-abc"
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": nil,
 		},
 	}
@@ -1294,8 +1294,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_All
 	ctx.AuthenticatedUser.UserType = testUserTypeInternal
 	ctx.AuthenticatedUser.OUID = "ou-789"
 	ctx.AuthenticatedUser.UserID = "user-xyz"
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": nil,
 		},
 	}
@@ -1318,8 +1318,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Doe
 	ctx.AuthenticatedUser.UserType = testUserTypeInternal
 	ctx.AuthenticatedUser.OUID = "ou-789"
 	ctx.AuthenticatedUser.UserID = "user-xyz"
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": nil,
 			"phone": nil,
 		},
@@ -1338,8 +1338,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Doe
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_PreservesVerifications() {
 	ctx := buildConsentNodeContext()
 	ctx.AuthenticatedUser.UserType = testUserTypeInternal
-	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	ctx.AuthenticatedUser.AvailableAttributes = &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": nil,
 		},
 		Verifications: map[string]*authnprovidercm.VerificationResponse{

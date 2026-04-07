@@ -141,12 +141,12 @@ func (as *authenticationService) AuthenticateWithCredentials(ctx context.Context
 	}
 
 	var requestedAttributes *authnprovidercm.RequestedAttributes
-	if authenticateResp.AvailableAttributes != nil {
+	if authenticateResp.AttributesResponse != nil {
 		requestedAttributes = &authnprovidercm.RequestedAttributes{
 			Attributes:    make(map[string]*authnprovidercm.AttributeMetadataRequest),
 			Verifications: nil,
 		}
-		for attrName := range authenticateResp.AvailableAttributes.Attributes {
+		for attrName := range authenticateResp.AttributesResponse.Attributes {
 			requestedAttributes.Attributes[attrName] = nil
 		}
 	}

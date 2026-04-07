@@ -491,8 +491,8 @@ func (s *StoreTestSuite) TestBuildFlowContextFromResultRow_WithByteToken() {
 
 func (s *StoreTestSuite) TestStoreFlowContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -550,8 +550,8 @@ func (s *StoreTestSuite) TestStoreFlowContext_WithAvailableAttributes() {
 
 func (s *StoreTestSuite) TestUpdateFlowContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -608,8 +608,8 @@ func (s *StoreTestSuite) TestUpdateFlowContext_WithAvailableAttributes() {
 
 func (s *StoreTestSuite) TestGetFlowContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,

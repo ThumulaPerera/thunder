@@ -64,8 +64,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateSuccess() {
 	userType := "person"
 	userToken := "test-token"
 
-	availableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	availableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"username": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: false,
@@ -80,11 +80,11 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateSuccess() {
 	}
 
 	providerResponse := &authnprovidercm.AuthnResult{
-		UserID:              userID,
-		UserType:            userType,
-		OUID:                orgUnit,
-		Token:               userToken,
-		AvailableAttributes: availableAttributes,
+		UserID:             userID,
+		UserType:           userType,
+		OUID:               orgUnit,
+		Token:              userToken,
+		AttributesResponse: availableAttributes,
 	}
 
 	suite.mockAuthnProvider.On("Authenticate", mock.Anything, identifiers, credentials, metadata).
@@ -97,7 +97,7 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateSuccess() {
 	suite.Equal(orgUnit, result.OUID)
 	suite.Equal(userType, result.UserType)
 	suite.Equal(userToken, result.Token)
-	suite.Equal(availableAttributes, result.AvailableAttributes)
+	suite.Equal(availableAttributes, result.AttributesResponse)
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
@@ -114,8 +114,8 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithNilMetadata()
 	userType := "person"
 	userToken := "test-token"
 
-	availableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	availableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"username": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: false,
@@ -126,11 +126,11 @@ func (suite *CredentialsAuthnServiceTestSuite) TestAuthenticateWithNilMetadata()
 	}
 
 	providerResponse := &authnprovidercm.AuthnResult{
-		UserID:              userID,
-		UserType:            userType,
-		OUID:                orgUnit,
-		Token:               userToken,
-		AvailableAttributes: availableAttributes,
+		UserID:             userID,
+		UserType:           userType,
+		OUID:               orgUnit,
+		Token:              userToken,
+		AttributesResponse: availableAttributes,
 	}
 
 	suite.mockAuthnProvider.On("Authenticate", mock.Anything, identifiers, credentials,

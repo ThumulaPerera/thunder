@@ -192,9 +192,9 @@ func (f *FlowContextDB) ToEngineContext(graph core.GraphInterface) (EngineContex
 	}
 
 	// Parse available attributes
-	var availableAttributes *authnprovidercm.AvailableAttributes
+	var availableAttributes *authnprovidercm.AttributesResponse
 	if content.AvailableAttributes != nil && strings.TrimSpace(*content.AvailableAttributes) != "" {
-		var attrs authnprovidercm.AvailableAttributes
+		var attrs authnprovidercm.AttributesResponse
 		if err := json.Unmarshal([]byte(*content.AvailableAttributes), &attrs); err != nil {
 			return EngineContext{}, err
 		}

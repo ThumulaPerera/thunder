@@ -1151,8 +1151,8 @@ func (s *EngineTestSuite) TestUpdateContextWithNodeResponse_RetainsTokenAndAvail
 	}
 
 	previousToken := "previous-auth-token"
-	previousAvailableAttrs := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	previousAvailableAttrs := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -1228,8 +1228,8 @@ func (s *EngineTestSuite) TestUpdateContextWithNodeResponse_UpdatesTokenAndAvail
 	}
 
 	previousToken := "previous-auth-token"
-	previousAvailableAttrs := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	previousAvailableAttrs := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -1240,8 +1240,8 @@ func (s *EngineTestSuite) TestUpdateContextWithNodeResponse_UpdatesTokenAndAvail
 	}
 
 	newToken := "new-auth-token" //nolint:gosec // G101: This is test data, not a real credential
-	newAvailableAttrs := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	newAvailableAttrs := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"phone": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -1352,8 +1352,8 @@ func (s *EngineTestSuite) TestUpdateContextWithNodeResponse_TokenSetButAvailable
 		observabilitySvc: mockObservability,
 	}
 
-	previousAvailableAttrs := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	previousAvailableAttrs := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,

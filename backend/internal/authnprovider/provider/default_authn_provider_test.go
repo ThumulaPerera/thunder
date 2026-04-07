@@ -78,9 +78,11 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_Success() {
 	suite.Equal("user123", result.Token)
 	suite.Equal("customer", result.UserType)
 	suite.Equal("ou1", result.OUID)
-	suite.NotNil(result.AvailableAttributes)
-	suite.Len(result.AvailableAttributes.Attributes, 1)
-	suite.Contains(result.AvailableAttributes.Attributes, "email")
+	suite.False(result.IsAttributeValuesIncluded)
+	suite.NotNil(result.AttributesResponse)
+	suite.Len(result.AttributesResponse.Attributes, 1)
+	suite.Contains(result.AttributesResponse.Attributes, "email")
+	suite.Nil(result.AttributesResponse.Attributes["email"].Value)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_UserNotFound() {

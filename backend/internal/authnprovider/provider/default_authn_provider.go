@@ -126,25 +126,25 @@ func (p *defaultAuthnProvider) Authenticate(
 		}
 	}
 
-	availableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes:    make(map[string]*authnprovidercm.AttributeMetadataResponse),
+	attributesResponse := &authnprovidercm.AttributesResponse{
+		Attributes:    make(map[string]*authnprovidercm.AttributeResponse),
 		Verifications: make(map[string]*authnprovidercm.VerificationResponse),
 	}
 	for k := range attributes {
-		availableAttributes.Attributes[k] = &authnprovidercm.AttributeMetadataResponse{
+		attributesResponse.Attributes[k] = &authnprovidercm.AttributeResponse{
 			AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
-				IsVerified:     false,
-				VerificationID: "",
+				IsVerified: false,
 			},
 		}
 	}
 
 	return &authnprovidercm.AuthnResult{
-		UserID:              authenticatedUserID,
-		Token:               authenticatedUserID,
-		UserType:            userResult.Type,
-		OUID:                userResult.OUID,
-		AvailableAttributes: availableAttributes,
+		UserID:                    authenticatedUserID,
+		Token:                     authenticatedUserID,
+		UserType:                  userResult.Type,
+		OUID:                      userResult.OUID,
+		IsAttributeValuesIncluded: false,
+		AttributesResponse:        attributesResponse,
 	}, nil
 }
 

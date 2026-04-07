@@ -168,8 +168,8 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_AuthenticationFlow(
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"username": {},
 			},
 		},
@@ -218,8 +218,8 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithEmailAttribute(
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"email": {},
 			},
 		},
@@ -295,8 +295,8 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttribu
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"email": {},
 				"phone": {},
 			},
@@ -500,8 +500,8 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_SuccessfulAuth
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"email": {},
 				"phone": {},
 			},
@@ -549,8 +549,8 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_Success_WithFe
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"username": {},
 				"email":    {},
 				"role":     {},
@@ -605,8 +605,8 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_Authentication
 		UserType: "person",
 		OUID:     "ou-123",
 		Token:    "test-token",
-		AvailableAttributes: &authnprovidercm.AvailableAttributes{
-			Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+		AttributesResponse: &authnprovidercm.AttributesResponse{
+			Attributes: map[string]*authnprovidercm.AttributeResponse{
 				"email": {},
 				"phone": {},
 			},

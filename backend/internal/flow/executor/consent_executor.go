@@ -297,14 +297,14 @@ func (e *consentExecutor) getRequiredAttributes(ctx *core.NodeContext) (
 	return essentialAttributes, optionalAttributes
 }
 
-// buildAugmentedAvailableAttributes returns an AvailableAttributes value augmented with
+// buildAugmentedAvailableAttributes returns an AttributesResponse value augmented with
 // special attribute keys (groups, userType, ouId, ouName, ouHandle) that are present by
-// construction in the authenticated user context but are never included in AvailableAttributes
+// construction in the authenticated user context but are never included in AttributesResponse
 // by authentication providers.
-func buildAugmentedAvailableAttributes(ctx *core.NodeContext) *authnprovidercm.AvailableAttributes {
+func buildAugmentedAvailableAttributes(ctx *core.NodeContext) *authnprovidercm.AttributesResponse {
 	base := ctx.AuthenticatedUser.AvailableAttributes
 
-	var baseAttrs map[string]*authnprovidercm.AttributeMetadataResponse
+	var baseAttrs map[string]*authnprovidercm.AttributeResponse
 	var baseVerifications map[string]*authnprovidercm.VerificationResponse
 	if base != nil {
 		baseAttrs = base.Attributes
@@ -312,7 +312,7 @@ func buildAugmentedAvailableAttributes(ctx *core.NodeContext) *authnprovidercm.A
 	}
 
 	// Shallow-copy existing entries so we never mutate the original
-	augmented := make(map[string]*authnprovidercm.AttributeMetadataResponse, len(baseAttrs))
+	augmented := make(map[string]*authnprovidercm.AttributeResponse, len(baseAttrs))
 	for k, v := range baseAttrs {
 		augmented[k] = v
 	}
@@ -321,18 +321,18 @@ func buildAugmentedAvailableAttributes(ctx *core.NodeContext) *authnprovidercm.A
 	// Value is set to empty since the consent enforcer only checks for presence of the key, and the actual values
 	// can be obtained from the authenticated user context if needed
 	if ctx.AuthenticatedUser.UserType != "" {
-		augmented[oauth2const.ClaimUserType] = &authnprovidercm.AttributeMetadataResponse{}
+		augmented[oauth2const.ClaimUserType] = &authnprovidercm.AttributeResponse{}
 	}
 	if ctx.AuthenticatedUser.OUID != "" {
-		augmented[oauth2const.ClaimOUID] = &authnprovidercm.AttributeMetadataResponse{}
-		augmented[oauth2const.ClaimOUName] = &authnprovidercm.AttributeMetadataResponse{}
-		augmented[oauth2const.ClaimOUHandle] = &authnprovidercm.AttributeMetadataResponse{}
+		augmented[oauth2const.ClaimOUID] = &authnprovidercm.AttributeResponse{}
+		augmented[oauth2const.ClaimOUName] = &authnprovidercm.AttributeResponse{}
+		augmented[oauth2const.ClaimOUHandle] = &authnprovidercm.AttributeResponse{}
 	}
 	if ctx.AuthenticatedUser.UserID != "" {
-		augmented[oauth2const.UserAttributeGroups] = &authnprovidercm.AttributeMetadataResponse{}
+		augmented[oauth2const.UserAttributeGroups] = &authnprovidercm.AttributeResponse{}
 	}
 
-	return &authnprovidercm.AvailableAttributes{
+	return &authnprovidercm.AttributesResponse{
 		Attributes:    augmented,
 		Verifications: baseVerifications,
 	}

@@ -42,7 +42,7 @@ type ConsentEnforcerServiceInterface interface {
 	// Returns nil if all required consents are active; otherwise returns ConsentPromptData
 	// describing which purposes/elements still need user consent.
 	ResolveConsent(ctx context.Context, ouID, appID, userID string,
-		essentialAttributes, optionalAttributes []string, availableAttributes *authnprovidercm.AvailableAttributes) (
+		essentialAttributes, optionalAttributes []string, availableAttributes *authnprovidercm.AttributesResponse) (
 		*ConsentPromptData, *serviceerror.I18nServiceError)
 
 	// RecordConsent records the user's consent decisions and returns the persisted consent record.
@@ -74,7 +74,7 @@ func newConsentEnforcerService(consentSvc consent.ConsentServiceInterface,
 // filtering (availableAttributes), then checks existing consent records. Returns nil if
 // all required consents are active, or ConsentPromptData for purposes that still need consent.
 func (s *consentEnforcerService) ResolveConsent(ctx context.Context, ouID, appID, userID string,
-	essentialAttributes, optionalAttributes []string, availableAttributes *authnprovidercm.AvailableAttributes) (
+	essentialAttributes, optionalAttributes []string, availableAttributes *authnprovidercm.AttributesResponse) (
 	*ConsentPromptData, *serviceerror.I18nServiceError) {
 	logger := s.logger.With(log.String("appID", appID), log.String("userID", userID))
 	logger.Debug("Resolving consent for user")
@@ -430,7 +430,7 @@ func buildConsentedElementSet(consents []consent.Consent) map[string]bool {
 
 // buildUserAttributeSet builds a set of attribute names present in the user's profile.
 // When availableAttributes is nil, the returned set is empty — meaning no profile filtering is applied.
-func buildUserAttributeSet(available *authnprovidercm.AvailableAttributes) map[string]bool {
+func buildUserAttributeSet(available *authnprovidercm.AttributesResponse) map[string]bool {
 	if available == nil || len(available.Attributes) == 0 {
 		return nil
 	}

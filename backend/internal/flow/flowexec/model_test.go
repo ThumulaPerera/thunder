@@ -421,8 +421,8 @@ func (s *ModelTestSuite) TestFromEngineContext_PreservesOtherFields() {
 
 func (s *ModelTestSuite) TestFromEngineContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -527,8 +527,8 @@ func (s *ModelTestSuite) TestFromEngineContext_WithoutAvailableAttributes() {
 
 func (s *ModelTestSuite) TestToEngineContext_WithAvailableAttributes() {
 	// Setup
-	testAvailableAttributes := &authnprovidercm.AvailableAttributes{
-		Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+	testAvailableAttributes := &authnprovidercm.AttributesResponse{
+		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {
 				AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 					IsVerified: true,
@@ -635,12 +635,12 @@ func (s *ModelTestSuite) TestAvailableAttributesSerializationRoundTrip() {
 	// Setup
 	testCases := []struct {
 		name       string
-		attributes *authnprovidercm.AvailableAttributes
+		attributes *authnprovidercm.AttributesResponse
 	}{
 		{
 			name: "Single attribute",
-			attributes: &authnprovidercm.AvailableAttributes{
-				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AttributesResponse{
+				Attributes: map[string]*authnprovidercm.AttributeResponse{
 					"email": {
 						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
@@ -652,8 +652,8 @@ func (s *ModelTestSuite) TestAvailableAttributesSerializationRoundTrip() {
 		},
 		{
 			name: "Multiple attributes",
-			attributes: &authnprovidercm.AvailableAttributes{
-				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AttributesResponse{
+				Attributes: map[string]*authnprovidercm.AttributeResponse{
 					"email": {
 						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
@@ -675,8 +675,8 @@ func (s *ModelTestSuite) TestAvailableAttributesSerializationRoundTrip() {
 		},
 		{
 			name: "Special characters in names",
-			attributes: &authnprovidercm.AvailableAttributes{
-				Attributes: map[string]*authnprovidercm.AttributeMetadataResponse{
+			attributes: &authnprovidercm.AttributesResponse{
+				Attributes: map[string]*authnprovidercm.AttributeResponse{
 					"custom-attr-1": {
 						AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
 							IsVerified: true,
