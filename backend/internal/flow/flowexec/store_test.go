@@ -29,6 +29,7 @@ import (
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	managerpkg "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/system/config"
 
@@ -698,4 +699,39 @@ func (s *StoreTestSuite) TestGetFlowContext_WithAvailableAttributes() {
 
 	mockDBProvider.AssertExpectations(s.T())
 	mockDBClient.AssertExpectations(s.T())
+}
+
+func (s *StoreTestSuite) TestEngineContextRoundTrip_WithAuthUser() {
+	authUser := managerpkg.NewAuthUser()
+	mockGraph := coremock.NewGraphInterfaceMock(s.T())
+	mockGraph.On("GetID").Return("test-graph-id")
+	mockGraph.On("GetType").Return(common.FlowTypeAuthentication)
+
+	originalCtx := EngineContext{
+		FlowID:   "authuser-flow-id",
+		AppID:    "authuser-app-id",
+		FlowType: common.FlowTypeAuthentication,
+		AuthenticatedUser: authncm.AuthenticatedUser{
+			IsAuthenticated: true,
+			UserID:          "au-user-1",
+			Attributes:      map[string]interface{}{},
+		},
+		AuthUser:         authUser,
+		UserInputs:       map[string]string{},
+		RuntimeData:      map[string]string{},
+		ExecutionHistory: map[string]*common.NodeExecutionRecord{},
+		Graph:            mockGraph,
+	}
+
+	dbModel, err := FromEngineContext(originalCtx)
+	s.NoError(err)
+	s.NotNil(dbModel)
+
+	// Token encryption is handled inside AuthUser.MarshalJSON; verify the JSON blob is present
+	content := s.getContextContent(dbModel)
+	s.NotNil(content.AuthUser)
+
+	restoredCtx, err := dbModel.ToEngineContext(mockGraph)
+	s.NoError(err)
+	s.NotNil(restoredCtx.AuthUser)
 }

@@ -97,6 +97,7 @@ func (fe *flowEngine) Execute(ctx *EngineContext) (FlowStep, *serviceerror.Servi
 			ForwardedData:     ctx.ForwardedData,
 			Application:       ctx.Application,
 			AuthenticatedUser: ctx.AuthenticatedUser,
+			AuthUser:          ctx.AuthUser,
 			ExecutionHistory:  ctx.ExecutionHistory,
 		}
 		if nodeCtx.NodeInputs == nil {
