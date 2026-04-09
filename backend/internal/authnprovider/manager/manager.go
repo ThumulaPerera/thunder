@@ -42,33 +42,26 @@ func newAuthnProviderManager(p provider.AuthnProviderInterface) AuthnProviderMan
 	}
 }
 
-// Authenticate delegates to the underlying provider.
-func (m *authnProviderManager) Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
-	return m.provider.Authenticate(ctx, identifiers, credentials, metadata)
-}
-
-// GetAttributes delegates to the underlying provider.
-func (m *authnProviderManager) GetAttributes(ctx context.Context, token string,
-	requestedAttributes *authnprovidercm.RequestedAttributes,
-	metadata *authnprovidercm.GetAttributesMetadata) (
-	*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError) {
-	return m.provider.GetAttributes(ctx, token, requestedAttributes, metadata)
-}
-
-// AuthenticateUser authenticates with the underlying provider and populates authUser with the result.
+// AuthenticateUser authenticates with the underlying provider and returns an updated AuthUser.
 func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers, credentials map[string]interface{},
 	requestedAttributes *authnprovidercm.RequestedAttributes,
 	metadata *authnprovidercm.AuthnMetadata,
-	authUser *AuthUser) (*AuthnBasicResult, *serviceerror.ServiceError) {
+	authUser AuthUser) (AuthUser, *AuthnBasicResult, *serviceerror.ServiceError) {
 	result, svcErr := m.provider.Authenticate(ctx, identifiers, credentials, metadata)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ServerErrorType {
 			m.logger.Error("provider returned server error during authentication",
 				log.String("error", svcErr.ErrorDescription))
-			return nil, serviceerror.CustomServiceError(ErrorAuthServerError, svcErr.ErrorDescription)
+			return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorAuthServerError, svcErr.ErrorDescription)
 		}
-		return nil, serviceerror.CustomServiceError(ErrorAuthenticationFailed, svcErr.ErrorDescription)
+		switch svcErr.Code {
+		case authnprovidercm.ErrorCodeUserNotFound:
+			return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorUserNotFound, svcErr.ErrorDescription)
+		case authnprovidercm.ErrorCodeInvalidRequest:
+			return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorInvalidRequest, svcErr.ErrorDescription)
+		default:
+			return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorAuthenticationFailed, svcErr.ErrorDescription)
+		}
 	}
 	authUser.setIdentity(result.UserID, result.UserType, result.OUID)
 	authUser.setProviderData(defaultProvider, providerData{
@@ -76,7 +69,7 @@ func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers
 		attributes:                result.AttributesResponse,
 		isAttributeValuesIncluded: result.IsAttributeValuesIncluded,
 	})
-	return &AuthnBasicResult{
+	return authUser, &AuthnBasicResult{
 		UserID:   result.UserID,
 		OUID:     result.OUID,
 		UserType: result.UserType,
@@ -85,9 +78,9 @@ func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers
 
 // GetUserAvailableAttributes returns the cached attributes for the default provider without making a provider call.
 func (m *authnProviderManager) GetUserAvailableAttributes(ctx context.Context,
-	authUser *AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
-	if authUser == nil {
-		m.logger.Error("GetUserAvailableAttributes called with nil authUser")
+	authUser AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
+	if !authUser.IsAuthenticated() {
+		m.logger.Error("GetUserAvailableAttributes called with unauthenticated authUser")
 		return nil, &ErrorNotAuthenticated
 	}
 	data, ok := authUser.getProviderData(defaultProvider)
@@ -101,32 +94,33 @@ func (m *authnProviderManager) GetUserAvailableAttributes(ctx context.Context,
 // GetUserAttributes returns attributes for the user, fetching from the provider if not already cached.
 func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 	requestedAttributes *authnprovidercm.RequestedAttributes,
-	authUser *AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
-	if authUser == nil {
-		m.logger.Error("GetUserAttributes called with nil authUser")
-		return nil, &ErrorNotAuthenticated
+	metadata *authnprovidercm.GetAttributesMetadata,
+	authUser AuthUser) (AuthUser, *authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
+	if !authUser.IsAuthenticated() {
+		m.logger.Error("GetUserAttributes called with unauthenticated authUser")
+		return AuthUser{}, nil, &ErrorNotAuthenticated
 	}
 	data, ok := authUser.getProviderData(defaultProvider)
 	if !ok {
 		m.logger.Error("GetUserAttributes: no provider data found for default provider")
-		return nil, &ErrorProviderDataNotFound
+		return AuthUser{}, nil, &ErrorProviderDataNotFound
 	}
 	if data.isAttributeValuesIncluded {
-		return data.attributes, nil
+		return authUser, data.attributes, nil
 	}
-	result, svcErr := m.provider.GetAttributes(ctx, data.token, requestedAttributes, nil)
+	result, svcErr := m.provider.GetAttributes(ctx, data.token, requestedAttributes, metadata)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ServerErrorType {
 			m.logger.Error("provider returned server error while fetching attributes",
 				log.String("error", svcErr.ErrorDescription))
-			return nil, serviceerror.CustomServiceError(ErrorGetAttributesFailed, svcErr.ErrorDescription)
+			return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorGetAttributesFailed, svcErr.ErrorDescription)
 		}
-		return nil, serviceerror.CustomServiceError(ErrorGetAttributesClientError, svcErr.ErrorDescription)
+		return AuthUser{}, nil, serviceerror.CustomServiceError(ErrorGetAttributesClientError, svcErr.ErrorDescription)
 	}
 	authUser.setProviderData(defaultProvider, providerData{
 		token:                     data.token,
 		attributes:                result.AttributesResponse,
 		isAttributeValuesIncluded: true,
 	})
-	return result.AttributesResponse, nil
+	return authUser, result.AttributesResponse, nil
 }

@@ -180,7 +180,8 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 
 	// For authentication flows, call Authenticate directly.
 	metadata := b.buildAuthnMetadata(ctx)
-	authnResult, svcErr := b.credsAuthSvc.Authenticate(ctx.Context, userIdentifiers, userCredentials, metadata)
+	newAuthUser, authnResult, svcErr := b.credsAuthSvc.Authenticate(ctx.Context, userIdentifiers, userCredentials,
+		nil, metadata, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
 			execResp.Status = common.ExecUserInputRequired
@@ -202,6 +203,7 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 			log.String("errorCode", svcErr.Code), log.String("errorDescription", svcErr.ErrorDescription))
 		return nil, errors.New("failed to authenticate user")
 	}
+	execResp.AuthUser = newAuthUser
 
 	// Try to retrieve the user and get the attributes
 	userAttributes := map[string]interface{}{}
@@ -223,13 +225,11 @@ func (b *basicAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 	}
 
 	return &authncm.AuthenticatedUser{
-		IsAuthenticated:     true,
-		UserID:              authnResult.UserID,
-		OUID:                authnResult.OUID,
-		UserType:            authnResult.UserType,
-		Attributes:          userAttributes,
-		AvailableAttributes: authnResult.AttributesResponse,
-		Token:               authnResult.Token,
+		IsAuthenticated: true,
+		UserID:          authnResult.UserID,
+		OUID:            authnResult.OUID,
+		UserType:        authnResult.UserType,
+		Attributes:      userAttributes,
 	}, nil
 }
 

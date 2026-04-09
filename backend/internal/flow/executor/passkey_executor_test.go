@@ -28,7 +28,7 @@ import (
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -278,10 +278,11 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_Success() {
 		inputUserHandle:        "user-handle",
 	}
 
-	authResp := &authnprovidercm.AuthnResult{
+	authResp := &authnprovidermgr.AuthnBasicResult{
 		UserID: testPasskeyUserID,
 	}
-	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(authResp, nil)
+	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, authResp, nil)
 
 	attrs := map[string]interface{}{"email": "test@example.com"}
 	attrsJSON, _ := json.Marshal(attrs)
@@ -343,8 +344,8 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_InvalidPasskey_Clie
 		inputSignature:         "invalid-signature",
 	}
 
-	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(
-		nil, &serviceerror.ServiceError{
+	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything, mock.Anything).Return(
+		authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
 			Type:             serviceerror.ClientErrorType,
 			ErrorDescription: "Invalid signature",
 		})
@@ -368,8 +369,8 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_ServiceError_Server
 		inputSignature:         "signature",
 	}
 
-	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(
-		nil, &serviceerror.ServiceError{
+	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything, mock.Anything).Return(
+		authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
 			Type:             serviceerror.ServerErrorType,
 			ErrorDescription: "Database error",
 		})
@@ -919,10 +920,11 @@ func (suite *PasskeyAuthExecutorTestSuite) TestExecuteVerify_GetAuthenticatedUse
 		inputUserHandle:        "user-handle",
 	}
 
-	authResp := &authnprovidercm.AuthnResult{
+	authResp := &authnprovidermgr.AuthnBasicResult{
 		UserID: testPasskeyUserID,
 	}
-	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything).Return(authResp, nil)
+	suite.mockPasskeyService.On("FinishAuthentication", mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, authResp, nil)
 
 	// Simulate user not found when getting authenticated user details
 	suite.mockUserProvider.On("GetUser", testPasskeyUserID).Return(

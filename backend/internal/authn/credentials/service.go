@@ -36,13 +36,15 @@ const (
 // CredentialsAuthnServiceInterface defines the contract for credentials-based authenticator services.
 type CredentialsAuthnServiceInterface interface {
 	Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-		metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
-	GetAttributes(
-		ctx context.Context,
-		token string,
+		requestedAttributes *authnprovidercm.RequestedAttributes,
+		metadata *authnprovidercm.AuthnMetadata,
+		authUser authnprovidermgr.AuthUser) (
+		authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult, *serviceerror.ServiceError)
+	GetAttributes(ctx context.Context,
 		requestedAttributes *authnprovidercm.RequestedAttributes,
 		metadata *authnprovidercm.GetAttributesMetadata,
-	) (*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError)
+		authUser authnprovidermgr.AuthUser) (
+		authnprovidermgr.AuthUser, *authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
 }
 
 // credentialsAuthnService is the default implementation of CredentialsAuthnServiceInterface.
@@ -64,42 +66,52 @@ func newCredentialsAuthnService(
 }
 
 func (c *credentialsAuthnService) Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-	metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
+	requestedAttributes *authnprovidercm.RequestedAttributes,
+	metadata *authnprovidercm.AuthnMetadata,
+	authUser authnprovidermgr.AuthUser) (
+	authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult, *serviceerror.ServiceError) {
 	if len(identifiers) == 0 || len(credentials) == 0 {
-		return nil, &ErrorEmptyAttributesOrCredentials
+		return authnprovidermgr.AuthUser{}, nil, &ErrorEmptyAttributesOrCredentials
 	}
 
-	authnResult, err := c.authnProvider.Authenticate(ctx, identifiers, credentials, metadata)
+	newAuthUser, result, err := c.authnProvider.AuthenticateUser(ctx, identifiers, credentials, requestedAttributes,
+		metadata, authUser)
 	if err != nil {
 		switch err.Code {
-		case authnprovidercm.ErrorCodeAuthenticationFailed:
-			return nil, &ErrorInvalidCredentials
-		case authnprovidercm.ErrorCodeUserNotFound:
-			return nil, &common.ErrorUserNotFound
+		case authnprovidermgr.ErrorAuthenticationFailed.Code:
+			return authnprovidermgr.AuthUser{}, nil, &ErrorInvalidCredentials
+		case authnprovidermgr.ErrorUserNotFound.Code:
+			return authnprovidermgr.AuthUser{}, nil, &common.ErrorUserNotFound
 		default:
 			c.logger.Error("Error occurred while authenticating the user", log.String("errorCode", err.Code),
 				log.String("errorDescription", err.ErrorDescription))
-			return nil, &serviceerror.InternalServerError
+			return authnprovidermgr.AuthUser{}, nil, &serviceerror.InternalServerError
 		}
 	}
-	return authnResult, nil
+	return newAuthUser, result, nil
 }
 
-func (c *credentialsAuthnService) GetAttributes(ctx context.Context, token string,
-	requestedAttributes *authnprovidercm.RequestedAttributes, metadata *authnprovidercm.GetAttributesMetadata) (
-	*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError) {
-	result, err := c.authnProvider.GetAttributes(ctx, token, requestedAttributes, metadata)
+func (c *credentialsAuthnService) GetAttributes(ctx context.Context,
+	requestedAttributes *authnprovidercm.RequestedAttributes,
+	metadata *authnprovidercm.GetAttributesMetadata,
+	authUser authnprovidermgr.AuthUser) (authnprovidermgr.AuthUser, *authnprovidercm.AttributesResponse,
+	*serviceerror.ServiceError) {
+	updatedAuthUser, result, err := c.authnProvider.GetUserAttributes(ctx, requestedAttributes, metadata, authUser)
 	if err != nil {
 		switch err.Code {
-		case authnprovidercm.ErrorCodeInvalidToken:
-			return nil, &ErrorInvalidToken
+		case authnprovidermgr.ErrorGetAttributesClientError.Code:
+			return authnprovidermgr.AuthUser{}, nil, &ErrorInvalidToken
+		case authnprovidermgr.ErrorNotAuthenticated.Code:
+			return authnprovidermgr.AuthUser{}, nil, &ErrorNotAuthenticated
+		case authnprovidermgr.ErrorProviderDataNotFound.Code:
+			return authnprovidermgr.AuthUser{}, nil, &ErrorProviderDataNotFound
 		default:
 			c.logger.Error("Error occurred while getting attributes", log.String("errorCode", err.Code),
 				log.String("errorDescription", err.ErrorDescription))
-			return nil, &serviceerror.InternalServerError
+			return authnprovidermgr.AuthUser{}, nil, &serviceerror.InternalServerError
 		}
 	}
-	return result, nil
+	return updatedAuthUser, result, nil
 }
 
 // getMetadata returns the authenticator metadata for credentials authenticator.

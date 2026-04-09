@@ -28,7 +28,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/tests/mocks/authn/passkeymock"
 	"github.com/asgardeo/thunder/tests/mocks/authnprovider/managermock"
@@ -345,20 +345,21 @@ func (suite *PasskeyAuthnServiceTestSuite) TestStartAuthentication_ServerError()
 
 func (suite *PasskeyAuthnServiceTestSuite) TestFinishAuthentication_DelegatesToAuthnProvider() {
 	ctx := context.Background()
-	expectedResult := &authnprovidercm.AuthnResult{
+	expectedResult := &authnprovidermgr.AuthnBasicResult{
 		UserID:   "user-123",
 		UserType: "person",
 		OUID:     "ou-123",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return(expectedResult, (*serviceerror.ServiceError)(nil))
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, expectedResult, (*serviceerror.ServiceError)(nil))
 
-	result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
+	_, result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
 		CredentialID:   "cred-id",
 		CredentialType: "public-key",
 		SessionToken:   "token-123",
-	})
+	}, authnprovidermgr.AuthUser{})
 
 	suite.Nil(svcErr)
 	suite.Equal(expectedResult, result)
@@ -369,17 +370,18 @@ func (suite *PasskeyAuthnServiceTestSuite) TestFinishAuthentication_ClientError(
 	ctx := context.Background()
 	mockErr := &serviceerror.ServiceError{
 		Type:             serviceerror.ClientErrorType,
-		Code:             authnprovidercm.ErrorCodeAuthenticationFailed,
+		Code:             authnprovidermgr.ErrorAuthenticationFailed.Code,
 		Error:            "Authentication failed",
 		ErrorDescription: "The passkey assertion was invalid",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), mockErr)
 
-	result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
+	_, result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
 		SessionToken: "token-123",
-	})
+	}, authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)
@@ -399,12 +401,13 @@ func (suite *PasskeyAuthnServiceTestSuite) TestFinishAuthentication_DefaultClien
 		ErrorDescription: "some description",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), mockErr)
 
-	result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
+	_, result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
 		SessionToken: "token-123",
-	})
+	}, authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)
@@ -423,12 +426,13 @@ func (suite *PasskeyAuthnServiceTestSuite) TestFinishAuthentication_ServerError(
 		ErrorDescription: "something broke",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), mockErr)
 
-	result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
+	_, result, svcErr := suite.service.FinishAuthentication(ctx, &passkeyauthn.AuthenticationFinishRequest{
 		SessionToken: "token-123",
-	})
+	}, authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)

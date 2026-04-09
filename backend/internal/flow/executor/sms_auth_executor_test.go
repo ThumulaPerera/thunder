@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/userprovider"
@@ -193,8 +193,10 @@ func (suite *SMSAuthExecutorTestSuite) TestValidatePrerequisites_AuthenticationF
 
 // TestGetAuthenticatedUser_MFA_AddsMobileNumberToAttributes verifies that when user is already authenticated
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_AddsMobileNumberToAttributes() {
-	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
-		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456", mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
+			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123",
+		}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
@@ -238,8 +240,10 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_A
 	}
 	attrsJSON, _ := json.Marshal(attrs)
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
-		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456", mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
+			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123",
+		}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
@@ -288,8 +292,10 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_P
 	}
 	attrsJSON, _ := json.Marshal(attrs)
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
-		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456", mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
+			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123",
+		}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
@@ -372,8 +378,10 @@ func (suite *SMSAuthExecutorTestSuite) TestGetUserMobileNumber_NotFoundInAttribu
 // TestGetAuthenticatedUser_MFA_NilAttributes verifies that when the authenticated user
 // has nil Attributes map, it is initialized before returning.
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_NilAttributes() {
-	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
-		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456", mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
+			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123",
+		}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",
@@ -412,8 +420,10 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_FetchFromStore_N
 	// JSON null unmarshals to nil map
 	attrsJSON := []byte("null")
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456").
-		Return(&authnprovidercm.AuthnResult{UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123"}, nil)
+	suite.mockOTPService.On("Authenticate", mock.Anything, "test-session-token", "123456", mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
+			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123",
+		}, nil)
 
 	ctx := &core.NodeContext{
 		FlowID:   "flow-123",

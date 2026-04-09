@@ -28,18 +28,14 @@ import (
 
 // AuthnProviderManagerInterface defines the interface for the authentication provider manager.
 type AuthnProviderManagerInterface interface {
-	Authenticate(ctx context.Context, identifiers, credentials map[string]interface{},
-		metadata *authnprovidercm.AuthnMetadata) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
-	GetAttributes(ctx context.Context, token string, requestedAttributes *authnprovidercm.RequestedAttributes,
-		metadata *authnprovidercm.GetAttributesMetadata) (
-		*authnprovidercm.GetAttributesResult, *serviceerror.ServiceError)
 	AuthenticateUser(ctx context.Context, identifiers, credentials map[string]interface{},
 		requestedAttributes *authnprovidercm.RequestedAttributes,
 		metadata *authnprovidercm.AuthnMetadata,
-		authUser *AuthUser) (*AuthnBasicResult, *serviceerror.ServiceError)
+		authUser AuthUser) (AuthUser, *AuthnBasicResult, *serviceerror.ServiceError)
 	GetUserAvailableAttributes(ctx context.Context,
-		authUser *AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
+		authUser AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
 	GetUserAttributes(ctx context.Context,
 		requestedAttributes *authnprovidercm.RequestedAttributes,
-		authUser *AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
+		metadata *authnprovidercm.GetAttributesMetadata,
+		authUser AuthUser) (AuthUser, *authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
 }

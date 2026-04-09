@@ -200,6 +200,7 @@ func (n *taskExecutionNode) buildNodeResponse(execResp *common.ExecutorResponse)
 		ForwardedData:     execResp.ForwardedData,
 		AuthenticatedUser: execResp.AuthenticatedUser,
 		Assertion:         execResp.Assertion,
+		AuthUser:          execResp.AuthUser,
 	}
 	if nodeResp.AdditionalData == nil {
 		nodeResp.AdditionalData = make(map[string]string)

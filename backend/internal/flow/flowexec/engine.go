@@ -379,6 +379,11 @@ func (fe *flowEngine) updateContextWithNodeResponse(engineCtx *EngineContext, no
 	if len(nodeResp.ForwardedData) > 0 {
 		engineCtx.ForwardedData = nodeResp.ForwardedData
 	}
+
+	// Write back AuthUser from the node response
+	if nodeResp.AuthUser.IsAuthenticated() {
+		engineCtx.AuthUser = nodeResp.AuthUser
+	}
 }
 
 // shouldUpdateAuthenticatedUser determines if the authenticated user should be updated in the context.

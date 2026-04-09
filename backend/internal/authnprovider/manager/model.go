@@ -52,15 +52,6 @@ type AuthnBasicResult struct {
 	UserType string
 }
 
-// NewAuthUser returns an initialized AuthUser. External packages that need to construct
-// a zero-value AuthUser (e.g. flowexec before unmarshalling) must use this constructor
-// because the providersAuthData map field is unexported.
-func NewAuthUser() *AuthUser {
-	return &AuthUser{
-		providersAuthData: make(map[providerKey]providerData),
-	}
-}
-
 func (a *AuthUser) setIdentity(userID, userType, ouID string) {
 	a.userID = userID
 	a.userType = userType
@@ -79,6 +70,12 @@ func (a *AuthUser) setProviderData(p providerKey, data providerData) { //nolint:
 func (a *AuthUser) getProviderData(p providerKey) (providerData, bool) { //nolint:unparam
 	data, ok := a.providersAuthData[p]
 	return data, ok
+}
+
+// IsAuthenticated reports whether this AuthUser has been populated by a successful
+// authentication.
+func (a AuthUser) IsAuthenticated() bool {
+	return a.userID != ""
 }
 
 // authUserJSON is the internal proxy used for JSON serialization of AuthUser.

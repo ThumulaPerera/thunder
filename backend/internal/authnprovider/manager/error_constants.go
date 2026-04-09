@@ -74,4 +74,22 @@ var (
 		Error:            "Provider data not found",
 		ErrorDescription: "No authentication data found for the provider",
 	}
+
+	// ErrorUserNotFound is returned when the underlying provider indicates no user was found
+	// matching the provided identifiers.
+	ErrorUserNotFound = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTHN-MGR-1007",
+		Error:            "User not found",
+		ErrorDescription: "No user found matching the provided identifiers",
+	}
+
+	// ErrorInvalidRequest is returned when the underlying provider rejects the authentication
+	// request as invalid.
+	ErrorInvalidRequest = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTHN-MGR-1008",
+		Error:            "Invalid request",
+		ErrorDescription: "The authentication request is invalid",
+	}
 )

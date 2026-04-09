@@ -32,6 +32,7 @@ import (
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	authncreds "github.com/asgardeo/thunder/internal/authn/credentials"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	oauth2const "github.com/asgardeo/thunder/internal/oauth/oauth2/constants"
@@ -356,10 +357,10 @@ func (a *authAssertExecutor) resolveUserAttributes(ctx *core.NodeContext, reques
 		// Fetch from user/authentication provider
 		if ctx.AuthenticatedUser.UserID != "" && fetchedAttributes == nil {
 			var err error
-			if ctx.AuthenticatedUser.Token != "" {
+			if ctx.AuthUser.IsAuthenticated() {
 				metadata := a.buildGetAttributesMetadata(ctx)
 				fetchedAttributes, err = a.getUserAttributesFromAuthnProvider(ctx.Context,
-					ctx.AuthenticatedUser.Token, requestedAttributes, metadata)
+					requestedAttributes, metadata, ctx.AuthUser)
 			} else {
 				fetchedAttributes, err = a.getUserAttributesFromUserProvider(ctx.AuthenticatedUser.UserID)
 			}
@@ -429,8 +430,9 @@ func (a *authAssertExecutor) appendComputedAttributes(
 }
 
 // getUserAttributesFromAuthnProvider retrieves user attributes from the authentication provider.
-func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Context, token string,
-	requestedAttributes []string, metadata *authnprovidercm.GetAttributesMetadata) (map[string]interface{}, error) {
+func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Context,
+	requestedAttributes []string, metadata *authnprovidercm.GetAttributesMetadata,
+	authUser authnprovidermgr.AuthUser) (map[string]interface{}, error) {
 	// Convert requested attributes from []string to *RequestedAttributes
 	reqAttrs := &authnprovidercm.RequestedAttributes{
 		Attributes:    make(map[string]*authnprovidercm.AttributeMetadataRequest),
@@ -440,7 +442,7 @@ func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Cont
 		reqAttrs.Attributes[attrName] = nil
 	}
 
-	res, svcErr := a.credsAuthSvc.GetAttributes(ctx, token, reqAttrs, metadata)
+	_, res, svcErr := a.credsAuthSvc.GetAttributes(ctx, reqAttrs, metadata, authUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ServerErrorType {
 			return nil, errors.New("something went wrong while fetching user attributes")
@@ -450,8 +452,8 @@ func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Cont
 
 	// Extract attribute values from AttributesResponse
 	attrs := make(map[string]interface{})
-	if res.AttributesResponse != nil && res.AttributesResponse.Attributes != nil {
-		for attrName, attrResp := range res.AttributesResponse.Attributes {
+	if res != nil && res.Attributes != nil {
+		for attrName, attrResp := range res.Attributes {
 			if attrResp != nil {
 				attrs[attrName] = attrResp.Value
 			}

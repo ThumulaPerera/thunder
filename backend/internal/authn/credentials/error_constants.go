@@ -51,4 +51,18 @@ var (
 		Error:            "Invalid token",
 		ErrorDescription: "The provided token is invalid",
 	}
+	// ErrorNotAuthenticated is the error when no authenticated user session exists.
+	ErrorNotAuthenticated = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTH-CRED-1005",
+		Error:            "Not authenticated",
+		ErrorDescription: "No authenticated user session exists",
+	}
+	// ErrorProviderDataNotFound is the error when no authentication data is found for the provider.
+	ErrorProviderDataNotFound = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTH-CRED-1006",
+		Error:            "Provider data not found",
+		ErrorDescription: "No authentication data found for the provider",
+	}
 )

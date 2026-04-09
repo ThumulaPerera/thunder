@@ -702,7 +702,10 @@ func (s *StoreTestSuite) TestGetFlowContext_WithAvailableAttributes() {
 }
 
 func (s *StoreTestSuite) TestEngineContextRoundTrip_WithAuthUser() {
-	authUser := managerpkg.NewAuthUser()
+	var authUser managerpkg.AuthUser
+	err := json.Unmarshal([]byte(`{"userId":"au-user-1","userType":"person","ouId":"ou-1","providersAuthData":{}}`),
+		&authUser)
+	s.NoError(err)
 	mockGraph := coremock.NewGraphInterfaceMock(s.T())
 	mockGraph.On("GetID").Return("test-graph-id")
 	mockGraph.On("GetType").Return(common.FlowTypeAuthentication)
@@ -733,5 +736,5 @@ func (s *StoreTestSuite) TestEngineContextRoundTrip_WithAuthUser() {
 
 	restoredCtx, err := dbModel.ToEngineContext(mockGraph)
 	s.NoError(err)
-	s.NotNil(restoredCtx.AuthUser)
+	s.True(restoredCtx.AuthUser.IsAuthenticated())
 }

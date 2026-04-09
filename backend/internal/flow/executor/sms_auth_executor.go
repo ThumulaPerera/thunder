@@ -593,7 +593,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		}, nil
 	}
 
-	authnResult, svcErr := s.otpService.Authenticate(ctx.Context, sessionToken, providedOTP)
+	newAuthUser, authnResult, svcErr := s.otpService.Authenticate(ctx.Context, sessionToken, providedOTP, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Code == otpauthn.ErrorAuthenticationFailed.Code {
 			logger.Debug("OTP verification failed", log.String("userID", userID))
@@ -604,6 +604,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		logger.Error("Failed to verify OTP", log.String("userID", userID), log.Any("serviceError", svcErr))
 		return nil, fmt.Errorf("failed to verify OTP: %s", svcErr.ErrorDescription)
 	}
+	execResp.AuthUser = newAuthUser
 
 	execResp.RuntimeData["otpSessionToken"] = ""
 	logger.Debug("OTP validated successfully", log.String("userID", userID))

@@ -27,7 +27,7 @@ import (
 
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/otp"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/tests/mocks/authn/otpmock"
@@ -217,16 +217,17 @@ func (suite *OTPAuthnServiceTestSuite) TestVerifyOTP_ServerError() {
 
 func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DelegatesToAuthnProvider() {
 	ctx := context.Background()
-	expectedResult := &authnprovidercm.AuthnResult{
+	expectedResult := &authnprovidermgr.AuthnBasicResult{
 		UserID:   "user-123",
 		UserType: "person",
 		OUID:     "ou-123",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return(expectedResult, (*serviceerror.ServiceError)(nil))
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, expectedResult, (*serviceerror.ServiceError)(nil))
 
-	result, svcErr := suite.service.Authenticate(ctx, "token123", "123456")
+	_, result, svcErr := suite.service.Authenticate(ctx, "token123", "123456", authnprovidermgr.AuthUser{})
 
 	suite.Nil(svcErr)
 	suite.Equal(expectedResult, result)
@@ -237,15 +238,16 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ReturnsErrorFromAuthnPro
 	ctx := context.Background()
 	providerErr := &serviceerror.ServiceError{
 		Type:             serviceerror.ClientErrorType,
-		Code:             authnprovidercm.ErrorCodeAuthenticationFailed,
+		Code:             authnprovidermgr.ErrorAuthenticationFailed.Code,
 		Error:            "Incorrect OTP",
 		ErrorDescription: "The provided OTP is incorrect",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), providerErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), providerErr)
 
-	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+	_, result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong", authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)
@@ -265,10 +267,11 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_DefaultClientError() {
 		ErrorDescription: "some description",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), mockErr)
 
-	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+	_, result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong", authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)
@@ -287,10 +290,11 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticate_ServerError() {
 		ErrorDescription: "something broke",
 	}
 
-	suite.mockAuthnProvider.On("Authenticate", ctx, mock.Anything, mock.Anything, mock.Anything).
-		Return((*authnprovidercm.AuthnResult)(nil), mockErr)
+	suite.mockAuthnProvider.On("AuthenticateUser", ctx, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), mockErr)
 
-	result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong")
+	_, result, svcErr := suite.service.Authenticate(ctx, "token123", "wrong", authnprovidermgr.AuthUser{})
 
 	suite.Nil(result)
 	suite.Require().NotNil(svcErr)

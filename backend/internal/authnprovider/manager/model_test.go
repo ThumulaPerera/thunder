@@ -50,7 +50,7 @@ func TestModelTestSuite(t *testing.T) {
 }
 
 func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
-	authUser := NewAuthUser()
+	var authUser AuthUser
 	authUser.setIdentity("user-123", "customer", "ou-456")
 	authUser.setProviderData(defaultProvider, providerData{
 		token: "secret-token",
@@ -63,15 +63,15 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 	})
 
 	// Marshal
-	data, err := json.Marshal(authUser)
+	data, err := json.Marshal(&authUser)
 	s.NoError(err)
 
 	// Token must not appear in plaintext
 	s.False(strings.Contains(string(data), "secret-token"), "token must be encrypted in JSON")
 
 	// Unmarshal into a new AuthUser
-	restored := NewAuthUser()
-	err = json.Unmarshal(data, restored)
+	var restored AuthUser
+	err = json.Unmarshal(data, &restored)
 	s.NoError(err)
 
 	// Identity round-trips correctly
@@ -88,16 +88,32 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 	s.Equal("test@example.com", pd.attributes.Attributes["email"].Value)
 }
 
+func (s *ModelTestSuite) TestAuthUserIsAuthenticated_ZeroValue() {
+	var a AuthUser
+	s.False(a.IsAuthenticated())
+}
+
+func (s *ModelTestSuite) TestAuthUserIsAuthenticated_EmptyAuthUser() {
+	a := AuthUser{}
+	s.False(a.IsAuthenticated())
+}
+
+func (s *ModelTestSuite) TestAuthUserIsAuthenticated_WithUserID() {
+	a := AuthUser{}
+	a.setIdentity("user-123", "customer", "ou-456")
+	s.True(a.IsAuthenticated())
+}
+
 func (s *ModelTestSuite) TestAuthUserMarshalNilProviderData() {
 	// An empty AuthUser must marshal and unmarshal without panicking
-	authUser := NewAuthUser()
+	authUser := AuthUser{}
 
-	data, err := json.Marshal(authUser)
+	data, err := json.Marshal(&authUser)
 	s.NoError(err)
 	s.NotEmpty(data)
 
-	restored := NewAuthUser()
-	err = json.Unmarshal(data, restored)
+	var restored AuthUser
+	err = json.Unmarshal(data, &restored)
 	s.NoError(err)
 	s.Empty(restored.userID)
 	s.Empty(restored.providersAuthData)

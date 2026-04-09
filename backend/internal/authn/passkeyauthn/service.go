@@ -23,7 +23,6 @@ import (
 
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	"github.com/asgardeo/thunder/internal/system/log"
@@ -37,8 +36,9 @@ type PasskeyAuthnServiceInterface interface {
 		*RegistrationFinishData, *serviceerror.ServiceError)
 	StartAuthentication(ctx context.Context, req *AuthenticationStartRequest) (
 		*AuthenticationStartData, *serviceerror.ServiceError)
-	FinishAuthentication(ctx context.Context, req *AuthenticationFinishRequest) (
-		*authnprovidercm.AuthnResult, *serviceerror.ServiceError)
+	FinishAuthentication(ctx context.Context, req *AuthenticationFinishRequest,
+		authUser authnprovidermgr.AuthUser) (
+		authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult, *serviceerror.ServiceError)
 }
 
 type passkeyAuthnService struct {
@@ -190,7 +190,8 @@ func (s *passkeyAuthnService) StartAuthentication(
 
 func (s *passkeyAuthnService) FinishAuthentication(
 	ctx context.Context, req *AuthenticationFinishRequest,
-) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
+	authUser authnprovidermgr.AuthUser,
+) (authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult, *serviceerror.ServiceError) {
 	passkeyCredential := &passkey.PasskeyAuthenticationFinishRequest{
 		CredentialID:      req.CredentialID,
 		CredentialType:    req.CredentialType,
@@ -204,23 +205,28 @@ func (s *passkeyAuthnService) FinishAuthentication(
 		"passkey": passkeyCredential,
 	}
 
-	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
+	newAuthUser, result, err := s.authnProvider.AuthenticateUser(ctx, nil, credentials, nil, nil, authUser)
 	if err != nil {
-		if err.Type == serviceerror.ClientErrorType {
-			switch err.Code {
-			case authnprovidercm.ErrorCodeAuthenticationFailed:
-				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
-			case authnprovidercm.ErrorCodeInvalidRequest:
-				return nil, newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
-			case authnprovidercm.ErrorCodeUserNotFound:
-				return nil, newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
-			default:
-				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
-			}
+		if err.Type == serviceerror.ServerErrorType {
+			return authnprovidermgr.AuthUser{}, nil,
+				s.logAndReturnServerError("FinishAuthentication failed with server error")
 		}
-		return nil, s.logAndReturnServerError("FinishAuthentication failed with server error")
+		switch err.Code {
+		case authnprovidermgr.ErrorAuthenticationFailed.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+		case authnprovidermgr.ErrorInvalidRequest.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
+		case authnprovidermgr.ErrorUserNotFound.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
+		default:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+		}
 	}
-	return authnResult, nil
+	return newAuthUser, result, nil
 }
 
 func newClientError(code, msg, desc string) *serviceerror.ServiceError {

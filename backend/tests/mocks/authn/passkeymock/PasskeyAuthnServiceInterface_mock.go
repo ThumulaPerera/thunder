@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
-	"github.com/asgardeo/thunder/internal/authnprovider/common"
+	"github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -41,33 +41,39 @@ func (_m *PasskeyAuthnServiceInterfaceMock) EXPECT() *PasskeyAuthnServiceInterfa
 }
 
 // FinishAuthentication provides a mock function for the type PasskeyAuthnServiceInterfaceMock
-func (_mock *PasskeyAuthnServiceInterfaceMock) FinishAuthentication(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest) (*common.AuthnResult, *serviceerror.ServiceError) {
-	ret := _mock.Called(ctx, req)
+func (_mock *PasskeyAuthnServiceInterfaceMock) FinishAuthentication(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest, authUser manager.AuthUser) (manager.AuthUser, *manager.AuthnBasicResult, *serviceerror.ServiceError) {
+	ret := _mock.Called(ctx, req, authUser)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishAuthentication")
 	}
 
-	var r0 *common.AuthnResult
-	var r1 *serviceerror.ServiceError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest) (*common.AuthnResult, *serviceerror.ServiceError)); ok {
-		return returnFunc(ctx, req)
+	var r0 manager.AuthUser
+	var r1 *manager.AuthnBasicResult
+	var r2 *serviceerror.ServiceError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest, manager.AuthUser) (manager.AuthUser, *manager.AuthnBasicResult, *serviceerror.ServiceError)); ok {
+		return returnFunc(ctx, req, authUser)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest) *common.AuthnResult); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest, manager.AuthUser) manager.AuthUser); ok {
+		r0 = returnFunc(ctx, req, authUser)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*common.AuthnResult)
-		}
+		r0 = ret.Get(0).(manager.AuthUser)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest) *serviceerror.ServiceError); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest, manager.AuthUser) *manager.AuthnBasicResult); ok {
+		r1 = returnFunc(ctx, req, authUser)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*serviceerror.ServiceError)
+			r1 = ret.Get(1).(*manager.AuthnBasicResult)
 		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *passkeyauthn.AuthenticationFinishRequest, manager.AuthUser) *serviceerror.ServiceError); ok {
+		r2 = returnFunc(ctx, req, authUser)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).(*serviceerror.ServiceError)
+		}
+	}
+	return r0, r1, r2
 }
 
 // PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FinishAuthentication'
@@ -78,11 +84,12 @@ type PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call struct {
 // FinishAuthentication is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *passkeyauthn.AuthenticationFinishRequest
-func (_e *PasskeyAuthnServiceInterfaceMock_Expecter) FinishAuthentication(ctx interface{}, req interface{}) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
-	return &PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call{Call: _e.mock.On("FinishAuthentication", ctx, req)}
+//   - authUser manager.AuthUser
+func (_e *PasskeyAuthnServiceInterfaceMock_Expecter) FinishAuthentication(ctx interface{}, req interface{}, authUser interface{}) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
+	return &PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call{Call: _e.mock.On("FinishAuthentication", ctx, req, authUser)}
 }
 
-func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) Run(run func(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest)) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
+func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) Run(run func(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest, authUser manager.AuthUser)) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -92,20 +99,25 @@ func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) Run(run fu
 		if args[1] != nil {
 			arg1 = args[1].(*passkeyauthn.AuthenticationFinishRequest)
 		}
+		var arg2 manager.AuthUser
+		if args[2] != nil {
+			arg2 = args[2].(manager.AuthUser)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) Return(authnResult *common.AuthnResult, serviceError *serviceerror.ServiceError) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
-	_c.Call.Return(authnResult, serviceError)
+func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) Return(authUser1 manager.AuthUser, authnBasicResult *manager.AuthnBasicResult, serviceError *serviceerror.ServiceError) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
+	_c.Call.Return(authUser1, authnBasicResult, serviceError)
 	return _c
 }
 
-func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) RunAndReturn(run func(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest) (*common.AuthnResult, *serviceerror.ServiceError)) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
+func (_c *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call) RunAndReturn(run func(ctx context.Context, req *passkeyauthn.AuthenticationFinishRequest, authUser manager.AuthUser) (manager.AuthUser, *manager.AuthnBasicResult, *serviceerror.ServiceError)) *PasskeyAuthnServiceInterfaceMock_FinishAuthentication_Call {
 	_c.Call.Return(run)
 	return _c
 }

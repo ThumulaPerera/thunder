@@ -304,7 +304,7 @@ func (p *passkeyAuthExecutor) validatePasskey(ctx *core.NodeContext, execResp *c
 		UserHandle:        userHandle,
 		SessionToken:      sessionToken,
 	}
-	authResp, svcErr := p.passkeyService.FinishAuthentication(ctx.Context, finishReq)
+	newAuthUser, authResp, svcErr := p.passkeyService.FinishAuthentication(ctx.Context, finishReq, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
 			logger.Debug("Passkey verification failed", log.String("userID", userID),
@@ -318,6 +318,7 @@ func (p *passkeyAuthExecutor) validatePasskey(ctx *core.NodeContext, execResp *c
 			log.String("error", svcErr.ErrorDescription))
 		return fmt.Errorf("failed to verify passkey: %s", svcErr.ErrorDescription)
 	}
+	execResp.AuthUser = newAuthUser
 
 	// Store authenticated user ID in runtime data
 	if authResp.UserID != "" {

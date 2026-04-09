@@ -56,7 +56,7 @@ type EngineContext struct {
 	Application appmodel.Application
 
 	AuthenticatedUser authncm.AuthenticatedUser
-	AuthUser          *managerpkg.AuthUser
+	AuthUser          managerpkg.AuthUser
 	Assertion         string
 	ExecutionHistory  map[string]*common.NodeExecutionRecord
 }
@@ -247,10 +247,9 @@ func (f *FlowContextDB) ToEngineContext(graph core.GraphInterface) (EngineContex
 	}
 
 	// Deserialize AuthUser if present
-	var authUser *managerpkg.AuthUser
+	var authUser managerpkg.AuthUser
 	if content.AuthUser != nil {
-		authUser = managerpkg.NewAuthUser()
-		if err := json.Unmarshal([]byte(*content.AuthUser), authUser); err != nil {
+		if err := json.Unmarshal([]byte(*content.AuthUser), &authUser); err != nil {
 			return EngineContext{}, err
 		}
 	}
@@ -357,8 +356,8 @@ func FromEngineContext(ctx EngineContext) (*FlowContextDB, error) {
 
 	// Serialize AuthUser if present
 	var authUserStr *string
-	if ctx.AuthUser != nil {
-		authUserJSON, err := json.Marshal(ctx.AuthUser)
+	if ctx.AuthUser.IsAuthenticated() {
+		authUserJSON, err := json.Marshal(&ctx.AuthUser)
 		if err != nil {
 			return nil, err
 		}

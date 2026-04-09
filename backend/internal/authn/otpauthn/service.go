@@ -24,7 +24,6 @@ import (
 
 	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/otp"
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -36,8 +35,9 @@ type OTPAuthnInterface interface {
 	SendOTP(ctx context.Context, senderID string, channel notifcommon.ChannelType,
 		recipient string) (string, *serviceerror.ServiceError)
 	VerifyOTP(ctx context.Context, sessionToken, otp string) *serviceerror.ServiceError
-	Authenticate(ctx context.Context, sessionToken, otp string) (*authnprovidercm.AuthnResult,
-		*serviceerror.ServiceError)
+	Authenticate(ctx context.Context, sessionToken, otp string,
+		authUser authnprovidermgr.AuthUser) (
+		authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult, *serviceerror.ServiceError)
 }
 
 // otpAuthnService is the proxy implementation of OTPAuthnInterface.
@@ -109,32 +109,37 @@ func (s *otpAuthnService) VerifyOTP(ctx context.Context, sessionToken, otpCode s
 	return nil
 }
 
-// Authenticate delegates to the underlying otp service.
+// Authenticate delegates to the underlying authn provider manager.
 func (s *otpAuthnService) Authenticate(ctx context.Context, sessionToken,
-	otpCode string) (*authnprovidercm.AuthnResult, *serviceerror.ServiceError) {
+	otpCode string, authUser authnprovidermgr.AuthUser) (authnprovidermgr.AuthUser, *authnprovidermgr.AuthnBasicResult,
+	*serviceerror.ServiceError) {
 	credentials := map[string]interface{}{
 		"otp": map[string]interface{}{
 			"sessionToken": sessionToken,
 			"otp":          otpCode,
 		},
 	}
-	authnResult, err := s.authnProvider.Authenticate(ctx, nil, credentials, nil)
+	newAuthUser, result, err := s.authnProvider.AuthenticateUser(ctx, nil, credentials, nil, nil, authUser)
 	if err != nil {
-		if err.Type == serviceerror.ClientErrorType {
-			switch err.Code {
-			case authnprovidercm.ErrorCodeAuthenticationFailed:
-				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
-			case authnprovidercm.ErrorCodeInvalidRequest:
-				return nil, newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
-			case authnprovidercm.ErrorCodeUserNotFound:
-				return nil, newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
-			default:
-				return nil, newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
-			}
+		if err.Type == serviceerror.ServerErrorType {
+			return authnprovidermgr.AuthUser{}, nil, s.logAndReturnServerError("Authenticate failed with server error")
 		}
-		return nil, s.logAndReturnServerError("Authenticate failed with server error")
+		switch err.Code {
+		case authnprovidermgr.ErrorAuthenticationFailed.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+		case authnprovidermgr.ErrorInvalidRequest.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorInvalidRequest.Code, err.Error, err.ErrorDescription)
+		case authnprovidermgr.ErrorUserNotFound.Code:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorUserNotFound.Code, err.Error, err.ErrorDescription)
+		default:
+			return authnprovidermgr.AuthUser{}, nil,
+				newClientError(ErrorAuthenticationFailed.Code, err.Error, err.ErrorDescription)
+		}
 	}
-	return authnResult, nil
+	return newAuthUser, result, nil
 }
 
 // getMetadata returns the authenticator metadata for OTP authenticator.

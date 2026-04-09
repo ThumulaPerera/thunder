@@ -47,7 +47,7 @@ type NodeContext struct {
 
 	Application       appmodel.Application
 	AuthenticatedUser authncm.AuthenticatedUser
-	AuthUser          *manager.AuthUser
+	AuthUser          manager.AuthUser
 	ExecutionHistory  map[string]*common.NodeExecutionRecord
 }
 
