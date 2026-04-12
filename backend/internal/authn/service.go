@@ -29,7 +29,6 @@ import (
 
 	"github.com/asgardeo/thunder/internal/authn/assert"
 	"github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/credentials"
 	"github.com/asgardeo/thunder/internal/authn/github"
 	"github.com/asgardeo/thunder/internal/authn/google"
 	"github.com/asgardeo/thunder/internal/authn/oauth"
@@ -87,7 +86,7 @@ type authenticationService struct {
 	idpService             idp.IDPServiceInterface
 	jwtService             jwt.JWTServiceInterface
 	authAssertionGenerator assert.AuthAssertGeneratorInterface
-	credentialsService     credentials.CredentialsAuthnServiceInterface
+	authnProvider          authnprovidermgr.AuthnProviderManagerInterface
 	otpService             otpauthn.OTPAuthnInterface
 	oauthService           oauth.OAuthAuthnServiceInterface
 	oidcService            oidc.OIDCAuthnServiceInterface
@@ -101,7 +100,7 @@ func newAuthenticationService(
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
 	authAssertGen assert.AuthAssertGeneratorInterface,
-	credentialsAuthnSvc credentials.CredentialsAuthnServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	otpAuthnSvc otpauthn.OTPAuthnInterface,
 	oauthAuthnSvc oauth.OAuthAuthnServiceInterface,
 	oidcAuthnSvc oidc.OIDCAuthnServiceInterface,
@@ -113,7 +112,7 @@ func newAuthenticationService(
 		idpService:             idpSvc,
 		jwtService:             jwtSvc,
 		authAssertionGenerator: authAssertGen,
-		credentialsService:     credentialsAuthnSvc,
+		authnProvider:          authnProvider,
 		otpService:             otpAuthnSvc,
 		oauthService:           oauthAuthnSvc,
 		oidcService:            oidcAuthnSvc,
@@ -130,10 +129,14 @@ func (as *authenticationService) AuthenticateWithCredentials(ctx context.Context
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Authenticating with credentials")
 
-	newAuthUser, basicResult, svcErr := as.credentialsService.Authenticate(ctx, identifiers, credentials, nil, nil,
+	if len(identifiers) == 0 || len(credentials) == 0 {
+		return nil, &ErrorEmptyAttributesOrCredentials
+	}
+
+	newAuthUser, basicResult, svcErr := as.authnProvider.AuthenticateUser(ctx, identifiers, credentials, nil, nil,
 		authnprovidermgr.AuthUser{})
 	if svcErr != nil {
-		return nil, svcErr
+		return nil, as.mapCredentialsAuthnError(svcErr, logger)
 	}
 
 	if basicResult == nil {
@@ -141,9 +144,9 @@ func (as *authenticationService) AuthenticateWithCredentials(ctx context.Context
 		return nil, &serviceerror.InternalServerError
 	}
 
-	_, attrsResponse, svcErr := as.credentialsService.GetAttributes(ctx, nil, nil, newAuthUser)
+	_, attrsResponse, svcErr := as.authnProvider.GetUserAttributes(ctx, nil, nil, newAuthUser)
 	if svcErr != nil {
-		return nil, svcErr
+		return nil, as.mapCredentialsGetAttributesError(svcErr, logger)
 	}
 
 	authResponse := &common.AuthenticationResponse{
@@ -593,6 +596,36 @@ func (as *authenticationService) finishGithubAuthentication(ctx context.Context,
 	}
 
 	return sub, user, nil
+}
+
+// mapCredentialsAuthnError maps provider manager errors to credentials-specific service errors.
+func (as *authenticationService) mapCredentialsAuthnError(svcErr *serviceerror.ServiceError,
+	logger *log.Logger) *serviceerror.ServiceError {
+	switch svcErr.Code {
+	case authnprovidermgr.ErrorAuthenticationFailed.Code:
+		return &ErrorInvalidCredentials
+	case authnprovidermgr.ErrorUserNotFound.Code:
+		return &common.ErrorUserNotFound
+	case authnprovidermgr.ErrorInvalidRequest.Code:
+		return &ErrorEmptyAttributesOrCredentials
+	default:
+		logger.Error("Error occurred while authenticating with credentials",
+			log.String("errorCode", svcErr.Code), log.String("errorDescription", svcErr.ErrorDescription))
+		return &serviceerror.InternalServerError
+	}
+}
+
+// mapCredentialsGetAttributesError maps provider manager errors from GetUserAttributes to credentials-specific errors.
+func (as *authenticationService) mapCredentialsGetAttributesError(svcErr *serviceerror.ServiceError,
+	logger *log.Logger) *serviceerror.ServiceError {
+	switch svcErr.Code {
+	case authnprovidermgr.ErrorGetAttributesClientError.Code:
+		return &ErrorInvalidToken
+	default:
+		logger.Error("Error occurred while getting attributes for credentials authentication",
+			log.String("errorCode", svcErr.Code), log.String("errorDescription", svcErr.ErrorDescription))
+		return &serviceerror.InternalServerError
+	}
 }
 
 // handleIDPServiceError handles errors from IDP service.

@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/credentials"
 	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/idp"
 	"github.com/asgardeo/thunder/internal/system/error/apierror"
@@ -232,9 +231,9 @@ func (suite *AuthenticationHandlerTestSuite) TestHandleCredentialsAuthRequestSer
 					"password": "wrongpass",
 				},
 			},
-			serviceError:       &credentials.ErrorInvalidCredentials,
+			serviceError:       &ErrorInvalidCredentials,
 			expectedStatusCode: http.StatusUnauthorized,
-			expectedErrorCode:  credentials.ErrorInvalidCredentials.Code,
+			expectedErrorCode:  ErrorInvalidCredentials.Code,
 		},
 		{
 			name: "UserNotFound",

@@ -30,7 +30,6 @@ import (
 	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/authn/assert"
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	authncreds "github.com/asgardeo/thunder/internal/authn/credentials"
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
@@ -55,7 +54,7 @@ type authAssertExecutor struct {
 	jwtService          jwt.JWTServiceInterface
 	ouService           ou.OrganizationUnitServiceInterface
 	authAssertGenerator assert.AuthAssertGeneratorInterface
-	credsAuthSvc        authncreds.CredentialsAuthnServiceInterface
+	authnProvider       authnprovidermgr.AuthnProviderManagerInterface
 	userProvider        userprovider.UserProviderInterface
 	attributeCacheSvc   attributecache.AttributeCacheServiceInterface
 	roleService         role.RoleServiceInterface
@@ -70,7 +69,7 @@ func newAuthAssertExecutor(
 	jwtService jwt.JWTServiceInterface,
 	ouService ou.OrganizationUnitServiceInterface,
 	assertGenerator assert.AuthAssertGeneratorInterface,
-	credsAuthSvc authncreds.CredentialsAuthnServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	userProvider userprovider.UserProviderInterface,
 	attributeCacheSvc attributecache.AttributeCacheServiceInterface,
 	roleService role.RoleServiceInterface,
@@ -86,7 +85,7 @@ func newAuthAssertExecutor(
 		jwtService:          jwtService,
 		ouService:           ouService,
 		authAssertGenerator: assertGenerator,
-		credsAuthSvc:        credsAuthSvc,
+		authnProvider:       authnProvider,
 		userProvider:        userProvider,
 		attributeCacheSvc:   attributeCacheSvc,
 		roleService:         roleService,
@@ -442,7 +441,7 @@ func (a *authAssertExecutor) getUserAttributesFromAuthnProvider(ctx context.Cont
 		reqAttrs.Attributes[attrName] = nil
 	}
 
-	_, res, svcErr := a.credsAuthSvc.GetAttributes(ctx, reqAttrs, metadata, authUser)
+	_, res, svcErr := a.authnProvider.GetUserAttributes(ctx, reqAttrs, metadata, authUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ServerErrorType {
 			return nil, errors.New("something went wrong while fetching user attributes")

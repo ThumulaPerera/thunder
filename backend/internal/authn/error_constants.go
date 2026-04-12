@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package credentials
+package authn
 
 import "github.com/asgardeo/thunder/internal/system/error/serviceerror"
 
@@ -50,19 +50,5 @@ var (
 		Code:             "AUTH-CRED-1004",
 		Error:            "Invalid token",
 		ErrorDescription: "The provided token is invalid",
-	}
-	// ErrorNotAuthenticated is the error when no authenticated user session exists.
-	ErrorNotAuthenticated = serviceerror.ServiceError{
-		Type:             serviceerror.ClientErrorType,
-		Code:             "AUTH-CRED-1005",
-		Error:            "Not authenticated",
-		ErrorDescription: "No authenticated user session exists",
-	}
-	// ErrorProviderDataNotFound is the error when no authentication data is found for the provider.
-	ErrorProviderDataNotFound = serviceerror.ServiceError{
-		Type:             serviceerror.ClientErrorType,
-		Code:             "AUTH-CRED-1006",
-		Error:            "Provider data not found",
-		ErrorDescription: "No authentication data found for the provider",
 	}
 )

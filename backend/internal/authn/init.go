@@ -24,8 +24,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/asgardeo/thunder/internal/authn/assert"
+	"github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authn/consent"
-	"github.com/asgardeo/thunder/internal/authn/credentials"
 	"github.com/asgardeo/thunder/internal/authn/github"
 	"github.com/asgardeo/thunder/internal/authn/google"
 	"github.com/asgardeo/thunder/internal/authn/oauth"
@@ -45,7 +45,6 @@ import (
 
 // AuthServiceRegistry holds references to all authentication services.
 type AuthServiceRegistry struct {
-	CredentialsAuthnService credentials.CredentialsAuthnServiceInterface
 	OTPAuthnService         otpauthn.OTPAuthnInterface
 	OAuthAuthnService       oauth.OAuthAuthnServiceInterface
 	OIDCAuthnService        oidc.OIDCAuthnServiceInterface
@@ -74,7 +73,7 @@ func Initialize(
 		idpSvc,
 		jwtSvc,
 		authServiceRegistry.AuthAssertGenerator,
-		authServiceRegistry.CredentialsAuthnService,
+		authnProvider,
 		authServiceRegistry.OTPAuthnService,
 		authServiceRegistry.OAuthAuthnService,
 		authServiceRegistry.OIDCAuthnService,
@@ -104,8 +103,11 @@ func createAuthServiceRegistry(
 	passkeySvc passkey.PasskeyServiceInterface,
 	otpSvc otp.OTPAuthnServiceInterface,
 ) *AuthServiceRegistry {
+	common.RegisterAuthenticator(common.AuthenticatorMeta{
+		Name:    common.AuthenticatorCredentials,
+		Factors: []common.AuthenticationFactor{common.FactorKnowledge},
+	})
 	return &AuthServiceRegistry{
-		CredentialsAuthnService: credentials.Initialize(authnProvider),
 		OTPAuthnService:         otpauthn.Initialize(otpSvc, authnProvider),
 		OAuthAuthnService:       oauth.Initialize(idpSvc, userProvider),
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),

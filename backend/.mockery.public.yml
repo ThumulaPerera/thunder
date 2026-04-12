@@ -172,14 +172,6 @@ packages:
       pkgname: assertmock
       filename: "{{.InterfaceName}}_mock.go"
 
-  github.com/asgardeo/thunder/internal/authn/credentials:
-    config:
-      all: true
-      dir: tests/mocks/authn/credentialsmock
-      structname: '{{.InterfaceName}}Mock'
-      pkgname: credentialsmock
-      filename: "{{.InterfaceName}}_mock.go"
-
   github.com/asgardeo/thunder/internal/authn/otp:
     config:
       all: true
