@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/idp"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
 	"github.com/asgardeo/thunder/internal/system/error/apierror"
@@ -329,7 +328,7 @@ func (ah *authenticationHandler) handleServiceError(w http.ResponseWriter, svcEr
 	status := http.StatusInternalServerError
 	if svcErr.Type == serviceerror.ClientErrorType {
 		switch svcErr.Code {
-		case ErrorInvalidCredentials.Code, otpauthn.ErrorAuthenticationFailed.Code:
+		case ErrorInvalidCredentials.Code, ErrorOTPAuthenticationFailed.Code:
 			status = http.StatusUnauthorized
 		case common.ErrorUserNotFound.Code:
 			status = http.StatusNotFound

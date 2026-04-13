@@ -51,4 +51,11 @@ var (
 		Error:            "Invalid token",
 		ErrorDescription: "The provided token is invalid",
 	}
+	// ErrorOTPAuthenticationFailed is the error when the OTP authentication attempt fails.
+	ErrorOTPAuthenticationFailed = serviceerror.ServiceError{
+		Type:             serviceerror.ClientErrorType,
+		Code:             "AUTHN-OTPAUTHN-1009",
+		Error:            "Authentication failed",
+		ErrorDescription: "The OTP authentication attempt failed",
+	}
 )

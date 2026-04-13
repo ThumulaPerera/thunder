@@ -33,7 +33,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/google"
 	"github.com/asgardeo/thunder/internal/authn/oauth"
 	"github.com/asgardeo/thunder/internal/authn/oidc"
-	"github.com/asgardeo/thunder/internal/authn/otpauthn"
+	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/idp"
@@ -87,7 +87,7 @@ type authenticationService struct {
 	jwtService             jwt.JWTServiceInterface
 	authAssertionGenerator assert.AuthAssertGeneratorInterface
 	authnProvider          authnprovidermgr.AuthnProviderManagerInterface
-	otpService             otpauthn.OTPAuthnInterface
+	otpService             otp.OTPAuthnServiceInterface
 	oauthService           oauth.OAuthAuthnServiceInterface
 	oidcService            oidc.OIDCAuthnServiceInterface
 	googleService          google.GoogleOIDCAuthnServiceInterface
@@ -101,7 +101,7 @@ func newAuthenticationService(
 	jwtSvc jwt.JWTServiceInterface,
 	authAssertGen assert.AuthAssertGeneratorInterface,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
-	otpAuthnSvc otpauthn.OTPAuthnInterface,
+	otpAuthnSvc otp.OTPAuthnServiceInterface,
 	oauthAuthnSvc oauth.OAuthAuthnServiceInterface,
 	oidcAuthnSvc oidc.OIDCAuthnServiceInterface,
 	googleAuthnSvc google.GoogleOIDCAuthnServiceInterface,
@@ -197,8 +197,21 @@ func (as *authenticationService) VerifyOTP(ctx context.Context, sessionToken str
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Verifying OTP for authentication")
 
-	_, basicResult, svcErr := as.otpService.Authenticate(ctx, sessionToken, otpCode, authnprovidermgr.AuthUser{})
+	credentials := map[string]interface{}{
+		"otp": map[string]interface{}{
+			"sessionToken": sessionToken,
+			"otp":          otpCode,
+		},
+	}
+	_, basicResult, svcErr := as.authnProvider.AuthenticateUser(
+		ctx, nil, credentials, nil, nil, authnprovidermgr.AuthUser{})
 	if svcErr != nil {
+		if svcErr.Type == serviceerror.ServerErrorType {
+			return nil, &serviceerror.InternalServerError
+		}
+		if svcErr.Code == authnprovidermgr.ErrorAuthenticationFailed.Code {
+			return nil, &ErrorOTPAuthenticationFailed
+		}
 		return nil, svcErr
 	}
 

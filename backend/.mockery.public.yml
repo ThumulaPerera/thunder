@@ -180,15 +180,6 @@ packages:
       pkgname: otpmock
       filename: "{{.InterfaceName}}_mock.go"
 
-  github.com/asgardeo/thunder/internal/authn/otpauthn:
-    interfaces:
-      OTPAuthnInterface:
-        config:
-          dir: tests/mocks/authn/otpauthnmock
-          structname: 'OTPAuthnInterfaceMock'
-          pkgname: otpauthnmock
-          filename: "OTPAuthnInterface_mock.go"
-
   github.com/asgardeo/thunder/internal/authn/oauth:
     config:
       all: true

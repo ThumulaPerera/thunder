@@ -45,7 +45,7 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/authn/googlemock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/oauthmock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/oidcmock"
-	"github.com/asgardeo/thunder/tests/mocks/authn/otpauthnmock"
+	"github.com/asgardeo/thunder/tests/mocks/authn/otpmock"
 	"github.com/asgardeo/thunder/tests/mocks/authn/passkeymock"
 	"github.com/asgardeo/thunder/tests/mocks/authnprovider/managermock"
 	"github.com/asgardeo/thunder/tests/mocks/idp/idpmock"
@@ -75,7 +75,7 @@ type AuthenticationServiceTestSuite struct {
 	mockJWTService      *jwtmock.JWTServiceInterfaceMock
 	mockAssertGenerator *assertmock.AuthAssertGeneratorInterfaceMock
 	mockAuthnProvider   *managermock.AuthnProviderManagerInterfaceMock
-	mockOTPService      *otpauthnmock.OTPAuthnInterfaceMock
+	mockOTPService      *otpmock.OTPAuthnServiceInterfaceMock
 	mockOAuthService    *oauthmock.OAuthAuthnServiceInterfaceMock
 	mockOIDCService     *oidcmock.OIDCAuthnServiceInterfaceMock
 	mockGoogleService   *googlemock.GoogleOIDCAuthnServiceInterfaceMock
@@ -125,7 +125,7 @@ func (suite *AuthenticationServiceTestSuite) SetupTest() {
 	suite.mockJWTService = jwtmock.NewJWTServiceInterfaceMock(suite.T())
 	suite.mockAssertGenerator = &assertmock.AuthAssertGeneratorInterfaceMock{}
 	suite.mockAuthnProvider = &managermock.AuthnProviderManagerInterfaceMock{}
-	suite.mockOTPService = &otpauthnmock.OTPAuthnInterfaceMock{}
+	suite.mockOTPService = &otpmock.OTPAuthnServiceInterfaceMock{}
 	suite.mockOAuthService = &oauthmock.OAuthAuthnServiceInterfaceMock{}
 	suite.mockOIDCService = &oidcmock.OIDCAuthnServiceInterfaceMock{}
 	suite.mockGoogleService = &googlemock.GoogleOIDCAuthnServiceInterfaceMock{}
@@ -484,7 +484,8 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			existingAssertion: "",
 			expectAssertion:   false,
 			setupMocks: func() {
-				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode, mock.Anything).
+				suite.mockAuthnProvider.On("AuthenticateUser",
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
 			},
 			validateAssertion: func(result *common.AuthenticationResponse) {
@@ -497,7 +498,8 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			existingAssertion: "",
 			expectAssertion:   true,
 			setupMocks: func() {
-				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode, mock.Anything).
+				suite.mockAuthnProvider.On("AuthenticateUser",
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
 				suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 					&assert.AssertionResult{
@@ -524,7 +526,8 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			expectAssertion:   true,
 			setupMocks: func() {
 				existingAssertion := suite.createTestAssertion(testUserID)
-				suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode, mock.Anything).
+				suite.mockAuthnProvider.On("AuthenticateUser",
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
 				suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()
 				suite.mockAssertGenerator.On("UpdateAssertion", mock.Anything, mock.Anything).Return(
@@ -566,21 +569,17 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 func (suite *AuthenticationServiceTestSuite) TestVerifyOTPServiceError() {
 	sessionToken := testSessionTkn
 	otpCode := "wrong_otp"
-	svcErr := &serviceerror.ServiceError{
-		Type:             serviceerror.ClientErrorType,
-		Code:             "INCORRECT_OTP",
-		Error:            "Incorrect OTP",
-		ErrorDescription: "The provided OTP is incorrect",
-	}
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), svcErr)
+	suite.mockAuthnProvider.On("AuthenticateUser",
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil),
+			&authnprovidermgr.ErrorAuthenticationFailed)
 
 	result, err := suite.service.VerifyOTP(context.Background(), sessionToken, false, "", otpCode)
 
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal(svcErr.Code, err.Code)
+	suite.Equal(ErrorOTPAuthenticationFailed.Code, err.Code)
 }
 
 func (suite *AuthenticationServiceTestSuite) TestStartIDPAuthenticationOAuthSuccess() {
@@ -1556,7 +1555,8 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTPJWTGenerationError() {
 		OUID:     testOrgUnit,
 	}
 
-	suite.mockOTPService.On("Authenticate", mock.Anything, sessionToken, otpCode, mock.Anything).
+	suite.mockAuthnProvider.On("AuthenticateUser",
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil)
 	suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 		&assert.AssertionResult{

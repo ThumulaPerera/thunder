@@ -25,7 +25,8 @@ import (
 	"strconv"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/otpauthn"
+	"github.com/asgardeo/thunder/internal/authn/otp"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -47,7 +48,8 @@ type smsOTPAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
 	userProvider     userprovider.UserProviderInterface
-	otpService       otpauthn.OTPAuthnInterface
+	otpService       otp.OTPAuthnServiceInterface
+	authnProvider    authnprovidermgr.AuthnProviderManagerInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
 }
@@ -58,7 +60,8 @@ var _ identifyingExecutorInterface = (*smsOTPAuthExecutor)(nil)
 // newSMSOTPAuthExecutor creates a new instance of SMSOTPAuthExecutor.
 func newSMSOTPAuthExecutor(
 	flowFactory core.FlowFactoryInterface,
-	otpService otpauthn.OTPAuthnInterface,
+	otpService otp.OTPAuthnServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 ) *smsOTPAuthExecutor {
@@ -87,6 +90,7 @@ func newSMSOTPAuthExecutor(
 		identifyingExecutorInterface: identifyExec,
 		userProvider:                 userProvider,
 		otpService:                   otpService,
+		authnProvider:                authnProvider,
 		observabilitySvc:             observabilitySvc,
 		logger:                       logger,
 	}
@@ -573,7 +577,7 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		// So we just validate the OTP and return an authenticated user with the mobile number as an attribute.
 		svcErr := s.otpService.VerifyOTP(ctx.Context, sessionToken, providedOTP)
 		if svcErr != nil {
-			if svcErr.Code == otpauthn.ErrorIncorrectOTP.Code {
+			if svcErr.Code == otp.ErrorIncorrectOTP.Code {
 				logger.Debug("OTP verification failed", log.String("userID", userID))
 				execResp.Status = common.ExecFailure
 				execResp.FailureReason = failureReasonInvalidOTP
@@ -593,9 +597,16 @@ func (s *smsOTPAuthExecutor) getAuthenticatedUser(ctx *core.NodeContext,
 		}, nil
 	}
 
-	newAuthUser, authnResult, svcErr := s.otpService.Authenticate(ctx.Context, sessionToken, providedOTP, ctx.AuthUser)
+	creds := map[string]interface{}{
+		"otp": map[string]interface{}{
+			"sessionToken": sessionToken,
+			"otp":          providedOTP,
+		},
+	}
+	newAuthUser, authnResult, svcErr := s.authnProvider.AuthenticateUser(
+		ctx.Context, nil, creds, nil, nil, ctx.AuthUser)
 	if svcErr != nil {
-		if svcErr.Code == otpauthn.ErrorAuthenticationFailed.Code {
+		if svcErr.Code == authnprovidermgr.ErrorAuthenticationFailed.Code {
 			logger.Debug("OTP verification failed", log.String("userID", userID))
 			execResp.Status = common.ExecFailure
 			execResp.FailureReason = failureReasonInvalidOTP

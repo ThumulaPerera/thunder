@@ -31,7 +31,6 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oauth"
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
-	"github.com/asgardeo/thunder/internal/authn/otpauthn"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
 	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	"github.com/asgardeo/thunder/internal/authn/reactsdk"
@@ -45,7 +44,6 @@ import (
 
 // AuthServiceRegistry holds references to all authentication services.
 type AuthServiceRegistry struct {
-	OTPAuthnService         otpauthn.OTPAuthnInterface
 	OAuthAuthnService       oauth.OAuthAuthnServiceInterface
 	OIDCAuthnService        oidc.OIDCAuthnServiceInterface
 	GithubOAuthAuthnService github.GithubOAuthAuthnServiceInterface
@@ -68,13 +66,13 @@ func Initialize(
 	otpSvc otp.OTPAuthnServiceInterface,
 ) (AuthenticationServiceInterface, *AuthServiceRegistry) {
 	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc,
-		userProvider, authnProvider, consentSvc, passkeySvc, otpSvc)
+		userProvider, authnProvider, consentSvc, passkeySvc)
 	authnService := newAuthenticationService(
 		idpSvc,
 		jwtSvc,
 		authServiceRegistry.AuthAssertGenerator,
 		authnProvider,
-		authServiceRegistry.OTPAuthnService,
+		otpSvc,
 		authServiceRegistry.OAuthAuthnService,
 		authServiceRegistry.OIDCAuthnService,
 		authServiceRegistry.GoogleOIDCAuthnService,
@@ -101,14 +99,16 @@ func createAuthServiceRegistry(
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
 	passkeySvc passkey.PasskeyServiceInterface,
-	otpSvc otp.OTPAuthnServiceInterface,
 ) *AuthServiceRegistry {
 	common.RegisterAuthenticator(common.AuthenticatorMeta{
 		Name:    common.AuthenticatorCredentials,
 		Factors: []common.AuthenticationFactor{common.FactorKnowledge},
 	})
+	common.RegisterAuthenticator(common.AuthenticatorMeta{
+		Name:    common.AuthenticatorSMSOTP,
+		Factors: []common.AuthenticationFactor{common.FactorPossession},
+	})
 	return &AuthServiceRegistry{
-		OTPAuthnService:         otpauthn.Initialize(otpSvc, authnProvider),
 		OAuthAuthnService:       oauth.Initialize(idpSvc, userProvider),
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),
