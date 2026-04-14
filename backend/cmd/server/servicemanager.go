@@ -211,7 +211,8 @@ func registerServices(mux *http.ServeMux) jwt.JWTServiceInterface {
 		logger.Fatal("Failed to initialize template service", log.Error(err))
 	}
 	execRegistry := executor.Initialize(flowFactory, ouService,
-		idpService, notifSenderSvc, jwtService, authSvcRegistry, authnProvider, otpCoreService, authZService,
+		idpService, notifSenderSvc, jwtService, authSvcRegistry, authnProvider, otpCoreService,
+		passkeyService, authZService,
 		userSchemaService, observabilitySvc, groupService, roleService, userProvider, attributeCacheService,
 		emailClient, templateService)
 

@@ -34,7 +34,7 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oauth"
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
-	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/idp"
 	notifcommon "github.com/asgardeo/thunder/internal/notification/common"
@@ -92,7 +92,7 @@ type authenticationService struct {
 	oidcService            oidc.OIDCAuthnServiceInterface
 	googleService          google.GoogleOIDCAuthnServiceInterface
 	githubService          github.GithubOAuthAuthnServiceInterface
-	passkeyService         passkeyauthn.PasskeyAuthnServiceInterface
+	passkeyService         passkey.PasskeyServiceInterface
 }
 
 // newAuthenticationService creates a new instance of AuthenticationService.
@@ -106,7 +106,7 @@ func newAuthenticationService(
 	oidcAuthnSvc oidc.OIDCAuthnServiceInterface,
 	googleAuthnSvc google.GoogleOIDCAuthnServiceInterface,
 	githubAuthnSvc github.GithubOAuthAuthnServiceInterface,
-	passkeySvc passkeyauthn.PasskeyAuthnServiceInterface,
+	passkeySvc passkey.PasskeyServiceInterface,
 ) AuthenticationServiceInterface {
 	return &authenticationService{
 		idpService:             idpSvc,
@@ -762,9 +762,9 @@ func (as *authenticationService) StartPasskeyRegistration(
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Starting Passkey registration")
 
-	var passkeyAuthnAuthSelection *passkeyauthn.AuthenticatorSelection
+	var passkeyAuthSel *passkey.AuthenticatorSelection
 	if authSelection != nil {
-		passkeyAuthnAuthSelection = &passkeyauthn.AuthenticatorSelection{
+		passkeyAuthSel = &passkey.AuthenticatorSelection{
 			AuthenticatorAttachment: authSelection.AuthenticatorAttachment,
 			RequireResidentKey:      authSelection.RequireResidentKey,
 			ResidentKey:             authSelection.ResidentKey,
@@ -772,11 +772,11 @@ func (as *authenticationService) StartPasskeyRegistration(
 		}
 	}
 
-	req := &passkeyauthn.RegistrationStartRequest{
+	req := &passkey.PasskeyRegistrationStartRequest{
 		UserID:                 userID,
 		RelyingPartyID:         relyingPartyID,
 		RelyingPartyName:       relyingPartyName,
-		AuthenticatorSelection: passkeyAuthnAuthSelection,
+		AuthenticatorSelection: passkeyAuthSel,
 		Attestation:            attestation,
 	}
 
@@ -791,7 +791,7 @@ func (as *authenticationService) FinishPasskeyRegistration(
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Finishing Passkey registration")
 
-	req := &passkeyauthn.RegistrationFinishRequest{
+	req := &passkey.PasskeyRegistrationFinishRequest{
 		CredentialID:      credential.ID,
 		CredentialType:    credential.Type,
 		ClientDataJSON:    credential.Response.ClientDataJSON,
@@ -809,7 +809,7 @@ func (as *authenticationService) StartPasskeyAuthentication(ctx context.Context,
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Starting Passkey authentication")
 
-	req := &passkeyauthn.AuthenticationStartRequest{
+	req := &passkey.PasskeyAuthenticationStartRequest{
 		UserID:         userID,
 		RelyingPartyID: relyingPartyID,
 	}
@@ -823,8 +823,7 @@ func (as *authenticationService) FinishPasskeyAuthentication(ctx context.Context
 	logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, svcLoggerComponentName))
 	logger.Debug("Finishing Passkey authentication")
 
-	// Get authentication response from passkey service
-	req := &passkeyauthn.AuthenticationFinishRequest{
+	passkeyCredential := &passkey.PasskeyAuthenticationFinishRequest{
 		CredentialID:      credentialID,
 		CredentialType:    credentialType,
 		ClientDataJSON:    response.ClientDataJSON,
@@ -833,7 +832,9 @@ func (as *authenticationService) FinishPasskeyAuthentication(ctx context.Context
 		UserHandle:        response.UserHandle,
 		SessionToken:      sessionToken,
 	}
-	_, basicResult, svcErr := as.passkeyService.FinishAuthentication(ctx, req, authnprovidermgr.AuthUser{})
+	credentials := map[string]interface{}{"passkey": passkeyCredential}
+	_, basicResult, svcErr := as.authnProvider.AuthenticateUser(
+		ctx, nil, credentials, nil, nil, authnprovidermgr.AuthUser{})
 	if svcErr != nil {
 		return nil, svcErr
 	}

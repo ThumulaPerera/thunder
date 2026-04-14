@@ -32,7 +32,6 @@ import (
 	"github.com/asgardeo/thunder/internal/authn/oidc"
 	"github.com/asgardeo/thunder/internal/authn/otp"
 	"github.com/asgardeo/thunder/internal/authn/passkey"
-	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
 	"github.com/asgardeo/thunder/internal/authn/reactsdk"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	consentmgt "github.com/asgardeo/thunder/internal/consent"
@@ -49,7 +48,6 @@ type AuthServiceRegistry struct {
 	GithubOAuthAuthnService github.GithubOAuthAuthnServiceInterface
 	GoogleOIDCAuthnService  google.GoogleOIDCAuthnServiceInterface
 	AuthAssertGenerator     assert.AuthAssertGeneratorInterface
-	PasskeyService          passkeyauthn.PasskeyAuthnServiceInterface
 	ConsentEnforcerService  consent.ConsentEnforcerServiceInterface
 }
 
@@ -66,7 +64,7 @@ func Initialize(
 	otpSvc otp.OTPAuthnServiceInterface,
 ) (AuthenticationServiceInterface, *AuthServiceRegistry) {
 	authServiceRegistry := createAuthServiceRegistry(idpSvc, jwtSvc,
-		userProvider, authnProvider, consentSvc, passkeySvc)
+		userProvider, consentSvc)
 	authnService := newAuthenticationService(
 		idpSvc,
 		jwtSvc,
@@ -77,7 +75,7 @@ func Initialize(
 		authServiceRegistry.OIDCAuthnService,
 		authServiceRegistry.GoogleOIDCAuthnService,
 		authServiceRegistry.GithubOAuthAuthnService,
-		authServiceRegistry.PasskeyService,
+		passkeySvc,
 	)
 
 	authnHandler := newAuthenticationHandler(authnService)
@@ -96,9 +94,7 @@ func createAuthServiceRegistry(
 	idpSvc idp.IDPServiceInterface,
 	jwtSvc jwt.JWTServiceInterface,
 	userProvider userprovider.UserProviderInterface,
-	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	consentSvc consentmgt.ConsentServiceInterface,
-	passkeySvc passkey.PasskeyServiceInterface,
 ) *AuthServiceRegistry {
 	common.RegisterAuthenticator(common.AuthenticatorMeta{
 		Name:    common.AuthenticatorCredentials,
@@ -108,12 +104,15 @@ func createAuthServiceRegistry(
 		Name:    common.AuthenticatorSMSOTP,
 		Factors: []common.AuthenticationFactor{common.FactorPossession},
 	})
+	common.RegisterAuthenticator(common.AuthenticatorMeta{
+		Name:    common.AuthenticatorPasskey,
+		Factors: []common.AuthenticationFactor{common.FactorPossession, common.FactorInherence},
+	})
 	return &AuthServiceRegistry{
 		OAuthAuthnService:       oauth.Initialize(idpSvc, userProvider),
 		OIDCAuthnService:        oidc.Initialize(idpSvc, userProvider, jwtSvc),
 		GithubOAuthAuthnService: github.Initialize(idpSvc, userProvider),
 		GoogleOIDCAuthnService:  google.Initialize(idpSvc, userProvider, jwtSvc),
-		PasskeyService:          passkeyauthn.Initialize(passkeySvc, authnProvider),
 		AuthAssertGenerator:     assert.Initialize(),
 		ConsentEnforcerService:  consent.Initialize(consentSvc, jwtSvc),
 	}

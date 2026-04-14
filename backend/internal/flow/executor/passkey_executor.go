@@ -24,7 +24,8 @@ import (
 	"fmt"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
-	"github.com/asgardeo/thunder/internal/authn/passkeyauthn"
+	"github.com/asgardeo/thunder/internal/authn/passkey"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
@@ -71,7 +72,8 @@ const (
 type passkeyAuthExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
-	passkeyService   passkeyauthn.PasskeyAuthnServiceInterface
+	passkeyService   passkey.PasskeyServiceInterface
+	authnProvider    authnprovidermgr.AuthnProviderManagerInterface
 	userProvider     userprovider.UserProviderInterface
 	observabilitySvc observability.ObservabilityServiceInterface
 	logger           *log.Logger
@@ -83,7 +85,8 @@ var _ identifyingExecutorInterface = (*passkeyAuthExecutor)(nil)
 // newPasskeyAuthExecutor creates a new instance of PasskeyAuthExecutor.
 func newPasskeyAuthExecutor(
 	flowFactory core.FlowFactoryInterface,
-	passkeyService passkeyauthn.PasskeyAuthnServiceInterface,
+	passkeyService passkey.PasskeyServiceInterface,
+	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
 	userProvider userprovider.UserProviderInterface,
 ) *passkeyAuthExecutor {
@@ -135,6 +138,7 @@ func newPasskeyAuthExecutor(
 		ExecutorInterface:            base,
 		identifyingExecutorInterface: identifyExec,
 		passkeyService:               passkeyService,
+		authnProvider:                authnProvider,
 		userProvider:                 userProvider,
 		observabilitySvc:             observabilitySvc,
 		logger:                       logger,
@@ -193,7 +197,7 @@ func (p *passkeyAuthExecutor) executeChallenge(ctx *core.NodeContext,
 	}
 
 	// Start passkey authentication (service will detect usernameless flow if userID is empty)
-	startReq := &passkeyauthn.AuthenticationStartRequest{
+	startReq := &passkey.PasskeyAuthenticationStartRequest{
 		UserID:         userID, // May be empty for usernameless flow
 		RelyingPartyID: relyingPartyID,
 	}
@@ -294,8 +298,7 @@ func (p *passkeyAuthExecutor) validatePasskey(ctx *core.NodeContext, execResp *c
 		return fmt.Errorf("no session token found for passkey authentication")
 	}
 
-	// Call passkey service to finish authentication
-	finishReq := &passkeyauthn.AuthenticationFinishRequest{
+	passkeyCredential := &passkey.PasskeyAuthenticationFinishRequest{
 		CredentialID:      credentialID,
 		CredentialType:    "public-key",
 		ClientDataJSON:    clientDataJSON,
@@ -304,7 +307,9 @@ func (p *passkeyAuthExecutor) validatePasskey(ctx *core.NodeContext, execResp *c
 		UserHandle:        userHandle,
 		SessionToken:      sessionToken,
 	}
-	newAuthUser, authResp, svcErr := p.passkeyService.FinishAuthentication(ctx.Context, finishReq, ctx.AuthUser)
+	credentials := map[string]interface{}{"passkey": passkeyCredential}
+	newAuthUser, authResp, svcErr := p.authnProvider.AuthenticateUser(
+		ctx.Context, nil, credentials, nil, nil, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
 			logger.Debug("Passkey verification failed", log.String("userID", userID),
@@ -391,7 +396,7 @@ func (p *passkeyAuthExecutor) executeRegisterStart(ctx *core.NodeContext,
 	}
 
 	// Build registration request
-	regReq := &passkeyauthn.RegistrationStartRequest{
+	regReq := &passkey.PasskeyRegistrationStartRequest{
 		UserID:           userID,
 		RelyingPartyID:   relyingPartyID,
 		RelyingPartyName: relyingPartyName,
@@ -481,7 +486,7 @@ func (p *passkeyAuthExecutor) executeRegisterFinish(ctx *core.NodeContext,
 	}
 
 	// Build finish registration request
-	finishReq := &passkeyauthn.RegistrationFinishRequest{
+	finishReq := &passkey.PasskeyRegistrationFinishRequest{
 		CredentialID:      credentialID,
 		CredentialType:    "public-key",
 		ClientDataJSON:    clientDataJSON,
@@ -571,13 +576,13 @@ func (p *passkeyAuthExecutor) getRelyingPartyName(ctx *core.NodeContext) string 
 }
 
 // getAuthenticatorSelection retrieves authenticator selection criteria from node properties.
-func (p *passkeyAuthExecutor) getAuthenticatorSelection(ctx *core.NodeContext) *passkeyauthn.AuthenticatorSelection {
+func (p *passkeyAuthExecutor) getAuthenticatorSelection(ctx *core.NodeContext) *passkey.AuthenticatorSelection {
 	if len(ctx.NodeProperties) == 0 {
 		return nil
 	}
 	if authSel, ok := ctx.NodeProperties["authenticatorSelection"]; ok {
 		if authSelMap, valid := authSel.(map[string]interface{}); valid {
-			selection := &passkeyauthn.AuthenticatorSelection{}
+			selection := &passkey.AuthenticatorSelection{}
 			if authAttachment, ok := authSelMap["authenticatorAttachment"].(string); ok {
 				selection.AuthenticatorAttachment = authAttachment
 			}

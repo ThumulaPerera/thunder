@@ -22,6 +22,7 @@ import (
 	"github.com/asgardeo/thunder/internal/attributecache"
 	"github.com/asgardeo/thunder/internal/authn"
 	"github.com/asgardeo/thunder/internal/authn/otp"
+	"github.com/asgardeo/thunder/internal/authn/passkey"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/authz"
 	"github.com/asgardeo/thunder/internal/flow/common"
@@ -50,6 +51,7 @@ func Initialize(
 	authRegistry *authn.AuthServiceRegistry,
 	authnProvider authnprovidermgr.AuthnProviderManagerInterface,
 	otpService otp.OTPAuthnServiceInterface,
+	passkeyService passkey.PasskeyServiceInterface,
 	authZService authz.AuthorizationServiceInterface,
 	userSchemaService userschema.UserSchemaServiceInterface,
 	observabilitySvc observability.ObservabilityServiceInterface,
@@ -66,7 +68,7 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameSMSAuth, newSMSOTPAuthExecutor(
 		flowFactory, otpService, authnProvider, observabilitySvc, userProvider))
 	reg.RegisterExecutor(ExecutorNamePasskeyAuth, newPasskeyAuthExecutor(
-		flowFactory, authRegistry.PasskeyService, observabilitySvc, userProvider))
+		flowFactory, passkeyService, authnProvider, observabilitySvc, userProvider))
 
 	reg.RegisterExecutor(ExecutorNameOAuth, newOAuthExecutor(
 		"", []common.Input{}, []common.Input{}, flowFactory, idpService, userSchemaService,
