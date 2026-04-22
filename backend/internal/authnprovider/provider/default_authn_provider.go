@@ -180,7 +180,7 @@ func (p *defaultAuthnProvider) authenticateWithOTP(
 		return nil, newClientError(authnprovidercm.ErrorCodeInvalidRequest,
 			"Invalid OTP payload", "otp is required")
 	}
-	authResponse, authErr := p.otpService.Authenticate(ctx, sessionToken, otpValue)
+	authResult, authErr := p.otpService.Authenticate(ctx, sessionToken, otpValue)
 	if authErr != nil {
 		if authErr.Type == serviceerror.ClientErrorType {
 			if authErr.Code == otp.ErrorIncorrectOTP.Code {
@@ -194,7 +194,14 @@ func (p *defaultAuthnProvider) authenticateWithOTP(
 			log.String("error", authErr.Error.DefaultValue),
 			log.String("errorDescription", authErr.ErrorDescription.DefaultValue))
 	}
-	return &credentialOutcome{entityID: authResponse.ID}, nil
+	if authResult.InternalEntity == nil {
+		return &credentialOutcome{
+			earlyReturn: &authnprovidercm.AuthnResult{
+				IsExistingUser: false,
+			},
+		}, nil
+	}
+	return &credentialOutcome{entityID: authResult.InternalEntity.ID}, nil
 }
 
 func (p *defaultAuthnProvider) authenticateWithFederated(
