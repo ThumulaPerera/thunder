@@ -92,18 +92,6 @@ func (p *defaultAuthnProvider) Authenticate(
 		}
 	}
 
-	attributesResponse := &authnprovidercm.AttributesResponse{
-		Attributes:    make(map[string]*authnprovidercm.AttributeResponse),
-		Verifications: make(map[string]*authnprovidercm.VerificationResponse),
-	}
-	for k := range attributes {
-		attributesResponse.Attributes[k] = &authnprovidercm.AttributeResponse{
-			AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
-				IsVerified: false,
-			},
-		}
-	}
-
 	return &authnprovidercm.AuthnResult{
 		EntityID:                  authOutcome.entityID,
 		EntityCategory:            string(entityResult.Category),
@@ -112,8 +100,8 @@ func (p *defaultAuthnProvider) Authenticate(
 		UserID:                    authOutcome.entityID,
 		Token:                     authOutcome.entityID,
 		UserType:                  entityResult.Type,
-		IsAttributeValuesIncluded: false,
-		AttributesResponse:        attributesResponse,
+		IsAttributeValuesIncluded: true,
+		AttributesResponse:        buildAttributesResponse(attributes),
 		IsExistingUser:            true,
 		ExternalSub:               authOutcome.externalSub,
 		ExternalClaims:            authOutcome.externalClaims,
@@ -197,7 +185,9 @@ func (p *defaultAuthnProvider) authenticateWithOTP(
 	if authResult.InternalEntity == nil {
 		return &credentialOutcome{
 			earlyReturn: &authnprovidercm.AuthnResult{
-				IsExistingUser: false,
+				IsExistingUser:            false,
+				IsAttributeValuesIncluded: true,
+				AttributesResponse:        buildAttributesResponse(authResult.VerifiedIdentifiers),
 			},
 		}, nil
 	}
@@ -238,10 +228,12 @@ func (p *defaultAuthnProvider) authenticateWithFederated(
 	if authResult.InternalEntity == nil {
 		return &credentialOutcome{
 			earlyReturn: &authnprovidercm.AuthnResult{
-				ExternalSub:     authResult.Sub,
-				ExternalClaims:  authResult.Claims,
-				IsExistingUser:  false,
-				IsAmbiguousUser: authResult.IsAmbiguousUser,
+				ExternalSub:               authResult.Sub,
+				ExternalClaims:            authResult.Claims,
+				IsExistingUser:            false,
+				IsAmbiguousUser:           authResult.IsAmbiguousUser,
+				IsAttributeValuesIncluded: true,
+				AttributesResponse:        buildAttributesResponse(authResult.Claims),
 			},
 		}, nil
 	}
@@ -354,6 +346,22 @@ func (p *defaultAuthnProvider) GetAttributes(
 		UserType:           entityResult.Type,
 		AttributesResponse: attributesResponse,
 	}, nil
+}
+
+func buildAttributesResponse(attrs map[string]interface{}) *authnprovidercm.AttributesResponse {
+	resp := &authnprovidercm.AttributesResponse{
+		Attributes:    make(map[string]*authnprovidercm.AttributeResponse),
+		Verifications: make(map[string]*authnprovidercm.VerificationResponse),
+	}
+	for k, v := range attrs {
+		resp.Attributes[k] = &authnprovidercm.AttributeResponse{
+			Value: v,
+			AssuranceMetadataResponse: &authnprovidercm.AssuranceMetadataResponse{
+				IsVerified: false,
+			},
+		}
+	}
+	return resp
 }
 
 func newClientError(code, msg, desc string) *serviceerror.ServiceError {

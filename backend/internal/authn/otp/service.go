@@ -45,6 +45,9 @@ var supportedChannels = []notifcommon.ChannelType{notifcommon.ChannelTypeSMS}
 // InternalEntity is nil when no local user was found for the verified OTP.
 type OTPAuthnResult struct {
 	InternalEntity *entityprovider.Entity
+	// VerifiedIdentifiers holds the channel identifiers proven by the OTP challenge
+	// (e.g. "mobileNumber"). Populated only when InternalEntity is nil (no local user found).
+	VerifiedIdentifiers map[string]interface{}
 }
 
 // OTPAuthnServiceInterface defines the interface for OTP authentication operations.
@@ -184,7 +187,10 @@ func (s *otpAuthnService) handleVerifyOTPResponse(result *notifcommon.VerifyOTPR
 	user, svcErr := s.resolveUser(result.Recipient, notifcommon.ChannelTypeSMS, logger)
 	if svcErr != nil {
 		if svcErr.Code == common.ErrorUserNotFound.Code {
-			return &OTPAuthnResult{InternalEntity: nil}, nil
+			return &OTPAuthnResult{
+				InternalEntity:      nil,
+				VerifiedIdentifiers: map[string]interface{}{userAttributeMobileNumber: result.Recipient},
+			}, nil
 		}
 		return nil, svcErr
 	}

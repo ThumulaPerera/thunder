@@ -84,11 +84,11 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_Success() {
 	suite.Equal("user123", result.Token)
 	suite.Equal("customer", result.UserType)
 	suite.Equal("ou1", result.OUID)
-	suite.False(result.IsAttributeValuesIncluded)
+	suite.True(result.IsAttributeValuesIncluded)
 	suite.NotNil(result.AttributesResponse)
 	suite.Len(result.AttributesResponse.Attributes, 1)
 	suite.Contains(result.AttributesResponse.Attributes, "email")
-	suite.Nil(result.AttributesResponse.Attributes["email"].Value)
+	suite.Equal("test@example.com", result.AttributesResponse.Attributes["email"].Value)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_EntityNotFound() {
@@ -339,13 +339,19 @@ func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_OTP_UserNotFound() 
 	}
 
 	mockOTP.On("Authenticate", mock.Anything, "tok", "123456").
-		Return(&otp.OTPAuthnResult{InternalEntity: nil}, nil).Once()
+		Return(&otp.OTPAuthnResult{
+			InternalEntity:      nil,
+			VerifiedIdentifiers: map[string]interface{}{"mobileNumber": "+1234567890"},
+		}, nil).Once()
 
 	result, err := provider.Authenticate(context.Background(), nil, credentials, nil)
 
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.False(result.IsExistingUser)
+	suite.True(result.IsAttributeValuesIncluded)
+	suite.NotNil(result.AttributesResponse)
+	suite.Equal("+1234567890", result.AttributesResponse.Attributes["mobileNumber"].Value)
 }
 
 func (suite *DefaultAuthnProviderTestSuite) TestAuthenticate_OTP_IncorrectOTP() {

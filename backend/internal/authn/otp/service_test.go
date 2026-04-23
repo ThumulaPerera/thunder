@@ -357,6 +357,7 @@ func (suite *OTPAuthnServiceTestSuite) TestAuthenticateWithUserServiceError() {
 				suite.NotNil(result)
 				suite.Nil(result.InternalEntity)
 				suite.Nil(err)
+				suite.Equal("+1234567890", result.VerifiedIdentifiers["mobileNumber"])
 			} else {
 				suite.Nil(result)
 				suite.NotNil(err)
