@@ -58,26 +58,6 @@ type AuthnBasicResult struct {
 	IsAmbiguousUser bool
 }
 
-func (a *AuthUser) setIdentity(userID, userType, ouID string) {
-	a.userID = userID
-	a.userType = userType
-	a.ouID = ouID
-}
-
-// p is currently always defaultProvider; the parameter exists to support multiple providers without a signature change.
-func (a *AuthUser) setProviderData(p providerKey, data providerData) { //nolint:unparam
-	if a.providersAuthData == nil {
-		a.providersAuthData = make(map[providerKey]providerData)
-	}
-	a.providersAuthData[p] = data
-}
-
-// p is currently always defaultProvider; the parameter exists to support multiple providers without a signature change.
-func (a *AuthUser) getProviderData(p providerKey) (providerData, bool) { //nolint:unparam
-	data, ok := a.providersAuthData[p]
-	return data, ok
-}
-
 // IsAuthenticated reports whether this AuthUser has been populated by a successful
 // authentication.
 func (a AuthUser) IsAuthenticated() bool {

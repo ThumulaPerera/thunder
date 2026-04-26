@@ -74,10 +74,13 @@ func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers
 		}
 	}
 	if !result.IsExistingUser {
-		authUser.setProviderData(defaultProvider, providerData{
+		if authUser.providersAuthData == nil {
+			authUser.providersAuthData = make(map[providerKey]providerData)
+		}
+		authUser.providersAuthData[defaultProvider] = providerData{
 			attributes:                result.AttributesResponse,
 			isAttributeValuesIncluded: result.IsAttributeValuesIncluded,
-		})
+		}
 		return authUser, &AuthnBasicResult{
 			ExternalSub:     result.ExternalSub,
 			ExternalClaims:  result.ExternalClaims,
@@ -85,12 +88,17 @@ func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers
 			IsAmbiguousUser: result.IsAmbiguousUser,
 		}, nil
 	}
-	authUser.setIdentity(result.UserID, result.UserType, result.OUID)
-	authUser.setProviderData(defaultProvider, providerData{
+	authUser.userID = result.UserID
+	authUser.userType = result.UserType
+	authUser.ouID = result.OUID
+	if authUser.providersAuthData == nil {
+		authUser.providersAuthData = make(map[providerKey]providerData)
+	}
+	authUser.providersAuthData[defaultProvider] = providerData{
 		token:                     result.Token,
 		attributes:                result.AttributesResponse,
 		isAttributeValuesIncluded: result.IsAttributeValuesIncluded,
-	})
+	}
 	return authUser, &AuthnBasicResult{
 		UserID:         result.UserID,
 		OUID:           result.OUID,
@@ -108,7 +116,7 @@ func (m *authnProviderManager) GetUserAvailableAttributes(ctx context.Context,
 		m.logger.Error("GetUserAvailableAttributes called with unauthenticated authUser")
 		return nil, &serviceerror.InternalServerError
 	}
-	data, ok := authUser.getProviderData(defaultProvider)
+	data, ok := authUser.providersAuthData[defaultProvider]
 	if !ok {
 		m.logger.Error("GetUserAvailableAttributes: no provider data found for default provider")
 		return nil, &serviceerror.InternalServerError
@@ -125,7 +133,7 @@ func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 		m.logger.Error("GetUserAttributes called with unauthenticated authUser")
 		return AuthUser{}, nil, &serviceerror.InternalServerError
 	}
-	data, ok := authUser.getProviderData(defaultProvider)
+	data, ok := authUser.providersAuthData[defaultProvider]
 	if !ok {
 		m.logger.Error("GetUserAttributes: no provider data found for default provider")
 		return AuthUser{}, nil, &serviceerror.InternalServerError
@@ -145,10 +153,10 @@ func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 			DefaultValue: svcErr.ErrorDescription.DefaultValue,
 		})
 	}
-	authUser.setProviderData(defaultProvider, providerData{
+	authUser.providersAuthData[defaultProvider] = providerData{
 		token:                     data.token,
 		attributes:                result.AttributesResponse,
 		isAttributeValuesIncluded: true,
-	})
+	}
 	return authUser, result.AttributesResponse, nil
 }
