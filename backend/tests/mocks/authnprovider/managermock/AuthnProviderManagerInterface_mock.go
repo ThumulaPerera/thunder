@@ -140,6 +140,57 @@ func (_c *AuthnProviderManagerInterfaceMock_AuthenticateUser_Call) RunAndReturn(
 	return _c
 }
 
+// GetAuthenticatedUserID provides a mock function for the type AuthnProviderManagerInterfaceMock
+func (_mock *AuthnProviderManagerInterfaceMock) GetAuthenticatedUserID(authUser manager.AuthUser) string {
+	ret := _mock.Called(authUser)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAuthenticatedUserID")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func(manager.AuthUser) string); ok {
+		r0 = returnFunc(authUser)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAuthenticatedUserID'
+type AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call struct {
+	*mock.Call
+}
+
+// GetAuthenticatedUserID is a helper method to define mock.On call
+//   - authUser manager.AuthUser
+func (_e *AuthnProviderManagerInterfaceMock_Expecter) GetAuthenticatedUserID(authUser interface{}) *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call {
+	return &AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call{Call: _e.mock.On("GetAuthenticatedUserID", authUser)}
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call) Run(run func(authUser manager.AuthUser)) *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 manager.AuthUser
+		if args[0] != nil {
+			arg0 = args[0].(manager.AuthUser)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call) Return(s string) *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call) RunAndReturn(run func(authUser manager.AuthUser) string) *AuthnProviderManagerInterfaceMock_GetAuthenticatedUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserAttributes provides a mock function for the type AuthnProviderManagerInterfaceMock
 func (_mock *AuthnProviderManagerInterfaceMock) GetUserAttributes(ctx context.Context, requestedAttributes *common.RequestedAttributes, metadata *common.GetAttributesMetadata, authUser manager.AuthUser) (manager.AuthUser, *common.AttributesResponse, *serviceerror.ServiceError) {
 	ret := _mock.Called(ctx, requestedAttributes, metadata, authUser)

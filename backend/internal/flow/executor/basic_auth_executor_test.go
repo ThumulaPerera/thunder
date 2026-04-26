@@ -71,7 +71,6 @@ func (suite *BasicAuthExecutorTestSuite) SetupTest() {
 		defaultInputs, []common.Input{}).Return(mockExec)
 
 	suite.executor = newBasicAuthExecutor(suite.mockFlowFactory, suite.mockEntityProvider, suite.mockAuthnProvider)
-
 }
 
 func createMockIdentifyingExecutor(t *testing.T) core.ExecutorInterface {

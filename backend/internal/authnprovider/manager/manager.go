@@ -165,3 +165,8 @@ func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 func (m *authnProviderManager) IsAuthenticated(authUser AuthUser) bool {
 	return authUser.userID != ""
 }
+
+// GetAuthenticatedUserID returns the user ID of the authenticated user, or an empty string if not set.
+func (m *authnProviderManager) GetAuthenticatedUserID(authUser AuthUser) string {
+	return authUser.userID
+}
