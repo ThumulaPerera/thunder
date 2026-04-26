@@ -39,4 +39,5 @@ type AuthnProviderManagerInterface interface {
 		metadata *authnprovidercm.GetAttributesMetadata,
 		authUser AuthUser) (AuthUser, *authnprovidercm.AttributesResponse, *serviceerror.ServiceError)
 	IsAuthenticated(authUser AuthUser) bool
+	GetAuthenticatedUserID(authUser AuthUser) string
 }
