@@ -294,7 +294,13 @@ func (g *graph) ToJSON() (string, error) {
 			if len(inputs) > 0 {
 				jsonNode.Inputs = make([]JSONInputs, len(inputs))
 				for i, input := range inputs {
-					jsonNode.Inputs[i] = JSONInputs(input)
+					jsonNode.Inputs[i] = JSONInputs{
+						Ref:        input.Ref,
+						Identifier: input.Identifier,
+						Type:       input.Type,
+						Required:   input.Required,
+						Options:    input.Options,
+					}
 				}
 			}
 		}

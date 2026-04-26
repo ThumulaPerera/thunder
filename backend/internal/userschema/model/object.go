@@ -43,6 +43,10 @@ func (p *object) isDisplayable() bool {
 	return false
 }
 
+func (p *object) getDisplayName() string {
+	return p.displayName
+}
+
 func (p *object) isUnique() bool {
 	return false
 }

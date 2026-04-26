@@ -92,7 +92,7 @@ func Initialize(
 		flowFactory, idpService, userSchemaService, googleSvc, authnProvider))
 
 	reg.RegisterExecutor(ExecutorNameProvisioning, newProvisioningExecutor(flowFactory,
-		groupService, roleService, entityProvider))
+		groupService, roleService, entityProvider, userSchemaService))
 	reg.RegisterExecutor(ExecutorNameOUCreation, newOUExecutor(flowFactory, ouService))
 
 	reg.RegisterExecutor(ExecutorNameAttributeCollect, newAttributeCollector(flowFactory, entityProvider))
