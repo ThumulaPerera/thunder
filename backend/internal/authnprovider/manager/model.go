@@ -58,10 +58,9 @@ type AuthnBasicResult struct {
 	IsAmbiguousUser bool
 }
 
-// IsAuthenticated reports whether this AuthUser has been populated by a successful
-// authentication.
-func (a AuthUser) IsAuthenticated() bool {
-	return a.userID != ""
+// IsSet reports whether this AuthUser has been populated (i.e. is not the zero value).
+func (a AuthUser) IsSet() bool {
+	return a.userID != "" || a.userType != "" || a.ouID != "" || len(a.providersAuthData) > 0
 }
 
 // authUserJSON is the internal proxy used for JSON serialization of AuthUser.

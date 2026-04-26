@@ -357,7 +357,7 @@ func (a *authAssertExecutor) resolveUserAttributes(ctx *core.NodeContext, reques
 		// Fetch from user/authentication provider
 		if ctx.AuthenticatedUser.UserID != "" && fetchedAttributes == nil {
 			var err error
-			if ctx.AuthUser.IsAuthenticated() {
+			if a.authnProvider.IsAuthenticated(ctx.AuthUser) {
 				metadata := a.buildGetAttributesMetadata(ctx)
 				fetchedAttributes, err = a.getUserAttributesFromAuthnProvider(ctx.Context,
 					requestedAttributes, metadata, ctx.AuthUser)

@@ -71,7 +71,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_Success() {
 	s.Equal("ou-1", result.OUID)
 	s.Equal("customer", result.UserType)
 
-	s.True(returnedAuthUser.IsAuthenticated())
+	s.True(s.mgr.IsAuthenticated(returnedAuthUser))
 	s.Equal("user-1", returnedAuthUser.userID)
 	s.Equal("customer", returnedAuthUser.userType)
 	s.Equal("ou-1", returnedAuthUser.ouID)
@@ -113,7 +113,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_FederatedNewUser() {
 	s.Equal("ext-sub-123", result.ExternalSub)
 	s.Equal(map[string]interface{}{"email": "new@example.com"}, result.ExternalClaims)
 
-	s.False(returnedAuthUser.IsAuthenticated())
+	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
 	data, ok := returnedAuthUser.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.True(data.isAttributeValuesIncluded)
@@ -140,7 +140,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ClientError() {
 	s.Equal(ErrorAuthenticationFailed.Code, svcErr.Code)
 	s.Equal(serviceerror.ClientErrorType, svcErr.Type)
 	s.Nil(result)
-	s.False(returnedAuthUser.IsAuthenticated())
+	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_UserNotFound() {
@@ -184,7 +184,7 @@ func (s *ManagerTestSuite) assertAuthenticateUserClientErrorMapping(
 	s.Equal(serviceerror.ClientErrorType, svcErr.Type)
 	s.Equal(providerErrorDescription, svcErr.ErrorDescription.DefaultValue)
 	s.Nil(result)
-	s.False(returnedAuthUser.IsAuthenticated())
+	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_ServerError() {
@@ -207,7 +207,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ServerError() {
 	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
 	s.Equal(serviceerror.ServerErrorType, svcErr.Type)
 	s.Nil(result)
-	s.False(returnedAuthUser.IsAuthenticated())
+	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_ReAuth() {

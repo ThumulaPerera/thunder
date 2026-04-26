@@ -125,7 +125,7 @@ func (b *basicAuthExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResp
 	if execResp.Status == common.ExecFailure || execResp.Status == common.ExecUserInputRequired {
 		return execResp, nil
 	}
-	if !execResp.AuthUser.IsAuthenticated() && ctx.FlowType != common.FlowTypeRegistration {
+	if !b.authnProvider.IsAuthenticated(execResp.AuthUser) && ctx.FlowType != common.FlowTypeRegistration {
 		execResp.Status = common.ExecUserInputRequired
 		if hasPreResolvedUser {
 			execResp.Inputs = b.getCredentialInputs(ctx)
@@ -140,7 +140,7 @@ func (b *basicAuthExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResp
 
 	logger.Debug("Basic authentication executor execution completed",
 		log.String("status", string(execResp.Status)),
-		log.Bool("isAuthenticated", execResp.AuthUser.IsAuthenticated()))
+		log.Bool("isAuthenticated", b.authnProvider.IsAuthenticated(execResp.AuthUser)))
 
 	return execResp, nil
 }
