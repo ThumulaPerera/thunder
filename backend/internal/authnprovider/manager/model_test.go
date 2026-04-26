@@ -36,17 +36,22 @@ func TestModelTestSuite(t *testing.T) {
 }
 
 func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
-	var authUser AuthUser
-	authUser.setIdentity("user-123", "customer", "ou-456")
-	authUser.setProviderData(defaultProvider, providerData{
-		token: "secret-token",
-		attributes: &authnprovidercm.AttributesResponse{
-			Attributes: map[string]*authnprovidercm.AttributeResponse{
-				"email": {Value: "test@example.com"},
+	authUser := AuthUser{
+		userID:   "user-123",
+		userType: "customer",
+		ouID:     "ou-456",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {
+				token: "secret-token",
+				attributes: &authnprovidercm.AttributesResponse{
+					Attributes: map[string]*authnprovidercm.AttributeResponse{
+						"email": {Value: "test@example.com"},
+					},
+				},
+				isAttributeValuesIncluded: true,
 			},
 		},
-		isAttributeValuesIncluded: true,
-	})
+	}
 
 	// Marshal
 	data, err := json.Marshal(&authUser)
@@ -63,7 +68,7 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 	s.Equal("ou-456", restored.ouID)
 
 	// Provider data round-trips correctly
-	pd, ok := restored.getProviderData(defaultProvider)
+	pd, ok := restored.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.Equal("secret-token", pd.token)
 	s.True(pd.isAttributeValuesIncluded)
@@ -83,7 +88,9 @@ func (s *ModelTestSuite) TestAuthUserIsAuthenticated_EmptyAuthUser() {
 
 func (s *ModelTestSuite) TestAuthUserIsAuthenticated_WithUserID() {
 	a := AuthUser{}
-	a.setIdentity("user-123", "customer", "ou-456")
+	a.userID = "user-123"
+	a.userType = "customer"
+	a.ouID = "ou-456"
 	s.True(a.IsAuthenticated())
 }
 

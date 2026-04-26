@@ -76,7 +76,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_Success() {
 	s.Equal("customer", returnedAuthUser.userType)
 	s.Equal("ou-1", returnedAuthUser.ouID)
 
-	pd, ok := returnedAuthUser.getProviderData(defaultProvider)
+	pd, ok := returnedAuthUser.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.Equal("tok", pd.token)
 	s.False(pd.isAttributeValuesIncluded)
@@ -114,7 +114,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_FederatedNewUser() {
 	s.Equal(map[string]interface{}{"email": "new@example.com"}, result.ExternalClaims)
 
 	s.False(returnedAuthUser.IsAuthenticated())
-	data, ok := returnedAuthUser.getProviderData(defaultProvider)
+	data, ok := returnedAuthUser.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.True(data.isAttributeValuesIncluded)
 	s.Equal(attrResp, data.attributes)
@@ -230,7 +230,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ReAuth() {
 	au1, _, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, AuthUser{})
 	au2, _, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, au1)
 
-	pd, ok := au2.getProviderData(defaultProvider)
+	pd, ok := au2.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.Equal("tok-second", pd.token, "second call must overwrite provider data")
 }
@@ -243,18 +243,23 @@ func (s *ManagerTestSuite) TestGetUserAvailableAttributes_EmptyAuthUser() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAvailableAttributes_WithData() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1")
 	expectedAttrs := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {Value: "a@b.com"},
 		},
 	}
-	authUser.setProviderData(defaultProvider, providerData{
-		token:                     "tok",
-		attributes:                expectedAttrs,
-		isAttributeValuesIncluded: true,
-	})
+	authUser := AuthUser{
+		userID:   "user-1",
+		userType: "person",
+		ouID:     "ou-1",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {
+				token:                     "tok",
+				attributes:                expectedAttrs,
+				isAttributeValuesIncluded: true,
+			},
+		},
+	}
 
 	attrs, svcErr := s.mgr.GetUserAvailableAttributes(context.Background(), authUser)
 	s.Nil(svcErr)
@@ -271,18 +276,23 @@ func (s *ManagerTestSuite) TestGetUserAttributes_EmptyAuthUser() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheHit() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1")
 	expectedAttrs := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
 			"email": {Value: "a@b.com"},
 		},
 	}
-	authUser.setProviderData(defaultProvider, providerData{
-		token:                     "tok",
-		attributes:                expectedAttrs,
-		isAttributeValuesIncluded: true,
-	})
+	authUser := AuthUser{
+		userID:   "user-1",
+		userType: "person",
+		ouID:     "ou-1",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {
+				token:                     "tok",
+				attributes:                expectedAttrs,
+				isAttributeValuesIncluded: true,
+			},
+		},
+	}
 
 	retAuthUser, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), nil, nil, authUser)
 	s.Nil(svcErr)
@@ -292,8 +302,7 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheHit() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAvailableAttributes_NoProviderData() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1") // authenticated but no provider data set
+	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no provider data set
 	attrs, svcErr := s.mgr.GetUserAvailableAttributes(context.Background(), authUser)
 	s.Nil(attrs)
 	s.NotNil(svcErr)
@@ -301,8 +310,7 @@ func (s *ManagerTestSuite) TestGetUserAvailableAttributes_NoProviderData() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_NoProviderData() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1") // authenticated but no provider data set
+	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no provider data set
 	_, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), nil, nil, authUser)
 	s.Nil(attrs)
 	s.NotNil(svcErr)
@@ -310,9 +318,14 @@ func (s *ManagerTestSuite) TestGetUserAttributes_NoProviderData() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissServerError() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1")
-	authUser.setProviderData(defaultProvider, providerData{token: "tok", isAttributeValuesIncluded: false})
+	authUser := AuthUser{
+		userID:   "user-1",
+		userType: "person",
+		ouID:     "ou-1",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {token: "tok", isAttributeValuesIncluded: false},
+		},
+	}
 
 	requestedAttrs := &authnprovidercm.RequestedAttributes{}
 	provErr := &serviceerror.ServiceError{
@@ -333,9 +346,14 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissServerError() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissClientError() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1")
-	authUser.setProviderData(defaultProvider, providerData{token: "expired-tok", isAttributeValuesIncluded: false})
+	authUser := AuthUser{
+		userID:   "user-1",
+		userType: "person",
+		ouID:     "ou-1",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {token: "expired-tok", isAttributeValuesIncluded: false},
+		},
+	}
 
 	requestedAttrs := &authnprovidercm.RequestedAttributes{}
 	provErr := &serviceerror.ServiceError{
@@ -356,13 +374,18 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissClientError() {
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheMiss() {
-	var authUser AuthUser
-	authUser.setIdentity("user-1", "person", "ou-1")
-	authUser.setProviderData(defaultProvider, providerData{
-		token:                     "tok",
-		attributes:                nil,
-		isAttributeValuesIncluded: false,
-	})
+	authUser := AuthUser{
+		userID:   "user-1",
+		userType: "person",
+		ouID:     "ou-1",
+		providersAuthData: map[providerKey]providerData{
+			defaultProvider: {
+				token:                     "tok",
+				attributes:                nil,
+				isAttributeValuesIncluded: false,
+			},
+		},
+	}
 
 	requestedAttrs := &authnprovidercm.RequestedAttributes{}
 	fetchedAttrs := &authnprovidercm.AttributesResponse{
@@ -379,7 +402,7 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMiss() {
 	retAuthUser, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), requestedAttrs, nil, authUser)
 	s.Nil(svcErr)
 	s.Equal(fetchedAttrs, attrs)
-	retData, ok := retAuthUser.getProviderData(defaultProvider)
+	retData, ok := retAuthUser.providersAuthData[defaultProvider]
 	s.True(ok)
 	s.True(retData.isAttributeValuesIncluded)
 	s.Equal(fetchedAttrs, retData.attributes)
