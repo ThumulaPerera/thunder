@@ -97,6 +97,8 @@ func (suite *AuthAssertExecutorTestSuite) SetupTest() {
 	suite.executor = newAuthAssertExecutor(suite.mockFlowFactory, suite.mockJWTService,
 		suite.mockOUService, suite.mockAssertGenerator, suite.mockAuthnProvider, suite.mockEntityProvider,
 		suite.mockAttributeCacheSvc, suite.mockRoleService)
+
+	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(false)
 }
 
 func createMockExecutorSimple(t *testing.T, name string,

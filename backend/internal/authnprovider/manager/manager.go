@@ -112,7 +112,7 @@ func (m *authnProviderManager) AuthenticateUser(ctx context.Context, identifiers
 // GetUserAvailableAttributes returns the cached attributes for the default provider without making a provider call.
 func (m *authnProviderManager) GetUserAvailableAttributes(ctx context.Context,
 	authUser AuthUser) (*authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
-	if !authUser.IsAuthenticated() {
+	if !m.IsAuthenticated(authUser) {
 		m.logger.Error("GetUserAvailableAttributes called with unauthenticated authUser")
 		return nil, &serviceerror.InternalServerError
 	}
@@ -129,7 +129,7 @@ func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 	requestedAttributes *authnprovidercm.RequestedAttributes,
 	metadata *authnprovidercm.GetAttributesMetadata,
 	authUser AuthUser) (AuthUser, *authnprovidercm.AttributesResponse, *serviceerror.ServiceError) {
-	if !authUser.IsAuthenticated() {
+	if !m.IsAuthenticated(authUser) {
 		m.logger.Error("GetUserAttributes called with unauthenticated authUser")
 		return AuthUser{}, nil, &serviceerror.InternalServerError
 	}
@@ -159,4 +159,9 @@ func (m *authnProviderManager) GetUserAttributes(ctx context.Context,
 		isAttributeValuesIncluded: true,
 	}
 	return authUser, result.AttributesResponse, nil
+}
+
+// IsAuthenticated reports whether the given AuthUser has been populated with a resolved user identity.
+func (m *authnProviderManager) IsAuthenticated(authUser AuthUser) bool {
+	return authUser.userID != ""
 }

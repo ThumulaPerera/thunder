@@ -297,3 +297,54 @@ func (_c *AuthnProviderManagerInterfaceMock_GetUserAvailableAttributes_Call) Run
 	_c.Call.Return(run)
 	return _c
 }
+
+// IsAuthenticated provides a mock function for the type AuthnProviderManagerInterfaceMock
+func (_mock *AuthnProviderManagerInterfaceMock) IsAuthenticated(authUser manager.AuthUser) bool {
+	ret := _mock.Called(authUser)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsAuthenticated")
+	}
+
+	var r0 bool
+	if returnFunc, ok := ret.Get(0).(func(manager.AuthUser) bool); ok {
+		r0 = returnFunc(authUser)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	return r0
+}
+
+// AuthnProviderManagerInterfaceMock_IsAuthenticated_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsAuthenticated'
+type AuthnProviderManagerInterfaceMock_IsAuthenticated_Call struct {
+	*mock.Call
+}
+
+// IsAuthenticated is a helper method to define mock.On call
+//   - authUser manager.AuthUser
+func (_e *AuthnProviderManagerInterfaceMock_Expecter) IsAuthenticated(authUser interface{}) *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call {
+	return &AuthnProviderManagerInterfaceMock_IsAuthenticated_Call{Call: _e.mock.On("IsAuthenticated", authUser)}
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call) Run(run func(authUser manager.AuthUser)) *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 manager.AuthUser
+		if args[0] != nil {
+			arg0 = args[0].(manager.AuthUser)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call) Return(b bool) *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call {
+	_c.Call.Return(b)
+	return _c
+}
+
+func (_c *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call) RunAndReturn(run func(authUser manager.AuthUser) bool) *AuthnProviderManagerInterfaceMock_IsAuthenticated_Call {
+	_c.Call.Return(run)
+	return _c
+}

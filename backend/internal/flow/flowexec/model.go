@@ -418,7 +418,7 @@ func FromEngineContext(ctx EngineContext) (*FlowContextDB, error) {
 
 	// Serialize AuthUser if present
 	var authUserStr *string
-	if ctx.AuthUser.IsAuthenticated() {
+	if ctx.AuthUser.IsSet() {
 		authUserJSON, err := json.Marshal(&ctx.AuthUser)
 		if err != nil {
 			return nil, err

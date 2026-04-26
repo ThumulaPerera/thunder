@@ -76,22 +76,30 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 	s.Equal("test@example.com", pd.attributes.Attributes["email"].Value)
 }
 
-func (s *ModelTestSuite) TestAuthUserIsAuthenticated_ZeroValue() {
+func (s *ModelTestSuite) TestAuthUserIsSet_ZeroValue() {
 	var a AuthUser
-	s.False(a.IsAuthenticated())
+	s.False(a.IsSet())
 }
 
-func (s *ModelTestSuite) TestAuthUserIsAuthenticated_EmptyAuthUser() {
+func (s *ModelTestSuite) TestAuthUserIsSet_EmptyAuthUser() {
 	a := AuthUser{}
-	s.False(a.IsAuthenticated())
+	s.False(a.IsSet())
 }
 
-func (s *ModelTestSuite) TestAuthUserIsAuthenticated_WithUserID() {
+func (s *ModelTestSuite) TestAuthUserIsSet_WithUserID() {
 	a := AuthUser{}
 	a.userID = "user-123"
 	a.userType = "customer"
 	a.ouID = "ou-456"
-	s.True(a.IsAuthenticated())
+	s.True(a.IsSet())
+}
+
+func (s *ModelTestSuite) TestAuthUserIsSet_WithOnlyProviderData() {
+	a := AuthUser{}
+	a.providersAuthData = map[providerKey]providerData{
+		defaultProvider: {token: "tok"},
+	}
+	s.True(a.IsSet())
 }
 
 func (s *ModelTestSuite) TestAuthUserMarshalNilProviderData() {

@@ -409,7 +409,7 @@ func (fe *flowEngine) updateContextWithNodeResponse(engineCtx *EngineContext, no
 	}
 
 	// Write back AuthUser from the node response
-	if nodeResp.AuthUser.IsAuthenticated() {
+	if nodeResp.AuthUser.IsSet() {
 		engineCtx.AuthUser = nodeResp.AuthUser
 	}
 }

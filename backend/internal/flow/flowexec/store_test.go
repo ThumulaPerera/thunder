@@ -824,5 +824,5 @@ func (s *StoreTestSuite) TestEngineContextRoundTrip_WithAuthUser() {
 
 	restoredCtx, err := dbModel.ToEngineContext(context.Background(), mockGraph)
 	s.NoError(err)
-	s.True(restoredCtx.AuthUser.IsAuthenticated())
+	s.True(restoredCtx.AuthUser.IsSet())
 }
