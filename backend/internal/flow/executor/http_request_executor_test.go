@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authncm "github.com/asgardeo/thunder/internal/authn/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/ou"
@@ -737,11 +738,11 @@ func (suite *HTTPRequestExecutorTestSuite) TestEnrichOURuntimeData_OUIDFromAuthe
 		Return(newMockExecutor(ExecutorNameHTTPRequest, common.ExecutorTypeUtility, []common.Input{}, []common.Input{}))
 	executor := newHTTPRequestExecutor(mockFlowFactory, mockOUService)
 
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"ouId":"ou-auth-123"}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "test-flow",
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			OUID: "ou-auth-123",
-		},
+		AuthUser:    authUser,
 		RuntimeData: map[string]string{},
 		UserInputs:  map[string]string{},
 		NodeProperties: map[string]interface{}{
@@ -848,11 +849,11 @@ func (suite *HTTPRequestExecutorTestSuite) TestEnrichOURuntimeData_Authenticated
 		Return(newMockExecutor(ExecutorNameHTTPRequest, common.ExecutorTypeUtility, []common.Input{}, []common.Input{}))
 	executor := newHTTPRequestExecutor(mockFlowFactory, mockOUService)
 
+	var authUser2 authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"ouId":"ou-auth-primary"}`), &authUser2)
 	ctx := &core.NodeContext{
 		ExecutionID: "test-flow",
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			OUID: "ou-auth-primary",
-		},
+		AuthUser:    authUser2,
 		RuntimeData: map[string]string{
 			"ouId": "ou-runtime-fallback", // should NOT be used
 		},
@@ -902,11 +903,11 @@ func (suite *HTTPRequestExecutorTestSuite) TestEnrichOURuntimeData_OverwritesExi
 		Return(newMockExecutor(ExecutorNameHTTPRequest, common.ExecutorTypeUtility, []common.Input{}, []common.Input{}))
 	executor := newHTTPRequestExecutor(mockFlowFactory, mockOUService)
 
+	var authUser3 authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"ouId":"ou-overwrite-test"}`), &authUser3)
 	ctx := &core.NodeContext{
 		ExecutionID: "test-flow",
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			OUID: "ou-overwrite-test",
-		},
+		AuthUser:    authUser3,
 		RuntimeData: map[string]string{
 			"ouHandle": "stale-handle", // pre-populated — must be overwritten
 		},
@@ -954,11 +955,11 @@ func (suite *HTTPRequestExecutorTestSuite) TestEnrichOURuntimeData_OULookupFailu
 		Return(newMockExecutor(ExecutorNameHTTPRequest, common.ExecutorTypeUtility, []common.Input{}, []common.Input{}))
 	executor := newHTTPRequestExecutor(mockFlowFactory, mockOUService)
 
+	var authUser4 authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"ouId":"ou-not-found"}`), &authUser4)
 	ctx := &core.NodeContext{
 		ExecutionID: "test-flow",
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			OUID: "ou-not-found",
-		},
+		AuthUser:    authUser4,
 		RuntimeData: map[string]string{},
 		UserInputs:  map[string]string{},
 		NodeProperties: map[string]interface{}{

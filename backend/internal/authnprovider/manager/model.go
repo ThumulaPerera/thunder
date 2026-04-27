@@ -68,6 +68,16 @@ func (a AuthUser) GetUserID() string {
 	return a.userID
 }
 
+// GetOUID returns the organizational unit ID of the authenticated user, or an empty string if not set.
+func (a AuthUser) GetOUID() string {
+	return a.ouID
+}
+
+// GetUserType returns the user type of the authenticated user, or an empty string if not set.
+func (a AuthUser) GetUserType() string {
+	return a.userType
+}
+
 // authUserJSON is the internal proxy used for JSON serialization of AuthUser.
 type authUserJSON struct {
 	UserID            string                      `json:"userId"`
