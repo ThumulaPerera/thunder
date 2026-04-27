@@ -63,6 +63,11 @@ func (a AuthUser) IsSet() bool {
 	return a.userID != "" || a.userType != "" || a.ouID != "" || len(a.providersAuthData) > 0
 }
 
+// GetUserID returns the user ID of the authenticated user, or an empty string if not set.
+func (a AuthUser) GetUserID() string {
+	return a.userID
+}
+
 // authUserJSON is the internal proxy used for JSON serialization of AuthUser.
 type authUserJSON struct {
 	UserID            string                      `json:"userId"`
