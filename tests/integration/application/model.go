@@ -81,10 +81,11 @@ type OAuthTokenConfig struct {
 
 // UserInfoConfig represents the UserInfo endpoint configuration.
 type UserInfoConfig struct {
-	SigningAlg      string   `json:"signingAlg,omitempty"`
-	EncryptionAlg   string   `json:"encryptionAlg,omitempty"`
-	EncryptionEnc   string   `json:"encryptionEnc,omitempty"`
-	UserAttributes  []string `json:"userAttributes,omitempty"`
+	ResponseType   string   `json:"responseType,omitempty"`
+	SigningAlg     string   `json:"signingAlg,omitempty"`
+	EncryptionAlg  string   `json:"encryptionAlg,omitempty"`
+	EncryptionEnc  string   `json:"encryptionEnc,omitempty"`
+	UserAttributes []string `json:"userAttributes,omitempty"`
 }
 
 // AssertionConfig represents the assertion configuration (used for application-level assertion config).
@@ -282,6 +283,9 @@ func (app *Application) equals(expectedApp Application) bool {
 				// Compare UserInfo config - lenient if expected is nil but actual is empty
 				if expectedOAuth.UserInfo != nil {
 					if oauth.UserInfo == nil {
+						return false
+					}
+					if oauth.UserInfo.ResponseType != expectedOAuth.UserInfo.ResponseType {
 						return false
 					}
 					if oauth.UserInfo.SigningAlg != expectedOAuth.UserInfo.SigningAlg {
