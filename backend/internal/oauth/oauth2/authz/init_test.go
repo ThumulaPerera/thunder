@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/cors"
@@ -49,6 +50,10 @@ func TestInitTestSuite(t *testing.T) {
 
 func (suite *InitTestSuite) SetupTest() {
 	// Initialize Runtime config with basic test config
+	var allowedOrigins cors.OriginEntries
+	suite.Require().NoError(yaml.Unmarshal([]byte(`
+- https://example.com
+`), &allowedOrigins))
 	testConfig := &config.Config{
 		Database: config.DatabaseConfig{
 			Config: config.DataSource{
@@ -67,13 +72,9 @@ func (suite *InitTestSuite) SetupTest() {
 			LoginPath: "/login",
 			ErrorPath: "/error",
 		},
-		CORS: config.CORSConfig{
-			AllowedOrigins: cors.OriginEntries{
-				cors.LiteralEntry{Value: "https://example.com"},
-			},
-		},
+		CORS: config.CORSConfig{AllowedOrigins: allowedOrigins},
 	}
-	_ = testConfig.CORS.Validate()
+	suite.Require().NoError(cors.InitializeMatcher(testConfig.CORS.AllowedOrigins))
 	_ = config.InitializeThunderRuntime("", testConfig)
 
 	suite.mockInboundClient = inboundclientmock.NewInboundClientServiceInterfaceMock(suite.T())
@@ -84,7 +85,6 @@ func (suite *InitTestSuite) SetupTest() {
 
 func (suite *InitTestSuite) TearDownTest() {
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
 }
 
 func (suite *InitTestSuite) TestInitialize() {

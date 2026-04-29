@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/asgardeo/thunder/internal/system/config"
 	"github.com/asgardeo/thunder/internal/system/cors"
@@ -38,29 +39,33 @@ func TestCORSMiddlewareTestSuite(t *testing.T) {
 	suite.Run(t, new(CORSMiddlewareTestSuite))
 }
 
-// initRuntime installs a fresh CORS matcher built from the given entries and
-// seeds the runtime config singleton. SetupTest calls this with the default
-// configuration; tests that need a different one call ResetThunderRuntime +
-// initRuntime directly. Validate is invoked explicitly here because the
-// matcher now lives in the cors package — production goes through LoadConfig,
-// and tests that bypass it own that step.
-func initRuntime(entries cors.OriginEntries) {
+// initRuntime parses the given YAML allowed-origins document, installs a
+// fresh CORS matcher from it, and seeds the runtime config singleton. Pass
+// the empty string to install an empty matcher. SetupTest calls this with
+// the default doc; tests that need different origins call ResetThunderRuntime
+// + initRuntime directly. cors.InitializeMatcher is invoked explicitly here
+// because production wires it from the server bootstrap; tests that bypass
+// LoadConfig + main own that step themselves.
+func (suite *CORSMiddlewareTestSuite) initRuntime(allowedOriginsYAML string) {
+	var entries cors.OriginEntries
+	if allowedOriginsYAML != "" {
+		suite.Require().NoError(yaml.Unmarshal([]byte(allowedOriginsYAML), &entries))
+	}
 	cfg := &config.Config{CORS: config.CORSConfig{AllowedOrigins: entries}}
-	_ = cfg.CORS.Validate()
-	_ = config.InitializeThunderRuntime("/tmp", cfg)
+	suite.Require().NoError(cors.InitializeMatcher(cfg.CORS.AllowedOrigins))
+	suite.Require().NoError(config.InitializeThunderRuntime("/tmp", cfg))
 }
 
 func (suite *CORSMiddlewareTestSuite) SetupTest() {
-	initRuntime(cors.OriginEntries{
-		cors.LiteralEntry{Value: "https://example.com"},
-		cors.LiteralEntry{Value: "https://test.com"},
-		cors.RegexEntry{Pattern: `^https://[a-z0-9-]+\.staging\.example\.com$`},
-	})
+	suite.initRuntime(`
+- https://example.com
+- https://test.com
+- regex: ^https://[a-z0-9-]+\.staging\.example\.com$
+`)
 }
 
 func (suite *CORSMiddlewareTestSuite) TearDownTest() {
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
 }
 
 // newGetRequest returns a (GET request, recorder) pair primed with the given
@@ -263,7 +268,7 @@ func (suite *CORSMiddlewareTestSuite) TestWithCORS_MultipleAllowedOrigins() {
 
 func (suite *CORSMiddlewareTestSuite) TestWithCORS_NoOriginsConfigured() {
 	config.ResetThunderRuntime()
-	initRuntime(nil)
+	suite.initRuntime("")
 
 	_, wrapped := WithCORS("GET /test", noopHandler, fullOpts)
 
@@ -388,9 +393,9 @@ func (suite *CORSMiddlewareTestSuite) TestWithCORS_OriginAllWhitespaceIgnored() 
 
 func (suite *CORSMiddlewareTestSuite) TestWithCORS_IPv6Origin() {
 	config.ResetThunderRuntime()
-	initRuntime(cors.OriginEntries{
-		cors.LiteralEntry{Value: "http://[::1]:8080"},
-	})
+	suite.initRuntime(`
+- http://[::1]:8080
+`)
 
 	_, wrapped := WithCORS("GET /test", noopHandler, fullOpts)
 
@@ -405,9 +410,9 @@ func (suite *CORSMiddlewareTestSuite) TestWithCORS_IDNOriginPunycodeEquivalence(
 	// Configure with the Punycode form; a request that uses the Unicode form
 	// must canonicalize to the same value and match.
 	config.ResetThunderRuntime()
-	initRuntime(cors.OriginEntries{
-		cors.LiteralEntry{Value: "https://xn--mnchen-3ya.example"},
-	})
+	suite.initRuntime(`
+- https://xn--mnchen-3ya.example
+`)
 
 	_, wrapped := WithCORS("GET /test", noopHandler, fullOpts)
 
@@ -420,9 +425,9 @@ func (suite *CORSMiddlewareTestSuite) TestWithCORS_IDNOriginPunycodeEquivalence(
 
 func (suite *CORSMiddlewareTestSuite) TestWithCORS_NullOriginAllowed() {
 	config.ResetThunderRuntime()
-	initRuntime(cors.OriginEntries{
-		cors.LiteralEntry{Value: "null"},
-	})
+	suite.initRuntime(`
+- "null"
+`)
 
 	_, wrapped := WithCORS("GET /test", noopHandler, fullOpts)
 
@@ -480,9 +485,9 @@ func (suite *CORSMiddlewareTestSuite) TestWithCORS_HotReloadMatcherTakesEffect()
 	assert.Equal(suite.T(), "https://example.com", w1.Header().Get("Access-Control-Allow-Origin"))
 
 	config.ResetThunderRuntime()
-	initRuntime(cors.OriginEntries{
-		cors.LiteralEntry{Value: "https://other.com"},
-	})
+	suite.initRuntime(`
+- https://other.com
+`)
 
 	req2, w2 := newGetRequest("https://example.com")
 	wrapped(w2, req2)

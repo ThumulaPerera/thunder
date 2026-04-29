@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/asgardeo/thunder/internal/system/config"
 	serverconst "github.com/asgardeo/thunder/internal/system/constants"
@@ -61,6 +62,11 @@ type InitTestSuite struct {
 func (s *InitTestSuite) SetupTest() {
 	s.mockService = NewFlowMgtServiceInterfaceMock(s.T())
 
+	var allowedOrigins cors.OriginEntries
+	s.Require().NoError(yaml.Unmarshal([]byte(`
+- https://example.com
+- https://localhost:3000
+`), &allowedOrigins))
 	testConfig := &config.Config{
 		Database: config.DatabaseConfig{
 			Config: config.DataSource{
@@ -75,20 +81,14 @@ func (s *InitTestSuite) SetupTest() {
 		Server: config.ServerConfig{
 			Identifier: "test-deployment",
 		},
-		CORS: config.CORSConfig{
-			AllowedOrigins: cors.OriginEntries{
-				cors.LiteralEntry{Value: "https://example.com"},
-				cors.LiteralEntry{Value: "https://localhost:3000"},
-			},
-		},
+		CORS: config.CORSConfig{AllowedOrigins: allowedOrigins},
 	}
-	_ = testConfig.CORS.Validate()
+	s.Require().NoError(cors.InitializeMatcher(testConfig.CORS.AllowedOrigins))
 	_ = config.InitializeThunderRuntime("test", testConfig)
 }
 
 func (s *InitTestSuite) TearDownTest() {
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
 }
 
 func TestInitTestSuite(t *testing.T) {

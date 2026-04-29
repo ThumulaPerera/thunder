@@ -36,21 +36,21 @@ func TestCompilerTestSuite(t *testing.T) {
 }
 
 func (suite *CompilerTestSuite) TestCompileLiteralEntry() {
-	rule, err := Compile(LiteralEntry{Value: "https://example.com"})
+	rule, err := compile(literalEntry{Value: "https://example.com"})
 	suite.Require().NoError(err)
-	assert.Equal(suite.T(), RuleLiteral, rule.Kind())
+	assert.Equal(suite.T(), kindLiteral, rule.kind())
 }
 
 func (suite *CompilerTestSuite) TestCompileRegexEntry() {
-	rule, err := Compile(RegexEntry{Pattern: `^https://.+$`})
+	rule, err := compile(regexEntry{Pattern: `^https://.+$`})
 	suite.Require().NoError(err)
-	assert.Equal(suite.T(), RuleRegex, rule.Kind())
+	assert.Equal(suite.T(), kindRegex, rule.kind())
 }
 
 func (suite *CompilerTestSuite) TestCompileLiteralWhitespaceTrimmed() {
-	rule, err := Compile(LiteralEntry{Value: "  https://example.com  "})
+	rule, err := compile(literalEntry{Value: "  https://example.com  "})
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 	parsed, err := ParseOrigin("https://example.com")
 	suite.Require().NoError(err)
 	allow, _ := m.Match(parsed)
@@ -58,9 +58,9 @@ func (suite *CompilerTestSuite) TestCompileLiteralWhitespaceTrimmed() {
 }
 
 func (suite *CompilerTestSuite) TestCompileNullLiteral() {
-	rule, err := Compile(LiteralEntry{Value: "null"})
+	rule, err := compile(literalEntry{Value: "null"})
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 	allowNull, _ := m.Match(ParseResult{Raw: "null", IsNull: true})
 	assert.True(suite.T(), allowNull)
 	parsed, err := ParseOrigin("https://example.com")
@@ -70,12 +70,12 @@ func (suite *CompilerTestSuite) TestCompileNullLiteral() {
 }
 
 func (suite *CompilerTestSuite) TestCompileWildcardLiteralRejected() {
-	_, err := Compile(LiteralEntry{Value: "*"})
+	_, err := compile(literalEntry{Value: "*"})
 	suite.Require().Error(err)
 	assert.True(suite.T(), errors.Is(err, ErrWildcardLiteral))
 }
 
-func (suite *CompilerTestSuite) TestIsRegexAnchored() {
+func (suite *CompilerTestSuite) TestisRegexAnchored() {
 	cases := []struct {
 		pattern  string
 		anchored bool
@@ -90,30 +90,30 @@ func (suite *CompilerTestSuite) TestIsRegexAnchored() {
 		{`.*\.example\.com`, false},
 	}
 	for _, c := range cases {
-		assert.Equal(suite.T(), c.anchored, IsRegexAnchored(c.pattern), c.pattern)
+		assert.Equal(suite.T(), c.anchored, isRegexAnchored(c.pattern), c.pattern)
 	}
 }
 
 func (suite *CompilerTestSuite) TestCompileEmptyLiteralRejected() {
-	_, err := Compile(LiteralEntry{Value: "   "})
+	_, err := compile(literalEntry{Value: "   "})
 	suite.Require().Error(err)
 	assert.True(suite.T(), errors.Is(err, ErrEmptyEntry))
 }
 
 func (suite *CompilerTestSuite) TestCompileInvalidLiteralRejected() {
-	_, err := Compile(LiteralEntry{Value: "not-a-url"})
+	_, err := compile(literalEntry{Value: "not-a-url"})
 	suite.Require().Error(err)
 	assert.True(suite.T(), errors.Is(err, ErrInvalidLiteral))
 }
 
 func (suite *CompilerTestSuite) TestCompileEmptyRegexRejected() {
-	_, err := Compile(RegexEntry{Pattern: ""})
+	_, err := compile(regexEntry{Pattern: ""})
 	suite.Require().Error(err)
 	assert.True(suite.T(), errors.Is(err, ErrEmptyEntry))
 }
 
 func (suite *CompilerTestSuite) TestCompileInvalidRegexRejected() {
-	_, err := Compile(RegexEntry{Pattern: "([unterminated"})
+	_, err := compile(regexEntry{Pattern: "([unterminated"})
 	suite.Require().Error(err)
 	assert.True(suite.T(), errors.Is(err, ErrInvalidRegex))
 }
@@ -123,33 +123,33 @@ type unknownEntry struct{}
 func (unknownEntry) isOriginEntry() {}
 
 func (suite *CompilerTestSuite) TestCompileUnknownEntryTypeRejected() {
-	_, err := Compile(unknownEntry{})
+	_, err := compile(unknownEntry{})
 	suite.Require().Error(err)
 }
 
 func (suite *CompilerTestSuite) TestCompileAllEmptyInput() {
-	rules, err := CompileAll(nil)
+	rules, err := compileAll(nil)
 	suite.Require().NoError(err)
 	assert.Nil(suite.T(), rules)
 }
 
 func (suite *CompilerTestSuite) TestCompileAllPreservesOrder() {
-	rules, err := CompileAll([]Entry{
-		LiteralEntry{Value: "https://a.com"},
-		RegexEntry{Pattern: `^https://b\.com$`},
-		LiteralEntry{Value: "https://c.com"},
+	rules, err := compileAll([]entry{
+		literalEntry{Value: "https://a.com"},
+		regexEntry{Pattern: `^https://b\.com$`},
+		literalEntry{Value: "https://c.com"},
 	})
 	suite.Require().NoError(err)
 	suite.Require().Len(rules, 3)
-	assert.Equal(suite.T(), RuleLiteral, rules[0].Kind())
-	assert.Equal(suite.T(), RuleRegex, rules[1].Kind())
-	assert.Equal(suite.T(), RuleLiteral, rules[2].Kind())
+	assert.Equal(suite.T(), kindLiteral, rules[0].kind())
+	assert.Equal(suite.T(), kindRegex, rules[1].kind())
+	assert.Equal(suite.T(), kindLiteral, rules[2].kind())
 }
 
 func (suite *CompilerTestSuite) TestCompileAllFailsFastWithIndex() {
-	_, err := CompileAll([]Entry{
-		LiteralEntry{Value: "https://ok.com"},
-		RegexEntry{Pattern: "([bad"},
+	_, err := compileAll([]entry{
+		literalEntry{Value: "https://ok.com"},
+		regexEntry{Pattern: "([bad"},
 	})
 	suite.Require().Error(err)
 	assert.Contains(suite.T(), err.Error(), "allowed_origins[1]")
@@ -163,8 +163,8 @@ func (suite *CompilerTestSuite) TestUnmarshalYAMLLiteralEntries() {
 	var entries OriginEntries
 	suite.Require().NoError(yaml.Unmarshal(doc, &entries))
 	suite.Require().Len(entries, 2)
-	assert.IsType(suite.T(), LiteralEntry{}, entries[0])
-	assert.IsType(suite.T(), LiteralEntry{}, entries[1])
+	assert.IsType(suite.T(), literalEntry{}, entries[0])
+	assert.IsType(suite.T(), literalEntry{}, entries[1])
 }
 
 func (suite *CompilerTestSuite) TestUnmarshalYAMLRegexEntries() {
@@ -174,7 +174,7 @@ func (suite *CompilerTestSuite) TestUnmarshalYAMLRegexEntries() {
 	var entries OriginEntries
 	suite.Require().NoError(yaml.Unmarshal(doc, &entries))
 	suite.Require().Len(entries, 1)
-	r, ok := entries[0].(RegexEntry)
+	r, ok := entries[0].(regexEntry)
 	suite.Require().True(ok)
 	assert.Equal(suite.T(), `^https://[a-z]+\.example\.com$`, r.Pattern)
 }
@@ -188,9 +188,9 @@ func (suite *CompilerTestSuite) TestUnmarshalYAMLMixedEntries() {
 	var entries OriginEntries
 	suite.Require().NoError(yaml.Unmarshal(doc, &entries))
 	suite.Require().Len(entries, 3)
-	assert.IsType(suite.T(), LiteralEntry{}, entries[0])
-	assert.IsType(suite.T(), RegexEntry{}, entries[1])
-	assert.IsType(suite.T(), LiteralEntry{}, entries[2])
+	assert.IsType(suite.T(), literalEntry{}, entries[0])
+	assert.IsType(suite.T(), regexEntry{}, entries[1])
+	assert.IsType(suite.T(), literalEntry{}, entries[2])
 }
 
 func (suite *CompilerTestSuite) TestUnmarshalYAMLNonSequenceRejected() {

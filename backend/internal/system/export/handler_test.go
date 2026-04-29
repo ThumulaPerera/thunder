@@ -47,7 +47,9 @@ import (
 	"github.com/asgardeo/thunder/tests/mocks/userschemamock"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // HandlerTestSuite contains comprehensive tests for the export handler functions.
@@ -64,15 +66,14 @@ type HandlerTestSuite struct {
 func (suite *HandlerTestSuite) SetupTest() {
 	// Initialize config for tests
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
+	var allowedOrigins cors.OriginEntries
+	suite.Require().NoError(yaml.Unmarshal([]byte(`
+- https://localhost:3000
+`), &allowedOrigins))
 	testConfig := &config.Config{
-		CORS: config.CORSConfig{
-			AllowedOrigins: cors.OriginEntries{
-				cors.LiteralEntry{Value: "https://localhost:3000"},
-			},
-		},
+		CORS: config.CORSConfig{AllowedOrigins: allowedOrigins},
 	}
-	suite.Require().NoError(testConfig.CORS.Validate())
+	suite.Require().NoError(cors.InitializeMatcher(testConfig.CORS.AllowedOrigins))
 	err := config.InitializeThunderRuntime("/tmp/test", testConfig)
 	suite.Require().NoError(err)
 
@@ -94,7 +95,6 @@ func (suite *HandlerTestSuite) SetupTest() {
 
 func (suite *HandlerTestSuite) TearDownTest() {
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
 }
 
 func TestHandlerTestSuite(t *testing.T) {
@@ -377,21 +377,17 @@ func TestGenerateAndSendZipResponse_Standalone(t *testing.T) {
 	logger := log.GetLogger()
 	// Setup config
 	config.ResetThunderRuntime()
-	cors.ResetMatcher()
+	var allowedOrigins cors.OriginEntries
+	assert.NoError(t, yaml.Unmarshal([]byte(`
+- https://localhost:3000
+`), &allowedOrigins))
 	testConfig := &config.Config{
-		CORS: config.CORSConfig{
-			AllowedOrigins: cors.OriginEntries{
-				cors.LiteralEntry{Value: "https://localhost:3000"},
-			},
-		},
+		CORS: config.CORSConfig{AllowedOrigins: allowedOrigins},
 	}
-	_ = testConfig.CORS.Validate()
+	require.NoError(t, cors.InitializeMatcher(testConfig.CORS.AllowedOrigins))
 	err := config.InitializeThunderRuntime("/tmp/test", testConfig)
 	assert.NoError(t, err)
-	defer func() {
-		config.ResetThunderRuntime()
-		cors.ResetMatcher()
-	}()
+	defer config.ResetThunderRuntime()
 
 	// Setup handler
 	mockAppService := applicationmock.NewApplicationServiceInterfaceMock(t)

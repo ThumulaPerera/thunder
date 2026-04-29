@@ -40,7 +40,7 @@ func TestRuleTestSuite(t *testing.T) {
 func (suite *RuleTestSuite) matchLiteralAgainst(literal, input string) bool {
 	rule, err := compileLiteral(literal)
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 	parsed, parseErr := ParseOrigin(input)
 	if parseErr != nil {
 		// Parse-gate failure → matcher should reject; we propagate by
@@ -88,7 +88,7 @@ func (suite *RuleTestSuite) TestLiteralRejectsUncanonicalizableInput() {
 func (suite *RuleTestSuite) TestLiteralNullMatchesOnlyNull() {
 	rule, err := compileLiteral("null")
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 
 	allowNull, _ := m.Match(ParseResult{Raw: "null", IsNull: true})
 	assert.True(suite.T(), allowNull)
@@ -102,7 +102,7 @@ func (suite *RuleTestSuite) TestLiteralNullMatchesOnlyNull() {
 func (suite *RuleTestSuite) TestLiteralNonNullDoesNotMatchNullInput() {
 	rule, err := compileLiteral("https://example.com")
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 	allow, _ := m.Match(ParseResult{Raw: "null", IsNull: true})
 	assert.False(suite.T(), allow)
 }
@@ -110,13 +110,13 @@ func (suite *RuleTestSuite) TestLiteralNonNullDoesNotMatchNullInput() {
 func (suite *RuleTestSuite) TestLiteralKindIsLiteral() {
 	rule, err := compileLiteral("https://example.com")
 	suite.Require().NoError(err)
-	assert.Equal(suite.T(), RuleLiteral, rule.Kind())
+	assert.Equal(suite.T(), kindLiteral, rule.kind())
 }
 
 func (suite *RuleTestSuite) TestRegexMatchesAgainstRawHeader() {
 	rule, err := compileRegex(`^https://[a-z]+\.example\.com$`)
 	suite.Require().NoError(err)
-	m := NewMatcher([]OriginRule{rule})
+	m := newMatcher([]originRule{rule})
 
 	lower, err := ParseOrigin("https://tenant.example.com")
 	suite.Require().NoError(err)
@@ -138,5 +138,5 @@ func (suite *RuleTestSuite) TestRegexMatchesAgainstRawHeader() {
 func (suite *RuleTestSuite) TestRegexKindIsRegex() {
 	rule, err := compileRegex(`.+`)
 	suite.Require().NoError(err)
-	assert.Equal(suite.T(), RuleRegex, rule.Kind())
+	assert.Equal(suite.T(), kindRegex, rule.kind())
 }

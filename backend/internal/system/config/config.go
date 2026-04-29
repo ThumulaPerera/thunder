@@ -294,12 +294,12 @@ type CORSConfig struct {
 
 // Validate checks every allowed-origins entry so configuration errors —
 // invalid literals, malformed regexes, the unsupported "*" wildcard — are
-// surfaced at server start rather than on the first cross-origin request,
-// and installs the resulting matcher as the cors package's process-wide
-// singleton. The middleware reads that singleton via cors.GetMatcher; this
-// config layer only owns YAML validation.
+// surfaced at server start rather than on the first cross-origin request.
+// Installation of the runtime matcher is the server bootstrap's
+// responsibility (see cors.InitializeMatcher); this config layer only owns
+// YAML validation.
 func (c *CORSConfig) Validate() error {
-	return cors.InitializeMatcher(c.AllowedOrigins)
+	return cors.Validate(c.AllowedOrigins)
 }
 
 // DeclarativeResources holds the configuration details for the declarative resources.
