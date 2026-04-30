@@ -147,7 +147,7 @@ func (s *smsOTPAuthExecutor) executeVerify(ctx *core.NodeContext,
 
 	logger.Debug("SMS OTP verify completed",
 		log.String("status", string(execResp.Status)),
-		log.Bool("isAuthenticated", s.authnProvider.IsAuthenticated(execResp.AuthUser)))
+		log.Bool("isAuthenticated", execResp.AuthUser.IsAuthenticated()))
 
 	return execResp, nil
 }
@@ -165,7 +165,7 @@ func (s *smsOTPAuthExecutor) InitiateOTP(ctx *core.NodeContext,
 	}
 
 	var userID *string
-	if s.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if ctx.AuthUser.IsAuthenticated() {
 		userIDVal := s.GetUserIDFromContext(ctx)
 		if userIDVal == "" {
 			return errors.New("user ID is empty in the context")
@@ -307,7 +307,7 @@ func (s *smsOTPAuthExecutor) getUserMobileFromContext(ctx *core.NodeContext, pho
 		mobileNumber = ctx.UserInputs[phoneAttr]
 	}
 
-	if mobileNumber == "" && s.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if mobileNumber == "" && ctx.AuthUser.IsAuthenticated() {
 		_, attrs, err := s.authnProvider.GetUserAttributes(ctx.Context, nil, nil, ctx.AuthUser)
 		if err != nil {
 			return "", fmt.Errorf("failed to get user attributes: %s", err.ErrorDescription.DefaultValue)
@@ -610,7 +610,7 @@ func (s *smsOTPAuthExecutor) authenticateUser(ctx *core.NodeContext,
 		},
 	}
 
-	newAuthUser, authnResult, svcErr := s.authnProvider.AuthenticateUser(
+	authUser, svcErr := s.authnProvider.AuthenticateUser(
 		ctx.Context, nil, creds, nil, nil, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Code == authnprovidermgr.ErrorAuthenticationFailed.Code {
@@ -626,14 +626,14 @@ func (s *smsOTPAuthExecutor) authenticateUser(ctx *core.NodeContext,
 
 	// Handle registration flows.
 	if ctx.FlowType == common.FlowTypeRegistration {
-		if authnResult.IsExistingUser {
+		if authUser.IsLocalUserExists() {
 			execResp.Status = common.ExecFailure
 			execResp.FailureReason = "User already exists with the provided mobile number."
 			return nil
 		}
 	}
 
-	execResp.AuthUser = newAuthUser
+	execResp.AuthUser = authUser
 	execResp.RuntimeData["otpSessionToken"] = ""
 
 	logger.Debug("OTP validated successfully", log.MaskedString(log.LoggerKeyUserID, userID))

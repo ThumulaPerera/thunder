@@ -87,7 +87,8 @@ func createMockExecutorWithInputs(t *testing.T) *coremock.ExecutorInterfaceMock 
 
 func buildConsentNodeContext() *core.NodeContext {
 	var authUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"user-123"}`), &authUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 
 	return &core.NodeContext{
 		Context:        context.Background(),
@@ -108,7 +109,6 @@ func buildConsentNodeContext() *core.NodeContext {
 // setupAuthnProviderForCheckConsent registers expectations for buildAugmentedAvailableAttributes
 // which is called on every checkConsent (HasRequiredInputs=false) path.
 func (suite *ConsentExecutorTestSuite) setupAuthnProviderForCheckConsent() {
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return((*authnprovidercm.AttributesResponse)(nil), nil).Once()
 }
@@ -985,7 +985,8 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_OUClaimsInjected() {
 	ctx := buildConsentNodeContext()
 	// Set OUID in AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","ouId":"ou-999"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","ouId":"ou-999",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	suite.executor.ExecutorInterface.(*coremock.ExecutorInterfaceMock).
 		On("ValidatePrerequisites", ctx, mock.AnythingOfType("*common.ExecutorResponse")).Return(true)
@@ -1017,7 +1018,8 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_UserTypeInjected() {
 	ctx := buildConsentNodeContext()
 	// Set UserType in AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"customer"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"customer",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	suite.executor.ExecutorInterface.(*coremock.ExecutorInterfaceMock).
 		On("ValidatePrerequisites", ctx, mock.AnythingOfType("*common.ExecutorResponse")).Return(true)
@@ -1044,7 +1046,8 @@ func (suite *ConsentExecutorTestSuite) TestExecute_NoInputs_AugmentedAttributes_
 	// Even with a nil base from GetUserAvailableAttributes, special claim keys from the authenticated
 	// user context must be injected and forwarded to ResolveConsent.
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	suite.executor.ExecutorInterface.(*coremock.ExecutorInterfaceMock).
 		On("ValidatePrerequisites", ctx, mock.AnythingOfType("*common.ExecutorResponse")).Return(true)
@@ -1186,9 +1189,9 @@ func (suite *ConsentExecutorTestSuite) TestCollectConsentedAttributes_AllApprove
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_NilBase() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal","ouId":"ou-123"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return((*authnprovidercm.AttributesResponse)(nil), nil).Once()
 
@@ -1208,13 +1211,13 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Nil
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_EmptyAttributes() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal","ouId":"ou-123"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	emptyBase := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{},
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(emptyBase, nil).Once()
 
@@ -1232,8 +1235,9 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Emp
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_NoSpecialContext() {
 	ctx := buildConsentNodeContext()
-	// All special fields empty — reset AuthUser to zero value
-	ctx.AuthUser = authnprovidermgr.AuthUser{}
+	// All special fields empty — only authHistory to make IsAuthenticated() return true
+	_ = json.Unmarshal([]byte(
+		`{"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	base := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -1242,7 +1246,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_NoS
 		},
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(base, nil).Once()
 
@@ -1268,14 +1271,16 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 
 	cases := []testCase{
 		{
-			name:             "UserType only",
-			authUserJSON:     `{"userType":"internal"}`,
+			name: "UserType only",
+			authUserJSON: `{"userType":"internal",` +
+				`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`,
 			expectedContains: []string{"userType", "email"},
 			expectedAbsent:   []string{"ouId", "ouName", "ouHandle", "groups"},
 		},
 		{
-			name:             "OUID only",
-			authUserJSON:     `{"ouId":"ou-456"}`,
+			name: "OUID only",
+			authUserJSON: `{"ouId":"ou-456",` +
+				`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`,
 			expectedContains: []string{"ouId", "ouName", "ouHandle", "email"},
 			expectedAbsent:   []string{"userType", "groups"},
 		},
@@ -1292,7 +1297,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 				},
 			}
 
-			suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 			suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 				Return(base, nil).Once()
 
@@ -1311,7 +1315,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_WithGroups() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-abc"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-abc",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	base := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -1319,7 +1324,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 		},
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(base, nil).Once()
 
@@ -1334,7 +1338,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Wit
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_AllSpecialFields() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-xyz","userType":"internal","ouId":"ou-789"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-xyz","userType":"internal","ouId":"ou-789",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	base := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -1342,7 +1347,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_All
 		},
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(base, nil).Once()
 
@@ -1361,7 +1365,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_All
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_DoesNotMutateOriginal() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-xyz","userType":"internal","ouId":"ou-789"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-xyz","userType":"internal","ouId":"ou-789",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	baseAttrs := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -1371,7 +1376,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Doe
 	}
 	originalLen := len(baseAttrs.Attributes)
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(baseAttrs, nil).Once()
 
@@ -1386,7 +1390,8 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Doe
 
 func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_PreservesVerifications() {
 	ctx := buildConsentNodeContext()
-	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal"}`), &ctx.AuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"user-123","userType":"internal",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &ctx.AuthUser)
 
 	baseAttrs := &authnprovidercm.AttributesResponse{
 		Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -1397,7 +1402,6 @@ func (suite *ConsentExecutorTestSuite) TestBuildAugmentedAvailableAttributes_Pre
 		},
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAvailableAttributes", mock.Anything, mock.Anything).
 		Return(baseAttrs, nil).Once()
 

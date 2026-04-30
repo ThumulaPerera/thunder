@@ -154,28 +154,22 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_AuthenticationFlow(
 		RuntimeData: make(map[string]string),
 	}
 
-	authenticateResult := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     "ou-123",
-	}
-
 	var mockAuthUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123"}`), &mockAuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, map[string]interface{}{
 		userAttributeUsername: "testuser",
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
-	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, authenticateResult, nil)
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), suite.mockAuthnProvider.IsAuthenticated(resp.AuthUser))
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
@@ -198,28 +192,22 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithEmailAttribute(
 	suite.executor.ExecutorInterface = createMockExecutorWithCustomInputs(
 		suite.T(), ExecutorNameBasicAuth, originalInputs)
 
-	authenticatedUser := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     "ou-123",
-	}
-
 	var mockAuthUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123"}`), &mockAuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, map[string]interface{}{
 		"email": "test@example.com",
 	}, map[string]interface{}{
 		"password": "password123",
-	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, authenticatedUser, nil)
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), suite.mockAuthnProvider.IsAuthenticated(resp.AuthUser))
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
@@ -237,15 +225,16 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_RegistrationFlow() 
 	suite.mockEntityProvider.On("IdentifyEntity", map[string]interface{}{
 		userAttributeUsername: "newuser",
 	}).Return(nil, entityprovider.NewEntityProviderError(entityprovider.ErrorCodeEntityNotFound, "", ""))
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(false)
-
+	suite.mockAuthnProvider.On("AuthenticateForRegistration", mock.Anything, "credentials",
+		authnprovidermgr.AuthUser{}).Return(authnprovidermgr.AuthUser{}, (*serviceerror.ServiceError)(nil))
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.False(suite.T(), suite.mockAuthnProvider.IsAuthenticated(resp.AuthUser))
+	assert.False(suite.T(), resp.AuthUser.IsAuthenticated())
 	suite.mockEntityProvider.AssertExpectations(suite.T())
+	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
 func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttributes() {
@@ -269,29 +258,23 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_Success_WithMultipleAttribu
 	suite.executor.ExecutorInterface = createMockExecutorWithCustomInputs(
 		suite.T(), ExecutorNameBasicAuth, customInputs)
 
-	authenticatedUser := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     "ou-123",
-	}
-
 	var mockAuthUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123"}`), &mockAuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, map[string]interface{}{
 		"email": "test@example.com",
 		"phone": "+1234567890",
 	}, map[string]interface{}{
 		"password": "password123",
-	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, authenticatedUser, nil)
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), suite.mockAuthnProvider.IsAuthenticated(resp.AuthUser))
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
@@ -327,7 +310,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_AuthenticationFailed() {
 	}, map[string]interface{}{
 		userAttributePassword: "wrongpassword",
 	}, mock.Anything, mock.Anything, mock.Anything).Return(authnprovidermgr.AuthUser{},
-		(*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+		&serviceerror.ServiceError{
 			Type: serviceerror.ClientErrorType,
 			ErrorDescription: i18ncore.I18nMessage{
 				Key: "error.test.invalid_credentials", DefaultValue: "Invalid credentials",
@@ -361,7 +344,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_UserNotFound_Authentication
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
 	}, mock.Anything, mock.Anything, mock.Anything).Return(authnprovidermgr.AuthUser{},
-		(*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+		&serviceerror.ServiceError{
 			Type:             serviceerror.ClientErrorType,
 			ErrorDescription: i18ncore.I18nMessage{Key: "error.test.user_not_found", DefaultValue: "User not found"},
 		})
@@ -419,7 +402,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_ServiceError() {
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
 	}, mock.Anything, mock.Anything, mock.Anything).Return(authnprovidermgr.AuthUser{},
-		(*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+		&serviceerror.ServiceError{
 			Type:  serviceerror.ServerErrorType,
 			Error: i18ncore.I18nMessage{Key: "error.test.database_error", DefaultValue: "database error"},
 		})
@@ -445,7 +428,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_AuthenticationServiceError(
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+		Return(authnprovidermgr.AuthUser{}, &serviceerror.ServiceError{
 			Type:  serviceerror.ServerErrorType,
 			Error: i18ncore.I18nMessage{Key: "error.test.internal_server_error", DefaultValue: "internal server error"},
 		})
@@ -473,26 +456,20 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_SuccessfulAuth
 		RuntimeData: make(map[string]string),
 	}
 
-	authenticatedUser := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     "ou-123",
-	}
-
 	var mockAuthUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123"}`), &mockAuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`","userType":"person","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, map[string]interface{}{
 		userAttributeUsername: "testuser",
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
-	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, authenticatedUser, nil)
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+	}, mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 
 	err := suite.executor.authenticateUser(ctx, execResp)
 
 	assert.NoError(suite.T(), err)
-	assert.True(suite.T(), suite.mockAuthnProvider.IsAuthenticated(execResp.AuthUser))
+	assert.True(suite.T(), execResp.AuthUser.IsAuthenticated())
 	suite.mockAuthnProvider.AssertExpectations(suite.T())
 }
 
@@ -514,16 +491,16 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_RegistrationFl
 	suite.mockEntityProvider.On("IdentifyEntity", map[string]interface{}{
 		userAttributeUsername: "newuser",
 	}).Return(nil, entityprovider.NewEntityProviderError(entityprovider.ErrorCodeEntityNotFound, "", ""))
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(false)
-
+	suite.mockAuthnProvider.On("AuthenticateForRegistration", mock.Anything, "credentials",
+		authnprovidermgr.AuthUser{}).Return(authnprovidermgr.AuthUser{}, (*serviceerror.ServiceError)(nil))
 	err := suite.executor.authenticateUser(ctx, execResp)
 
 	assert.NoError(suite.T(), err)
-	assert.False(suite.T(), suite.mockAuthnProvider.IsAuthenticated(execResp.AuthUser))
+	assert.False(suite.T(), execResp.AuthUser.IsAuthenticated())
 	assert.Equal(suite.T(), common.ExecComplete, execResp.Status)
 	// Verify IdentifyUser was called for registration flow
 	suite.mockEntityProvider.AssertExpectations(suite.T())
-	// Verify Authenticate was NOT called for registration flow
+	// Verify AuthenticateUser was NOT called for registration flow
 	suite.mockAuthnProvider.AssertNotCalled(suite.T(), "AuthenticateUser")
 }
 
@@ -572,7 +549,7 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_RetryableAuthenticationErro
 			}, map[string]interface{}{
 				userAttributePassword: tt.password,
 			}, mock.Anything, mock.Anything, mock.Anything).Return(
-				authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+				authnprovidermgr.AuthUser{}, &serviceerror.ServiceError{
 					Type: serviceerror.ClientErrorType,
 					Code: tt.errorCode,
 				})
@@ -609,7 +586,7 @@ func (suite *BasicAuthExecutorTestSuite) TestGetAuthenticatedUser_ClientError_Re
 	}, map[string]interface{}{
 		userAttributePassword: "password123",
 	}, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), &serviceerror.ServiceError{
+		authnprovidermgr.AuthUser{}, &serviceerror.ServiceError{
 			Type:             serviceerror.ClientErrorType,
 			Code:             authnprovidermgr.ErrorAuthenticationFailed.Code,
 			ErrorDescription: i18ncore.I18nMessage{Key: "error.test.wrong_password", DefaultValue: "wrong password"},
@@ -829,25 +806,19 @@ func (suite *BasicAuthExecutorTestSuite) TestExecute_PreResolvedUser_WithPasswor
 		Application: appmodel.Application{},
 	}
 
-	authenticateResult := &authnprovidermgr.AuthnBasicResult{
-		UserID:   "pre-resolved-user-123",
-		UserType: "person",
-		OUID:     "ou-123",
-	}
-
 	var mockAuthUser authnprovidermgr.AuthUser
-	_ = json.Unmarshal([]byte(`{"userId":"pre-resolved-user-123","userType":"person","ouId":"ou-123"}`), &mockAuthUser)
+	_ = json.Unmarshal([]byte(`{"userId":"pre-resolved-user-123","userType":"person","ouId":"ou-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything,
 		map[string]interface{}{userAttributeUserID: "pre-resolved-user-123"},
 		map[string]interface{}{userAttributePassword: "password123"},
-		mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, authenticateResult, nil)
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+		mock.Anything, mock.Anything, mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), suite.mockAuthnProvider.IsAuthenticated(resp.AuthUser))
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
 }

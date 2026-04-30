@@ -125,7 +125,7 @@ func (b *basicAuthExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResp
 	if execResp.Status == common.ExecFailure || execResp.Status == common.ExecUserInputRequired {
 		return execResp, nil
 	}
-	if !b.authnProvider.IsAuthenticated(execResp.AuthUser) && ctx.FlowType != common.FlowTypeRegistration {
+	if !execResp.AuthUser.IsAuthenticated() && ctx.FlowType != common.FlowTypeRegistration {
 		execResp.Status = common.ExecUserInputRequired
 		if hasPreResolvedUser {
 			execResp.Inputs = b.getCredentialInputs(ctx)
@@ -140,7 +140,7 @@ func (b *basicAuthExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResp
 
 	logger.Debug("Basic authentication executor execution completed",
 		log.String("status", string(execResp.Status)),
-		log.Bool("isAuthenticated", b.authnProvider.IsAuthenticated(execResp.AuthUser)))
+		log.Bool("isAuthenticated", execResp.AuthUser.IsAuthenticated()))
 
 	return execResp, nil
 }
@@ -188,6 +188,15 @@ func (b *basicAuthExecutor) authenticateUser(ctx *core.NodeContext, execResp *co
 		if execResp.Status == common.ExecFailure {
 			if execResp.FailureReason == failureReasonUserNotFound {
 				logger.Debug("User not found for the provided attributes. Proceeding with registration flow.")
+				authUser, svcErr := b.authnProvider.AuthenticateForRegistration(ctx.Context, "credentials",
+					ctx.AuthUser)
+				if svcErr != nil {
+					logger.Error("Failed to authenticate user for registration",
+						log.String("errorCode", svcErr.Code),
+						log.String("errorDescription", svcErr.ErrorDescription.DefaultValue))
+					return errors.New("failed to authenticate user for registration")
+				}
+				execResp.AuthUser = authUser
 				execResp.Status = common.ExecComplete
 				return nil
 			}
@@ -201,7 +210,7 @@ func (b *basicAuthExecutor) authenticateUser(ctx *core.NodeContext, execResp *co
 
 	// For authentication flows, call Authenticate directly.
 	metadata := b.buildAuthnMetadata(ctx)
-	newAuthUser, _, svcErr := b.authnProvider.AuthenticateUser(ctx.Context, userIdentifiers,
+	authUser, svcErr := b.authnProvider.AuthenticateUser(ctx.Context, userIdentifiers,
 		userCredentials, nil, metadata, ctx.AuthUser)
 	if svcErr != nil {
 		if svcErr.Type == serviceerror.ClientErrorType {
@@ -224,7 +233,7 @@ func (b *basicAuthExecutor) authenticateUser(ctx *core.NodeContext, execResp *co
 			log.String("errorCode", svcErr.Code), log.String("errorDescription", svcErr.ErrorDescription.DefaultValue))
 		return errors.New("failed to authenticate user")
 	}
-	execResp.AuthUser = newAuthUser
+	execResp.AuthUser = authUser
 	return nil
 }
 

@@ -81,13 +81,13 @@ func (a *authorizationExecutor) Execute(ctx *core.NodeContext) (*common.Executor
 		RuntimeData: make(map[string]string),
 	}
 
-	if !a.authnProvider.IsAuthenticated(ctx.AuthUser) && ctx.FlowType == common.FlowTypeRegistration {
+	if !ctx.AuthUser.IsAuthenticated() && ctx.FlowType == common.FlowTypeRegistration {
 		logger.Debug("Sending executor complete response for unauthenticated user in registration flow")
 		execResp.Status = common.ExecComplete
 		return execResp, nil
 	}
 
-	if !a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if !ctx.AuthUser.IsAuthenticated() {
 		execResp.Status = common.ExecFailure
 		execResp.FailureReason = failureReasonUserNotAuthenticated
 		return execResp, nil
@@ -158,7 +158,7 @@ func setAuthorizedPermissions(execResp *common.ExecutorResponse, authorizedPermi
 // If neither provides group information, it fetches them using the user service.
 func (a *authorizationExecutor) extractGroupIDs(ctx *core.NodeContext) ([]string, error) {
 	// Try to get groups from authenticated user attributes
-	if a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if ctx.AuthUser.IsAuthenticated() {
 		_, attrsResp, svcErr := a.authnProvider.GetUserAttributes(ctx.Context, nil, nil, ctx.AuthUser)
 		if svcErr == nil && attrsResp != nil && attrsResp.Attributes != nil {
 			if groupsAttrResp, ok := attrsResp.Attributes[userAttributeGroups]; ok && groupsAttrResp != nil {

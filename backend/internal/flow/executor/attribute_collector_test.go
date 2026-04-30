@@ -125,8 +125,6 @@ func (suite *AttributeCollectorTestSuite) TestExecute_UserNotAuthenticated() {
 		FlowType:    common.FlowTypeAuthentication,
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Once()
-
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
@@ -136,13 +134,15 @@ func (suite *AttributeCollectorTestSuite) TestExecute_UserNotAuthenticated() {
 }
 
 func (suite *AttributeCollectorTestSuite) TestExecute_PrerequisitesNotMet() {
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"user-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{},
+		AuthUser:    authUser,
 	}
-
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -162,16 +162,18 @@ func (suite *AttributeCollectorTestSuite) TestExecute_UserInputRequired() {
 
 	suite.mockEntityProvider.On("GetEntity", testUserID).Return(existingUser, nil)
 
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{userAttributeUserID: testUserID},
 		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
 		UserInputs:  map[string]string{},
+		AuthUser:    authUser,
 	}
 
-	// IsAuthenticated called in Execute and again in HasRequiredInputs
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(2)
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
 
@@ -185,15 +187,17 @@ func (suite *AttributeCollectorTestSuite) TestExecute_UserInputRequired() {
 }
 
 func (suite *AttributeCollectorTestSuite) TestExecute_Success() {
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{userAttributeUserID: testUserID},
 		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
 		UserInputs:  map[string]string{"email": "test@example.com"},
+		AuthUser:    authUser,
 	}
-
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 
 	existingUser := &entityprovider.Entity{
 		ID:         testUserID,
@@ -216,15 +220,17 @@ func (suite *AttributeCollectorTestSuite) TestExecute_Success() {
 }
 
 func (suite *AttributeCollectorTestSuite) TestExecute_UpdateUserFails() {
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{userAttributeUserID: testUserID},
 		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
 		UserInputs:  map[string]string{"email": "test@example.com"},
+		AuthUser:    authUser,
 	}
-
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 
 	existingUser := &entityprovider.Entity{
 		ID:         testUserID,
@@ -247,11 +253,15 @@ func (suite *AttributeCollectorTestSuite) TestExecute_UpdateUserFails() {
 }
 
 func (suite *AttributeCollectorTestSuite) TestHasRequiredInputs_AttributesInAuthenticatedUser() {
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"user-123",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
 		RuntimeData: map[string]string{},
+		AuthUser:    authUser,
 	}
 
 	execResp := &common.ExecutorResponse{
@@ -259,7 +269,6 @@ func (suite *AttributeCollectorTestSuite) TestHasRequiredInputs_AttributesInAuth
 		RuntimeData: make(map[string]string),
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
 			Attributes: map[string]*authnprovidercm.AttributeResponse{
@@ -278,14 +287,17 @@ func (suite *AttributeCollectorTestSuite) TestHasRequiredInputs_AttributesInUser
 	attrs := map[string]interface{}{"email": "profile@example.com"}
 	attrsJSON, _ := json.Marshal(attrs)
 
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"`+testUserID+`",`+
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeAuthentication,
 		RuntimeData: map[string]string{userAttributeUserID: testUserID},
 		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
+		AuthUser:    authUser,
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
 

@@ -168,16 +168,16 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentials() {
 			skipAssertion:   true,
 			expectAssertion: false,
 			setupMocks: func() {
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, identifiers,
 					authnCredentials, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-						UserID:   testUserID,
-						UserType: testUserType,
-						OUID:     testOrgUnit,
-					}, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything,
 					mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil).Once()
+					Return(mockAuthUser, &authnprovidercm.AttributesResponse{}, nil).Once()
 			},
 			validateAssertion: func(result *common.AuthenticationResponse) {
 				suite.Empty(result.Assertion)
@@ -189,16 +189,16 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentials() {
 			expectAssertion: true,
 			validateClaims:  true,
 			setupMocks: func() {
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, identifiers,
 					authnCredentials, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-						UserID:   testUserID,
-						UserType: testUserType,
-						OUID:     testOrgUnit,
-					}, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything,
 					mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil).Once()
+					Return(mockAuthUser, &authnprovidercm.AttributesResponse{}, nil).Once()
 				suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 					&assert.AssertionResult{
 						Context: &assert.AssuranceContext{
@@ -224,16 +224,16 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentials() {
 			expectAssertion:   true,
 			validateClaims:    true,
 			setupMocks: func() {
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, identifiers,
 					authnCredentials, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-						UserID:   testUserID,
-						UserType: testUserType,
-						OUID:     testOrgUnit,
-					}, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything,
 					mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil).Once()
+					Return(mockAuthUser, &authnprovidercm.AttributesResponse{}, nil).Once()
 				suite.mockJWTService.On("VerifyJWT", mock.Anything, "", mock.Anything).Return(nil).Once()
 				suite.mockAssertGenerator.On("UpdateAssertion", mock.Anything, mock.Anything).Return(
 					&assert.AssertionResult{
@@ -283,8 +283,7 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentialsServ
 
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, identifiers,
 		authnCredentials, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil),
-		&authnprovidermgr.ErrorAuthenticationFailed)
+		authnprovidermgr.AuthUser{}, &authnprovidermgr.ErrorAuthenticationFailed)
 
 	result, err := suite.service.AuthenticateWithCredentials(context.Background(), identifiers,
 		authnCredentials, false, "")
@@ -302,15 +301,15 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentialsJWTG
 		"password": "testpass",
 	}
 
+	var mockAuthUser authnprovidermgr.AuthUser
+	mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, identifiers, authnCredentials, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:   testUserID,
-			UserType: testUserType,
-			OUID:     testOrgUnit,
-		}, nil)
+		mockAuthUser, (*serviceerror.ServiceError)(nil))
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil)
+		Return(mockAuthUser, &authnprovidercm.AttributesResponse{}, nil)
 	suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 		&assert.AssertionResult{
 			Context: &assert.AssuranceContext{
@@ -350,15 +349,15 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentialsSubj
 	// Create assertion with different subject
 	existingAssertion := suite.createTestAssertion("different_user_id")
 
+	var mockAuthUser authnprovidermgr.AuthUser
+	mockJSON1 := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(mockJSON1), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, identifiers, authnCredentials, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:   testUserID,
-			UserType: testUserType,
-			OUID:     testOrgUnit,
-		}, nil)
+		mockAuthUser, (*serviceerror.ServiceError)(nil))
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil)
+		Return(mockAuthUser, &authnprovidercm.AttributesResponse{}, nil)
 	suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil)
 
 	result, err := suite.service.AuthenticateWithCredentials(context.Background(), identifiers,
@@ -377,15 +376,15 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentialsInva
 		"password": "testpass",
 	}
 
+	var mockAuthUser authnprovidermgr.AuthUser
+	mockJSON2 := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(mockJSON2), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, identifiers, authnCredentials, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:   testUserID,
-			UserType: testUserType,
-			OUID:     testOrgUnit,
-		}, nil)
+		mockAuthUser, (*serviceerror.ServiceError)(nil))
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil)
+		mockAuthUser, &authnprovidercm.AttributesResponse{}, nil)
 	suite.mockJWTService.On("VerifyJWT", invalidAssertion, "", mock.Anything).Return(&serviceerror.ServiceError{
 		Type:  serviceerror.ServerErrorType,
 		Code:  "INVALID_JWT",
@@ -414,15 +413,15 @@ func (suite *AuthenticationServiceTestSuite) TestAuthenticateWithCredentialsExis
 	// Create assertion without assurance claim
 	existingAssertion := suite.createTestAssertionWithoutAssurance(testUserID)
 
+	var mockAuthUser authnprovidermgr.AuthUser
+	mockJSON3 := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(mockJSON3), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, identifiers, authnCredentials, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:   testUserID,
-			UserType: testUserType,
-			OUID:     testOrgUnit,
-		}, nil)
+		mockAuthUser, (*serviceerror.ServiceError)(nil))
 	suite.mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
-		authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{}, nil)
+		mockAuthUser, &authnprovidercm.AttributesResponse{}, nil)
 	suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil)
 
 	result, err := suite.service.AuthenticateWithCredentials(context.Background(), identifiers,
@@ -470,11 +469,6 @@ func (suite *AuthenticationServiceTestSuite) TestSendOTPServiceError() {
 func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 	sessionToken := testSessionTkn
 	otpCode := "123456"
-	testAuthnResult := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     testOrgUnit,
-	}
 
 	testCases := []struct {
 		name              string
@@ -490,9 +484,13 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			existingAssertion: "",
 			expectAssertion:   false,
 			setupMocks: func() {
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser",
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 			},
 			validateAssertion: func(result *common.AuthenticationResponse) {
 				suite.Empty(result.Assertion)
@@ -504,9 +502,13 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			existingAssertion: "",
 			expectAssertion:   true,
 			setupMocks: func() {
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser",
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 					&assert.AssertionResult{
 						Context: &assert.AssuranceContext{
@@ -532,9 +534,13 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTP() {
 			expectAssertion:   true,
 			setupMocks: func() {
 				existingAssertion := suite.createTestAssertion(testUserID)
+				var mockAuthUser authnprovidermgr.AuthUser
+				mockJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+				_ = json.Unmarshal([]byte(mockJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser",
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()
 				suite.mockAssertGenerator.On("UpdateAssertion", mock.Anything, mock.Anything).Return(
 					&assert.AssertionResult{
@@ -578,8 +584,7 @@ func (suite *AuthenticationServiceTestSuite) TestVerifyOTPServiceError() {
 
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil),
-			&authnprovidermgr.ErrorAuthenticationFailed)
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.ErrorAuthenticationFailed)
 
 	result, err := suite.service.VerifyOTP(context.Background(), sessionToken, false, "", otpCode)
 
@@ -770,17 +775,17 @@ func (suite *AuthenticationServiceTestSuite) TestStartIDPAuthenticationJWTGenera
 func (suite *AuthenticationServiceTestSuite) mockFederatedAuthnSuccess(idpType idp.IDPType) string {
 	sessionToken := suite.createSessionToken(idpType)
 	suite.mockJWTService.On("VerifyJWT", sessionToken, "auth-svc", mock.Anything).Return(nil)
+	var mockAuthUser authnprovidermgr.AuthUser
+	fedJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"OIDC","isVerified":true,"localUserState":"exists",` +
+		`"federatedAuthResult":{"sub":"EXT_SUB","attributes":{}}}]}`
+	_ = json.Unmarshal([]byte(fedJSON), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything,
 		mock.MatchedBy(func(creds map[string]interface{}) bool {
 			_, ok := creds["federated"]
 			return ok
 		}), mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:         testUserID,
-			UserType:       "person",
-			OUID:           testOrgUnit,
-			IsExistingUser: true,
-		}, nil).Once()
+		Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 	return sessionToken
 }
 
@@ -836,17 +841,17 @@ func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationWithAsse
 			setupMocks: func() {
 				sessionToken := suite.createSessionToken(idp.IDPTypeOAuth)
 				suite.mockJWTService.On("VerifyJWT", sessionToken, "auth-svc", mock.Anything).Return(nil).Once()
+				var mockAuthUser authnprovidermgr.AuthUser
+				fedJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"OIDC","isVerified":true,"localUserState":"exists",` +
+					`"federatedAuthResult":{"sub":"EXT_SUB","attributes":{}}}]}`
+				_ = json.Unmarshal([]byte(fedJSON), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything,
 					mock.MatchedBy(func(creds map[string]interface{}) bool {
 						_, ok := creds["federated"]
 						return ok
 					}), mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-						UserID:         testUserID,
-						UserType:       "person",
-						OUID:           testOrgUnit,
-						IsExistingUser: true,
-					}, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 					&assert.AssertionResult{
 						Context: &assert.AssuranceContext{
@@ -871,17 +876,17 @@ func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationWithAsse
 				existingAssertion := suite.createTestAssertion(testUserID)
 				suite.mockJWTService.On("VerifyJWT", sessionToken, "auth-svc", mock.Anything).Return(nil).Once()
 				suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()
+				var mockAuthUser authnprovidermgr.AuthUser
+				fedJSON2 := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+					`"authHistory":[{"authType":"OIDC","isVerified":true,"localUserState":"exists",` +
+					`"federatedAuthResult":{"sub":"EXT_SUB","attributes":{}}}]}`
+				_ = json.Unmarshal([]byte(fedJSON2), &mockAuthUser)
 				suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything,
 					mock.MatchedBy(func(creds map[string]interface{}) bool {
 						_, ok := creds["federated"]
 						return ok
 					}), mock.Anything, mock.Anything, mock.Anything).
-					Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-						UserID:         testUserID,
-						UserType:       "person",
-						OUID:           testOrgUnit,
-						IsExistingUser: true,
-					}, nil).Once()
+					Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 				suite.mockAssertGenerator.On("UpdateAssertion", mock.Anything, mock.Anything).Return(
 					&assert.AssertionResult{
 						Context: &assert.AssuranceContext{
@@ -974,14 +979,16 @@ func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationTypeMism
 func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationUserNotFound() {
 	sessionToken := suite.createSessionToken(idp.IDPTypeOAuth)
 	suite.mockJWTService.On("VerifyJWT", sessionToken, "auth-svc", mock.Anything).Return(nil)
+	var mockAuthUser authnprovidermgr.AuthUser
+	notExistsJSON := `{"authHistory":[{"authType":"OIDC","isVerified":false,"localUserState":"not_exists",` +
+		`"federatedAuthResult":{"sub":"EXT_SUB","attributes":{}}}]}`
+	_ = json.Unmarshal([]byte(notExistsJSON), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything,
 		mock.MatchedBy(func(creds map[string]interface{}) bool {
 			_, ok := creds["federated"]
 			return ok
 		}), mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			IsExistingUser: false,
-		}, nil).Once()
+		Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 
 	result, err := suite.service.FinishIDPAuthentication(
 		context.Background(), idp.IDPTypeOAuth, sessionToken, false, "",
@@ -1000,7 +1007,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationProvider
 			_, ok := creds["federated"]
 			return ok
 		}), mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, nil, &authnprovidermgr.ErrorAuthenticationFailed).Once()
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.ErrorAuthenticationFailed).Once()
 
 	result, err := suite.service.FinishIDPAuthentication(
 		context.Background(), idp.IDPTypeOAuth, sessionToken, false, "",
@@ -1120,7 +1127,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationProvider
 			_, ok := creds["federated"]
 			return ok
 		}), mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, nil, &serviceerror.InternalServerError).Once()
+		Return(authnprovidermgr.AuthUser{}, &serviceerror.InternalServerError).Once()
 
 	result, err := suite.service.FinishIDPAuthentication(context.Background(), idp.IDPTypeOIDC, sessionToken, true, "",
 		testAuthCode)
@@ -1186,17 +1193,17 @@ func (suite *AuthenticationServiceTestSuite) TestValidateAndAppendAuthAssertionE
 func (suite *AuthenticationServiceTestSuite) TestFinishIDPAuthenticationAssertionGenerationError() {
 	sessionToken := suite.createSessionToken(idp.IDPTypeOAuth)
 	suite.mockJWTService.On("VerifyJWT", sessionToken, "auth-svc", mock.Anything).Return(nil).Once()
+	var mockAuthUser authnprovidermgr.AuthUser
+	assertErrFedJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"OIDC","isVerified":true,"localUserState":"exists",` +
+		`"federatedAuthResult":{"sub":"EXT_SUB","attributes":{}}}]}`
+	_ = json.Unmarshal([]byte(assertErrFedJSON), &mockAuthUser)
 	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything,
 		mock.MatchedBy(func(creds map[string]interface{}) bool {
 			_, ok := creds["federated"]
 			return ok
 		}), mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			UserID:         testUserID,
-			UserType:       "person",
-			OUID:           testOrgUnit,
-			IsExistingUser: true,
-		}, nil).Once()
+		Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 
 	// Create invalid existing assertion that will fail JWT verification
 	suite.mockJWTService.On("VerifyJWT", invalidAssertion, "", mock.Anything).
@@ -1417,15 +1424,14 @@ func (suite *AuthenticationServiceTestSuite) TestExtractClaimsFromAssertionUnmar
 func (suite *AuthenticationServiceTestSuite) TestVerifyOTPJWTGenerationError() {
 	sessionToken := testSessionTkn
 	otpCode := "123456"
-	testAuthnResult := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     testOrgUnit,
-	}
+	var mockAuthUser authnprovidermgr.AuthUser
+	otpErrJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(otpErrJSON), &mockAuthUser)
 
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, testAuthnResult, nil)
+		Return(mockAuthUser, (*serviceerror.ServiceError)(nil))
 	suite.mockAssertGenerator.On("GenerateAssertion", mock.Anything).Return(
 		&assert.AssertionResult{
 			Context: &assert.AssuranceContext{
@@ -1774,15 +1780,14 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Suc
 	}
 	sessionToken := testSessionTkn
 
-	authResultFromPasskey := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     testOrgUnit,
-	}
+	var mockAuthUser authnprovidermgr.AuthUser
+	passkeyJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(passkeyJSON), &mockAuthUser)
 
 	suite.mockAuthnProvider.On(
 		"AuthenticateUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything).Return(authnprovidermgr.AuthUser{}, authResultFromPasskey, nil).Once()
+		mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 
 	// Mock assertion generation
 	mockAssertionResult := &assert.AssertionResult{
@@ -1824,15 +1829,14 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 	}
 	sessionToken := testSessionTkn
 
-	authResultFromPasskey := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     testOrgUnit,
-	}
+	var mockAuthUser authnprovidermgr.AuthUser
+	passkeyJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(passkeyJSON), &mockAuthUser)
 
 	suite.mockAuthnProvider.On(
 		"AuthenticateUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything).Return(authnprovidermgr.AuthUser{}, authResultFromPasskey, nil).Once()
+		mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 
 	result, err := suite.service.FinishPasskeyAuthentication(
 		context.Background(), testCredentialID, testCredentialType, response, sessionToken, true, "")
@@ -1853,15 +1857,14 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Wit
 	sessionToken := testSessionTkn
 	existingAssertion := suite.createTestAssertion(testUserID)
 
-	authResultFromPasskey := &authnprovidermgr.AuthnBasicResult{
-		UserID:   testUserID,
-		UserType: "person",
-		OUID:     testOrgUnit,
-	}
+	var mockAuthUser authnprovidermgr.AuthUser
+	passkeyJSON := `{"userId":"user123","userType":"person","ouId":"org_unit_123",` +
+		`"authHistory":[{"authType":"LOCAL","isVerified":true,"localUserState":"exists"}]}`
+	_ = json.Unmarshal([]byte(passkeyJSON), &mockAuthUser)
 
 	suite.mockAuthnProvider.On(
 		"AuthenticateUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything).Return(authnprovidermgr.AuthUser{}, authResultFromPasskey, nil).Once()
+		mock.Anything).Return(mockAuthUser, (*serviceerror.ServiceError)(nil)).Once()
 
 	// Mock JWT verification for existing assertion
 	suite.mockJWTService.On("VerifyJWT", existingAssertion, "", mock.Anything).Return(nil).Once()
@@ -1911,7 +1914,7 @@ func (suite *AuthenticationServiceTestSuite) TestFinishPasskeyAuthentication_Ser
 	suite.mockAuthnProvider.On(
 		"AuthenticateUser", mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, (*authnprovidermgr.AuthnBasicResult)(nil), serviceError).Once()
+		Return(authnprovidermgr.AuthUser{}, serviceError).Once()
 
 	result, err := suite.service.FinishPasskeyAuthentication(
 		context.Background(), testCredentialID, testCredentialType, response, testSessionTkn, false, "")

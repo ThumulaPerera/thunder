@@ -92,7 +92,7 @@ func Initialize(
 		flowFactory, idpService, userSchemaService, googleSvc, authnProvider))
 
 	reg.RegisterExecutor(ExecutorNameProvisioning, newProvisioningExecutor(flowFactory,
-		groupService, roleService, entityProvider, userSchemaService))
+		groupService, roleService, entityProvider, userSchemaService, authnProvider))
 	reg.RegisterExecutor(ExecutorNameOUCreation, newOUExecutor(flowFactory, ouService))
 
 	reg.RegisterExecutor(ExecutorNameAttributeCollect, newAttributeCollector(
@@ -117,7 +117,8 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameAttributeUniquenessValidator, newAttributeUniquenessValidator(
 		flowFactory, userSchemaService, entityProvider))
 	reg.RegisterExecutor(ExecutorNameSMSExecutor, newSMSExecutor(flowFactory, notifSenderSvc, templateService))
-	reg.RegisterExecutor(ExecutorNameFederatedAuthResolver, newFederatedAuthResolverExecutor(flowFactory))
+	reg.RegisterExecutor(ExecutorNameFederatedAuthResolver,
+		newFederatedAuthResolverExecutor(flowFactory, authnProvider))
 
 	return reg
 }

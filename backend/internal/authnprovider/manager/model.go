@@ -24,43 +24,39 @@ import (
 	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 )
 
-type providerKey string
+// ProviderUserState represents the local user resolution state from the authn provider.
+type ProviderUserState string
 
-const defaultProvider providerKey = "default"
-
-type providerData struct {
-	token                     string
-	attributes                *authnprovidercm.AttributesResponse
-	isAttributeValuesIncluded bool
-}
+// ProviderUserState values representing local user resolution outcomes.
+const (
+	ProviderUserStateExists    ProviderUserState = "exists"
+	ProviderUserStateNotExists ProviderUserState = "not_exists"
+	ProviderUserStateAmbiguous ProviderUserState = "ambiguous"
+)
 
 // AuthUser accumulates per-provider authentication state produced during flow execution.
 // All fields are unexported; use the manager methods to interact with this type.
 type AuthUser struct {
-	userID            string
-	userType          string
-	ouID              string
-	providersAuthData map[providerKey]providerData
+	userID      string
+	userType    string
+	ouID        string
+	authHistory []*AuthResult
 }
 
-// AuthnBasicResult is returned by AuthenticateUser and carries the identity fields
-// extracted from the provider's authentication result.
-type AuthnBasicResult struct {
-	UserID   string
-	OUID     string
-	UserType string
-
-	// Federated authentication fields. Set when the authentication flow is federated
-	// and no internal user was found (IsExistingUser = false).
-	ExternalSub     string
-	ExternalClaims  map[string]interface{}
-	IsExistingUser  bool
-	IsAmbiguousUser bool
+// AuthResult holds the outcome of a single authentication step.
+type AuthResult struct {
+	authType                          string
+	isVerified                        bool
+	token                             string
+	providerAttributes                map[string]interface{}
+	isProviderAttributeValuesIncluded bool
+	localUserState                    ProviderUserState
+	runtimeAttributes                 map[string]interface{}
 }
 
 // IsSet reports whether this AuthUser has been populated (i.e. is not the zero value).
 func (a AuthUser) IsSet() bool {
-	return a.userID != "" || a.userType != "" || a.ouID != "" || len(a.providersAuthData) > 0
+	return a.userID != "" || a.userType != "" || a.ouID != "" || len(a.authHistory) > 0
 }
 
 // GetUserID returns the user ID of the authenticated user, or an empty string if not set.
@@ -78,35 +74,110 @@ func (a AuthUser) GetUserType() string {
 	return a.userType
 }
 
-// authUserJSON is the internal proxy used for JSON serialization of AuthUser.
-type authUserJSON struct {
-	UserID            string                      `json:"userId"`
-	UserType          string                      `json:"userType"`
-	OUID              string                      `json:"ouId"`
-	ProvidersAuthData map[string]providerDataJSON `json:"providersAuthData"`
+// IsLocalUserExists returns true if all authentication steps indicate that a local user exists for
+// the authenticated identity.
+func (a AuthUser) IsLocalUserExists() bool {
+	for _, authResult := range a.authHistory {
+		if authResult.localUserState != ProviderUserStateExists {
+			return false
+		}
+	}
+	return true
 }
 
-// providerDataJSON is the internal proxy used for JSON serialization of providerData.
-type providerDataJSON struct {
-	Token                     string                              `json:"token"`
-	Attributes                *authnprovidercm.AttributesResponse `json:"attributes,omitempty"`
-	IsAttributeValuesIncluded bool                                `json:"isAttributeValuesIncluded"`
+// IsLocalUserAmbiguous returns true if any authentication step indicates that the authenticated identity
+// is ambiguously mapped to multiple local users.
+func (a AuthUser) IsLocalUserAmbiguous() bool {
+	for _, authResult := range a.authHistory {
+		if authResult.localUserState == ProviderUserStateAmbiguous {
+			return true
+		}
+	}
+	return false
+}
+
+// IsAuthenticated returns true if all authentication steps are verified and at least one step exists.
+func (a AuthUser) IsAuthenticated() bool {
+	for _, authResult := range a.authHistory {
+		if !authResult.isVerified || authResult.localUserState != ProviderUserStateExists {
+			return false
+		}
+	}
+	return len(a.authHistory) > 0
+}
+
+// GetLastFederatedSub returns the subject claim from the most recent federated auth result.
+func (a *AuthUser) GetLastFederatedSub() string {
+	sub, ok := a.GetRuntimeAttribute("sub").(string)
+	if ok {
+		return sub
+	}
+	return ""
+}
+
+// GetRuntimeAttribute returns the runtime attribute value for the given key from the last auth result.
+func (a *AuthUser) GetRuntimeAttribute(key string) interface{} {
+	runtimeAttributes := a.GetRuntimeAttributes()
+	if runtimeAttributes == nil {
+		return nil
+	}
+	return runtimeAttributes[key]
+}
+
+// GetRuntimeAttributes returns all runtime attributes from the last auth result.
+func (a *AuthUser) GetRuntimeAttributes() map[string]interface{} {
+	if len(a.authHistory) == 0 {
+		return nil
+	}
+	lastAuthResult := a.authHistory[len(a.authHistory)-1]
+	return lastAuthResult.runtimeAttributes
+}
+
+func (a *AuthUser) getLastAuthResult() *AuthResult {
+	if len(a.authHistory) == 0 {
+		return nil
+	}
+	return a.authHistory[len(a.authHistory)-1]
+}
+
+// authUserJSON is the internal proxy used for JSON serialization of AuthUser.
+type authUserJSON struct {
+	UserID      string           `json:"userId"`
+	UserType    string           `json:"userType"`
+	OUID        string           `json:"ouId"`
+	AuthHistory []authResultJSON `json:"authHistory"`
+}
+
+// authResultJSON is the internal proxy used for JSON serialization of AuthResult.
+type authResultJSON struct {
+	AuthType                          string                              `json:"authType"`
+	IsVerified                        bool                                `json:"isVerified"`
+	Token                             string                              `json:"token"`
+	Attributes                        *authnprovidercm.AttributesResponse `json:"attributes,omitempty"`
+	ProviderAttributes                map[string]interface{}              `json:"providerAttributes,omitempty"`
+	IsProviderAttributeValuesIncluded bool                                `json:"isProviderAttributeValuesIncluded"`
+	LocalUserState                    string                              `json:"localUserState"`
+	RuntimeAttributes                 map[string]interface{}              `json:"runtimeAttributes,omitempty"`
 }
 
 // MarshalJSON implements json.Marshaler.
 func (a *AuthUser) MarshalJSON() ([]byte, error) {
 	proxy := authUserJSON{
-		UserID:            a.userID,
-		UserType:          a.userType,
-		OUID:              a.ouID,
-		ProvidersAuthData: make(map[string]providerDataJSON, len(a.providersAuthData)),
+		UserID:      a.userID,
+		UserType:    a.userType,
+		OUID:        a.ouID,
+		AuthHistory: make([]authResultJSON, len(a.authHistory)),
 	}
 
-	for p, data := range a.providersAuthData {
-		proxy.ProvidersAuthData[string(p)] = providerDataJSON{
-			Token:                     data.token,
-			Attributes:                data.attributes,
-			IsAttributeValuesIncluded: data.isAttributeValuesIncluded,
+	for i, r := range a.authHistory {
+		proxy.AuthHistory[i] = authResultJSON{
+			AuthType:                          r.authType,
+			IsVerified:                        r.isVerified,
+			Token:                             r.token,
+			ProviderAttributes:                r.providerAttributes,
+			IsProviderAttributeValuesIncluded: r.isProviderAttributeValuesIncluded,
+			LocalUserState:                    string(r.localUserState),
+			RuntimeAttributes:                 r.runtimeAttributes,
 		}
 	}
 
@@ -123,14 +194,17 @@ func (a *AuthUser) UnmarshalJSON(b []byte) error {
 	a.userID = proxy.UserID
 	a.userType = proxy.UserType
 	a.ouID = proxy.OUID
+	a.authHistory = make([]*AuthResult, len(proxy.AuthHistory))
 
-	a.providersAuthData = make(map[providerKey]providerData, len(proxy.ProvidersAuthData))
-
-	for k, v := range proxy.ProvidersAuthData {
-		a.providersAuthData[providerKey(k)] = providerData{
-			token:                     v.Token,
-			attributes:                v.Attributes,
-			isAttributeValuesIncluded: v.IsAttributeValuesIncluded,
+	for i, r := range proxy.AuthHistory {
+		a.authHistory[i] = &AuthResult{
+			authType:                          r.AuthType,
+			isVerified:                        r.IsVerified,
+			token:                             r.Token,
+			providerAttributes:                r.ProviderAttributes,
+			isProviderAttributeValuesIncluded: r.IsProviderAttributeValuesIncluded,
+			localUserState:                    ProviderUserState(r.LocalUserState),
+			runtimeAttributes:                 r.RuntimeAttributes,
 		}
 	}
 

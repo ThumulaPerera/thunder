@@ -22,7 +22,6 @@ import (
 	"context"
 
 	appmodel "github.com/asgardeo/thunder/internal/application/model"
-	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	"github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 )
@@ -46,7 +45,6 @@ type NodeContext struct {
 	ForwardedData  map[string]interface{}
 
 	Application       appmodel.Application
-	AuthenticatedUser authncm.AuthenticatedUser
 	AuthUser          manager.AuthUser
 	ExecutionHistory  map[string]*common.NodeExecutionRecord
 }

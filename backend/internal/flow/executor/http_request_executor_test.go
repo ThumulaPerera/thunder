@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	authncm "github.com/asgardeo/thunder/internal/authn/common"
 	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
@@ -141,15 +140,15 @@ func (suite *HTTPRequestExecutorTestSuite) TestResolvePlaceholderUserIDSpecialHa
 		w.WriteHeader(http.StatusOK)
 	}))
 
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(`{"userId":"auth-user-456"}`), &authUser)
 	ctx := &core.NodeContext{
 		ExecutionID: "test-flow",
 		UserInputs: map[string]string{
 			"userId": "input-user-id", // This should NOT be used for userId
 		},
 		RuntimeData: map[string]string{},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			UserID: "auth-user-456",
-		},
+		AuthUser:    authUser,
 		NodeProperties: map[string]interface{}{
 			"url":    suite.mockServer.URL + "/api/user",
 			"method": "POST",
@@ -793,10 +792,8 @@ func (suite *HTTPRequestExecutorTestSuite) TestEnrichOURuntimeData_FallbackToRun
 	executor := newHTTPRequestExecutor(mockFlowFactory, mockOUService)
 
 	ctx := &core.NodeContext{
-		ExecutionID:       "test-flow",
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			// OUID is empty — falls back to RuntimeData["ouId"]
-		},
+		ExecutionID: "test-flow",
+		// AuthUser zero value has empty ouID — falls back to RuntimeData["ouId"]
 		RuntimeData: map[string]string{
 			"ouId": "ou-runtime-456",
 		},

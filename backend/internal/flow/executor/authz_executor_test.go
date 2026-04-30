@@ -67,9 +67,15 @@ func createMockExecutor(t *testing.T, name string, executorType common.ExecutorT
 }
 
 // mustAuthUser creates an AuthUser with the given userID via JSON unmarshal.
+// When userID is non-empty, authHistory is populated so that IsAuthenticated() returns true.
 func mustAuthUser(userID string) authnprovidermgr.AuthUser {
 	var au authnprovidermgr.AuthUser
-	b, _ := json.Marshal(map[string]string{"userId": userID})
+	b, _ := json.Marshal(map[string]interface{}{
+		"userId": userID,
+		"authHistory": []map[string]interface{}{
+			{"authType": "LOCAL", "isVerified": true, "localUserState": "exists"},
+		},
+	})
 	_ = json.Unmarshal(b, &au)
 	return au
 }
@@ -102,8 +108,6 @@ func TestAuthorizationExecutor_Execute_Success(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated called twice in Execute, once in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	// GetUserAttributes called in extractGroupIDs; return groups
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
@@ -156,8 +160,6 @@ func TestAuthorizationExecutor_Execute_PartialPermissions(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	// GetUserAttributes returns nil — fall through to entity provider
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
@@ -199,8 +201,6 @@ func TestAuthorizationExecutor_Execute_NoPermissions(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
 
@@ -237,9 +237,6 @@ func TestAuthorizationExecutor_Execute_NotAuthenticated(t *testing.T) {
 		RuntimeData: make(map[string]string),
 	}
 
-	// IsAuthenticated called twice: first check (Registration bypass) and second check (auth gate)
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Times(2)
-
 	// Execute
 	resp, err := executor.Execute(ctx)
 
@@ -268,8 +265,6 @@ func TestAuthorizationExecutor_Execute_ServiceError(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
 
@@ -308,8 +303,6 @@ func TestAuthorizationExecutor_Execute_GroupExtractionError(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, (*authnprovidercm.AttributesResponse)(nil), nil).Once()
 
@@ -345,9 +338,6 @@ func TestAuthorizationExecutor_Execute_NoRequestedPermissions(t *testing.T) {
 		AuthUser:    mustAuthUser("user123"),
 		RuntimeData: make(map[string]string), // No requestedPermissionsKey
 	}
-
-	// IsAuthenticated: 2 in Execute (both pass, then early return on no permissions)
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(2)
 
 	// Execute
 	resp, err := executor.Execute(ctx)
@@ -402,10 +392,9 @@ func TestAuthorizationExecutor_ExtractGroupIDs_FromAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := &core.NodeContext{
+				AuthUser:    mustAuthUser("test-user"),
 				RuntimeData: make(map[string]string),
 			}
-
-			mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
 
 			var attrsResp *authnprovidercm.AttributesResponse
 			if tt.groupsVal != nil {
@@ -421,6 +410,12 @@ func TestAuthorizationExecutor_ExtractGroupIDs_FromAttributes(t *testing.T) {
 			}
 			mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(authnprovidermgr.AuthUser{}, attrsResp, nil).Once()
+
+			// When no groups attribute is returned, extractGroupIDs falls through to the entity provider.
+			if tt.groupsVal == nil {
+				mockEntityProvider.On("GetTransitiveEntityGroups", "test-user").
+					Return([]entityprovider.EntityGroup{}, nil).Once()
+			}
 
 			groupIDs, err := executor.extractGroupIDs(ctx)
 			assert.NoError(t, err)
@@ -441,9 +436,7 @@ func TestAuthorizationExecutor_ExtractGroupIDs_FromRuntimeData(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated returns false → skip GetUserAttributes, fall through to RuntimeData
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Once()
-
+	// ctx.AuthUser is empty, so IsAuthenticated() returns false → skip GetUserAttributes, fall through to RuntimeData
 	groupIDs, err := executor.extractGroupIDs(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"runtime-group1", "runtime-group2"}, groupIDs)
@@ -526,8 +519,7 @@ func TestAuthorizationExecutor_ExtractGroupIDs_WithNoGroups(t *testing.T) {
 		RuntimeData: make(map[string]string),
 	}
 
-	// IsAuthenticated true; GetUserAttributes returns no groups; falls through to entity provider
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
+	// AuthUser is authenticated; GetUserAttributes returns no groups; falls through to entity provider
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
 			Attributes: map[string]*authnprovidercm.AttributeResponse{},
@@ -556,8 +548,6 @@ func TestAuthorizationExecutor_Execute_WithMultipleGroups(t *testing.T) {
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	// GetUserAttributes returns groups: ["admin","editor","viewer"]
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
@@ -637,8 +627,7 @@ func TestAuthorizationExecutor_Execute_RegistrationFlow_UnauthenticatedWithoutPe
 		RuntimeData: make(map[string]string),
 	}
 
-	// First IsAuthenticated check: false && Registration → ExecComplete (early return)
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Once()
+	// ctx.AuthUser is empty, so IsAuthenticated() returns false && Registration → ExecComplete (early return)
 
 	// Execute
 	resp, err := executor.Execute(ctx)
@@ -667,8 +656,7 @@ func TestAuthorizationExecutor_Execute_RegistrationFlow_UnauthenticatedWithPermi
 		},
 	}
 
-	// First IsAuthenticated check: false && Registration → ExecComplete (early return)
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Once()
+	// ctx.AuthUser is empty, so IsAuthenticated() returns false && Registration → ExecComplete (early return)
 
 	// Execute
 	resp, err := executor.Execute(ctx)
@@ -697,8 +685,6 @@ func TestAuthorizationExecutor_Execute_RegistrationFlow_AuthenticatedWithPermiss
 		},
 	}
 
-	// IsAuthenticated: 2 in Execute + 1 in extractGroupIDs
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Times(3)
 	// GetUserAttributes returns groups: ["new-users"]
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
@@ -761,9 +747,8 @@ func TestAuthorizationExecutor_Execute_NonRegistrationFlow_UnauthenticatedShould
 				},
 			}
 
-			// 2 IsAuthenticated calls: first (Registration check, non-Registration → continue),
-			// second (auth gate → ExecFailure)
-			mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false).Times(2)
+			// ctx.AuthUser is empty, so IsAuthenticated() returns false:
+			// first check (non-Registration → continue), second check (auth gate → ExecFailure)
 
 			// Execute
 			resp, err := executor.Execute(ctx)
@@ -791,8 +776,7 @@ func TestAuthorizationExecutor_ExtractGroupIDs_FromUserService(t *testing.T) {
 		RuntimeData: make(map[string]string), // No groups in runtime data
 	}
 
-	// IsAuthenticated true; GetUserAttributes returns no groups; falls through to entity provider
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
+	// AuthUser is authenticated; GetUserAttributes returns no groups; falls through to entity provider
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
 			Attributes: map[string]*authnprovidercm.AttributeResponse{},
@@ -822,8 +806,7 @@ func TestAuthorizationExecutor_ExtractGroupIDs_FromUserService_Error(t *testing.
 		RuntimeData: make(map[string]string), // No groups in runtime data
 	}
 
-	// IsAuthenticated true; GetUserAttributes returns no groups; falls through to entity provider
-	mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(true).Once()
+	// AuthUser is authenticated; GetUserAttributes returns no groups; falls through to entity provider
 	mockAuthnProvider.On("GetUserAttributes", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(authnprovidermgr.AuthUser{}, &authnprovidercm.AttributesResponse{
 			Attributes: map[string]*authnprovidercm.AttributeResponse{},

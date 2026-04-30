@@ -204,9 +204,7 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_MFA_AddsMobileNu
 
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(populatedUser, &authnprovidermgr.AuthnBasicResult{
-			UserID: "user-123", UserType: "INTERNAL", OUID: "ou-123", IsExistingUser: true,
-		}, nil)
+		Return(populatedUser, nil)
 
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
@@ -261,7 +259,6 @@ func (suite *SMSAuthExecutorTestSuite) TestGetUserMobileNumber_NotFoundInAttribu
 		Attributes: attrsJSON,
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false)
 	suite.mockEntityProvider.On("GetEntity", "user-123").Return(userFromStore, nil)
 
 	mobileNumber, err := suite.executor.getUserMobileNumber("user-123", ctx, execResp)
@@ -343,7 +340,6 @@ func (suite *SMSAuthExecutorTestSuite) TestGetUserMobileNumber_NonStringAttribut
 		Attributes: attrsJSON,
 	}
 
-	suite.mockAuthnProvider.On("IsAuthenticated", mock.Anything).Return(false)
 	suite.mockEntityProvider.On("GetEntity", "user-123").Return(userFromStore, nil)
 
 	mobileNumber, err := suite.executor.getUserMobileNumber("user-123", ctx, execResp)
@@ -357,11 +353,12 @@ func (suite *SMSAuthExecutorTestSuite) TestGetUserMobileNumber_NonStringAttribut
 // TestGetAuthenticatedUser_Registration_OTPValid_NoLocalUser verifies that a valid OTP with no
 // existing local user does not fail and leaves status unset (to be finalized by the caller).
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_Registration_OTPValid_NoLocalUser() {
+	var noLocalUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal([]byte(
+		`{"authHistory":[{"authType":"SMS","isVerified":false,"localUserState":"not_exists"}]}`), &noLocalUser)
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			IsExistingUser: false,
-		}, nil)
+		Return(noLocalUser, nil)
 
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-reg-123",
@@ -390,10 +387,7 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_Registration_OTP
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_Registration_OTPValid_UserAlreadyExists() {
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.AuthnBasicResult{
-			IsExistingUser: true,
-			UserID:         "existing-user-123",
-		}, nil)
+		Return(authnprovidermgr.AuthUser{}, nil)
 
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-reg-456",
@@ -422,7 +416,7 @@ func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_Registration_OTP
 func (suite *SMSAuthExecutorTestSuite) TestGetAuthenticatedUser_Registration_WrongOTP() {
 	suite.mockAuthnProvider.On("AuthenticateUser",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(authnprovidermgr.AuthUser{}, nil, &authnprovidermgr.ErrorAuthenticationFailed)
+		Return(authnprovidermgr.AuthUser{}, &authnprovidermgr.ErrorAuthenticationFailed)
 
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-reg-789",

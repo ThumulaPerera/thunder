@@ -307,7 +307,7 @@ func (e *consentExecutor) getRequiredAttributes(ctx *core.NodeContext) (
 // by authentication providers.
 func (e *consentExecutor) buildAugmentedAvailableAttributes(ctx *core.NodeContext) *authnprovidercm.AttributesResponse {
 	var base *authnprovidercm.AttributesResponse
-	if e.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if ctx.AuthUser.IsAuthenticated() {
 		base, _ = e.authnProvider.GetUserAvailableAttributes(ctx.Context, ctx.AuthUser)
 	}
 
