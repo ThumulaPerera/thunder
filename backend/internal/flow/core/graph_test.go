@@ -382,7 +382,10 @@ func (s *GraphTestSuite) TestToJSON() {
 
 	if execNode, ok := node1.(ExecutorBackedNodeInterface); ok {
 		execNode.SetExecutorName("test-executor")
-		execNode.SetInputs([]common.Input{{Identifier: "username", Type: "string", Required: true}})
+		execNode.SetInputs([]common.Input{
+			{Identifier: "username", Type: "string", Required: true,
+				DisplayName: "User Name"},
+		})
 	}
 
 	_ = s.graph.AddNode(node1)
@@ -399,4 +402,6 @@ func (s *GraphTestSuite) TestToJSON() {
 	s.Contains(jsonStr, "node-2")
 	s.Contains(jsonStr, "test-executor")
 	s.Contains(jsonStr, "username")
+	s.NotContains(jsonStr, "displayName", "DisplayName must not appear in serialized graph JSON")
+	s.NotContains(jsonStr, "User Name", "DisplayName value must not appear in serialized graph JSON")
 }
