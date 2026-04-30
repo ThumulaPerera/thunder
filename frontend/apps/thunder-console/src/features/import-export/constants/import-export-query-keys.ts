@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,7 +16,18 @@
  * under the License.
  */
 
-/// <reference types="vite/client" />
-/// <reference types="vite-plugin-svgr/client" />
+/**
+ * Query key constants for import-export feature cache management.
+ */
+const ImportExportQueryKeys = {
+  /**
+   * Base key for all export-related queries
+   */
+  EXPORT: 'export',
+  /**
+   * Base key for all import-related queries
+   */
+  IMPORT: 'import',
+} as const;
 
-declare const VERSION: string;
+export default ImportExportQueryKeys;
