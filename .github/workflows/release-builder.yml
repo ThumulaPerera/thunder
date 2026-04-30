@@ -353,7 +353,7 @@ jobs:
 
       - name: 🏷️ Update Product Version
         run: |
-          VERSION="${{ needs.build-product.outputs.version }}"
+          VERSION="${{ needs.build.outputs.version }}"
           echo "$VERSION" > version.txt
 
       - name: ⚙️ Set up Go Environment
@@ -403,7 +403,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          TAG_VERSION="${{ needs.build-product.outputs.version }}"
+          TAG_VERSION="${{ needs.build.outputs.version }}"
           if [[ ! $TAG_VERSION == v* ]]; then
             TAG_VERSION="v$TAG_VERSION"
           fi
@@ -442,7 +442,7 @@ jobs:
           IMAGE_NAME="ghcr.io/${REPO_NAME}"
           
           # Get version without 'v' prefix for Docker tags
-          DOCKER_VERSION="${{ needs.build-product.outputs.version }}"
+          DOCKER_VERSION="${{ needs.build.outputs.version }}"
           if [[ $DOCKER_VERSION == v* ]]; then
             DOCKER_VERSION="${DOCKER_VERSION#v}"
           fi
@@ -467,7 +467,7 @@ jobs:
       - name: 🏷️ Update Helm Values Image Tag
         run: |
           # Get version without 'v' prefix
-          CHART_VERSION="${{ needs.build-product.outputs.version }}"
+          CHART_VERSION="${{ needs.build.outputs.version }}"
           if [[ $CHART_VERSION == v* ]]; then
             CHART_VERSION="${CHART_VERSION#v}"
           fi
@@ -513,7 +513,7 @@ jobs:
           HELM_REGISTRY="ghcr.io/${OWNER_NAME}"
           
           # Get version without 'v' prefix for Helm chart version
-          CHART_VERSION="${{ needs.build-product.outputs.version }}"
+          CHART_VERSION="${{ needs.build.outputs.version }}"
           if [[ $CHART_VERSION == v* ]]; then
             CHART_VERSION="${CHART_VERSION#v}"
           fi
@@ -546,7 +546,7 @@ jobs:
           OWNER_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           HELM_REGISTRY="ghcr.io/${OWNER_NAME}/helm-charts"
 
-          CHART_VERSION="${{ needs.build-product.outputs.version }}"
+          CHART_VERSION="${{ needs.build.outputs.version }}"
           if [[ $CHART_VERSION == v* ]]; then
             CHART_VERSION="${CHART_VERSION#v}"
           fi
@@ -568,7 +568,7 @@ jobs:
         id: next_version
         run: |
           # Get the current release version and remove 'v' prefix
-          RELEASE_VERSION="${{ needs.build-product.outputs.version }}"
+          RELEASE_VERSION="${{ needs.build.outputs.version }}"
           if [[ $RELEASE_VERSION == v* ]]; then
             RELEASE_VERSION="${RELEASE_VERSION#v}"
           fi
@@ -660,7 +660,7 @@ jobs:
       - name: 📝 Update Sample Apps Version
         uses: ./.github/actions/update-sample-versions
         with:
-          version: ${{ needs.build-product.outputs.version }}
+          version: ${{ needs.build.outputs.version }}
 
       - name: 📦 Build and Package Linux Samples
         run: |
@@ -694,7 +694,7 @@ jobs:
       - name: 📝 Update Sample Apps Version
         uses: ./.github/actions/update-sample-versions
         with:
-          version: ${{ needs.build-product.outputs.version }}
+          version: ${{ needs.build.outputs.version }}
 
       - name: 📦 Build and Package macOS Samples
         run: |
@@ -763,7 +763,7 @@ jobs:
       - name: 📝 Read Version
         id: version
         run: |
-          VERSION="${{ needs.build-product.outputs.version }}"
+          VERSION="${{ needs.build.outputs.version }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: 📝 Generate Automatic Release Notes
@@ -771,7 +771,7 @@ jobs:
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            const currentTag = '${{ needs.build-product.outputs.version }}';
+            const currentTag = '${{ needs.build.outputs.version }}';
             
             try {
               // Get only the 2 most recent releases (current + previous)
@@ -850,7 +850,7 @@ jobs:
         id: readme_extract
         run: |
           # Get the release version without v prefix for replacement
-          RELEASE_VERSION="${{ needs.build-product.outputs.version }}"
+          RELEASE_VERSION="${{ needs.build.outputs.version }}"
           if [[ $RELEASE_VERSION == v* ]]; then
             RELEASE_VERSION="${RELEASE_VERSION#v}"
           fi
@@ -989,7 +989,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.version }}
           name: ${{ env.PRODUCT_NAME }} ${{ steps.version.outputs.version }}
           draft: false
-          prerelease: ${{ needs.build-product.outputs.prerelease }}
+          prerelease: ${{ needs.build.outputs.prerelease }}
           files: target/dist/*.zip
           body: ${{ env.RELEASE_BODY }}
           generate_release_notes: false
@@ -1015,7 +1015,7 @@ jobs:
     name: 🧪 Trigger Performance Test
     runs-on: ubuntu-latest
     needs: [build, release]
-    if: ${{ needs.build-product.outputs.run_performance_test == 'true' }}
+    if: ${{ needs.build.outputs.run_performance_test == 'true' }}
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
