@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,7 +16,8 @@
  * under the License.
  */
 
-/// <reference types="vite/client" />
-/// <reference types="vite-plugin-svgr/client" />
-
-declare const VERSION: string;
+/**
+ * Default file names for Thunder configuration import/export
+ */
+export const DEFAULT_CONFIG_FILE_NAME = 'thunder-id-config.yml';
+export const DEFAULT_ENV_FILE_NAME = 'thunder-id-environment.env';

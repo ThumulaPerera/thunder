@@ -149,9 +149,10 @@ describe('useUpdateRole', () => {
   });
 
   it('should set pending state during update', async () => {
+    let resolveRequest: ((value: {data: Role}) => void) | undefined;
     mockHttpRequest.mockReturnValue(
-      new Promise((resolve) => {
-        setTimeout(() => resolve({data: mockUpdatedRole}), 100);
+      new Promise<{data: Role}>((resolve) => {
+        resolveRequest = resolve;
       }),
     );
 
@@ -162,6 +163,8 @@ describe('useUpdateRole', () => {
     await waitFor(() => {
       expect(result.current.isPending).toBe(true);
     });
+
+    resolveRequest?.({data: mockUpdatedRole});
 
     await waitFor(
       () => {
