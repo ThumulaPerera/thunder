@@ -31,7 +31,7 @@ const (
 	schemeHTTPS = "https"
 )
 
-// Canonicalize returns the canonical form of an HTTP(S) origin for literal-rule
+// canonicalize returns the canonical form of an HTTP(S) origin for literal-rule
 // comparison. The canonical form lowercases the scheme and host, strips a
 // trailing dot from the host, Punycode-encodes IDN labels, and wraps IPv6
 // hosts in brackets so the resulting string compares equal across all common
@@ -46,7 +46,7 @@ const (
 //
 // "null" is not a valid input here; callers must route the null origin through
 // the IsNull flag on ParseResult instead.
-func Canonicalize(raw string) (string, error) {
+func canonicalize(raw string) (string, error) {
 	if raw == "" {
 		return "", fmt.Errorf("%w: empty origin", ErrInvalidOrigin)
 	}

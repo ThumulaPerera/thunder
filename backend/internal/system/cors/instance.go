@@ -27,12 +27,12 @@ package cors
 import "github.com/asgardeo/thunder/internal/system/log"
 
 // instance holds the process-wide compiled CORS matcher. It is populated once
-// at server start by InitializeMatcher (called from the config package during
-// deployment.yaml validation) and read on every CORS request via GetMatcher.
+// at server start by InitializeMatcher (called from the server bootstrap
+// after configuration has been validated) and read on every CORS request via
+// GetMatcher.
 //
 // The field is a plain pointer rather than an atomic — Initialize runs on the
-// main goroutine before the HTTP server starts, and tests reset and reinstall
-// it synchronously before issuing requests, so there is no concurrent
+// main goroutine before the HTTP server starts, so there is no concurrent
 // reader/writer overlap to guard against.
 var instance *Matcher
 
@@ -47,18 +47,18 @@ var instance *Matcher
 // pattern into a partial-match filter and almost always allows far more
 // origins than intended.
 func InitializeMatcher(entries OriginEntries) error {
-	rules, err := CompileAll(entries)
+	rules, err := compileAll(entries)
 	if err != nil {
 		return err
 	}
-	m := NewMatcher(rules)
+	m := newMatcher(rules)
 
-	for i, entry := range entries {
-		rx, ok := entry.(RegexEntry)
+	for i, e := range entries {
+		rx, ok := e.(regexEntry)
 		if !ok {
 			continue
 		}
-		if !IsRegexAnchored(rx.Pattern) {
+		if !isRegexAnchored(rx.Pattern) {
 			logger := log.GetLogger().With(log.String(log.LoggerKeyComponentName, "CORS"))
 			logger.Warn("cors.allowed_origins regex is not fully anchored; partial matches are likely",
 				log.Int("index", i),
@@ -76,11 +76,4 @@ func InitializeMatcher(entries OriginEntries) error {
 // AllowedOrigins list.
 func GetMatcher() *Matcher {
 	return instance
-}
-
-// ResetMatcher clears the installed singleton. It is intended for tests that
-// exercise multiple configurations within a single process; production code
-// calls InitializeMatcher once at boot and never resets.
-func ResetMatcher() {
-	instance = nil
 }

@@ -35,23 +35,23 @@ type Matcher struct {
 	size        int
 }
 
-// NewMatcher constructs a Matcher over the given compiled rules. Literal and
+// newMatcher constructs a Matcher over the given compiled rules. Literal and
 // regex rules are partitioned; null literals are tracked via nullAllowed. A
 // nil or empty slice yields a matcher that rejects every origin.
-func NewMatcher(rules []OriginRule) *Matcher {
+func newMatcher(rules []originRule) *Matcher {
 	m := &Matcher{
 		literals: make(map[string]struct{}),
 		size:     len(rules),
 	}
 	for _, rule := range rules {
 		switch r := rule.(type) {
-		case LiteralRule:
+		case literalRule:
 			if r.isNull {
 				m.nullAllowed = true
 				continue
 			}
 			m.literals[r.canonical] = struct{}{}
-		case RegexRule:
+		case regexRule:
 			m.regexes = append(m.regexes, r.re)
 		}
 	}
@@ -90,8 +90,7 @@ func (m *Matcher) Match(parsed ParseResult) (allow bool, echo string) {
 	return false, ""
 }
 
-// Size reports the total number of rules the matcher holds. Intended for
-// boot-time logging and tests.
+// Size reports the total number of rules the matcher holds.
 func (m *Matcher) Size() int {
 	if m == nil {
 		return 0
