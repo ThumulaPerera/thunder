@@ -118,11 +118,6 @@ RESPONSE=$(api_call POST "/user-schemas" '{
       "unique": true,
       "regex": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     },
-    "email_verified": {
-      "type": "boolean",
-      "displayName": "Email Verified",
-      "required": false
-    },
     "given_name": {
       "type": "string",
       "displayName": "First Name",
@@ -141,11 +136,6 @@ RESPONSE=$(api_call POST "/user-schemas" '{
     "phone_number": {
       "type": "string",
       "displayName": "Phone Number",
-      "required": false
-    },
-    "phone_number_verified": {
-      "type": "boolean",
-      "displayName": "Phone Number Verified",
       "required": false
     },
     "sub": {
@@ -202,13 +192,11 @@ RESPONSE=$(api_call POST "/users" '{
     "password": "admin",
     "sub": "admin",
     "email": "admin@example.com",
-    "email_verified": true,
     "name": "Administrator",
     "given_name": "Admin",
     "family_name": "User",
     "picture": "https://example.com/avatar.jpg",
-    "phone_number": "+12345678920",
-    "phone_number_verified": true
+    "phone_number": "+12345678920"
   }
 }')
 
