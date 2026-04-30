@@ -274,7 +274,7 @@ func (g *googleOIDCAuthnService) Authenticate(ctx context.Context, idpID, code s
 
 	result := &common.FederatedAuthResult{
 		Sub:    sub,
-		Claims: claims,
+		Claims: g.internal.FilterUserClaims(claims),
 	}
 	user, svcErr := g.GetInternalUser(sub)
 	if svcErr != nil {

@@ -23,8 +23,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-
-	authnprovidercm "github.com/asgardeo/thunder/internal/authnprovider/common"
 )
 
 type ModelTestSuite struct {
@@ -40,15 +38,13 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 		userID:   "user-123",
 		userType: "customer",
 		ouID:     "ou-456",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {
+		authHistory: []*AuthResult{
+			{
 				token: "secret-token",
-				attributes: &authnprovidercm.AttributesResponse{
-					Attributes: map[string]*authnprovidercm.AttributeResponse{
-						"email": {Value: "test@example.com"},
-					},
+				providerAttributes: map[string]interface{}{
+					"email": "test@example.com",
 				},
-				isAttributeValuesIncluded: true,
+				isProviderAttributeValuesIncluded: true,
 			},
 		},
 	}
@@ -67,13 +63,13 @@ func (s *ModelTestSuite) TestAuthUserMarshalUnmarshal() {
 	s.Equal("customer", restored.userType)
 	s.Equal("ou-456", restored.ouID)
 
-	// Provider data round-trips correctly
-	pd, ok := restored.providersAuthData[defaultProvider]
-	s.True(ok)
-	s.Equal("secret-token", pd.token)
-	s.True(pd.isAttributeValuesIncluded)
-	s.NotNil(pd.attributes)
-	s.Equal("test@example.com", pd.attributes.Attributes["email"].Value)
+	// Auth history round-trips correctly
+	s.Require().Len(restored.authHistory, 1)
+	ar := restored.authHistory[0]
+	s.Equal("secret-token", ar.token)
+	s.True(ar.isProviderAttributeValuesIncluded)
+	s.NotNil(ar.providerAttributes)
+	s.Equal("test@example.com", ar.providerAttributes["email"])
 }
 
 func (s *ModelTestSuite) TestAuthUserIsSet_ZeroValue() {
@@ -94,15 +90,15 @@ func (s *ModelTestSuite) TestAuthUserIsSet_WithUserID() {
 	s.True(a.IsSet())
 }
 
-func (s *ModelTestSuite) TestAuthUserIsSet_WithOnlyProviderData() {
+func (s *ModelTestSuite) TestAuthUserIsSet_WithOnlyAuthHistory() {
 	a := AuthUser{}
-	a.providersAuthData = map[providerKey]providerData{
-		defaultProvider: {token: "tok"},
+	a.authHistory = []*AuthResult{
+		{token: "tok"},
 	}
 	s.True(a.IsSet())
 }
 
-func (s *ModelTestSuite) TestAuthUserMarshalNilProviderData() {
+func (s *ModelTestSuite) TestAuthUserMarshalNilAuthHistory() {
 	// An empty AuthUser must marshal and unmarshal without panicking
 	authUser := AuthUser{}
 
@@ -114,5 +110,5 @@ func (s *ModelTestSuite) TestAuthUserMarshalNilProviderData() {
 	err = json.Unmarshal(data, &restored)
 	s.NoError(err)
 	s.Empty(restored.userID)
-	s.Empty(restored.providersAuthData)
+	s.Empty(restored.authHistory)
 }

@@ -28,13 +28,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	authncm "github.com/asgardeo/thunder/internal/authn/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/entityprovider"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
 	"github.com/asgardeo/thunder/internal/group"
 	"github.com/asgardeo/thunder/internal/role"
 	"github.com/asgardeo/thunder/internal/system/error/serviceerror"
+	"github.com/asgardeo/thunder/tests/mocks/authnprovider/managermock"
 	"github.com/asgardeo/thunder/tests/mocks/entityprovidermock"
 	"github.com/asgardeo/thunder/tests/mocks/flow/coremock"
 	"github.com/asgardeo/thunder/tests/mocks/groupmock"
@@ -52,6 +53,7 @@ type ProvisioningExecutorTestSuite struct {
 	mockRoleService    *rolemock.RoleServiceInterfaceMock
 	mockFlowFactory    *coremock.FlowFactoryInterfaceMock
 	mockEntityProvider *entityprovidermock.EntityProviderInterfaceMock
+	mockAuthnProvider  *managermock.AuthnProviderManagerInterfaceMock
 	executor           *provisioningExecutor
 }
 
@@ -64,6 +66,7 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 	suite.mockRoleService = rolemock.NewRoleServiceInterfaceMock(suite.T())
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
 	suite.mockEntityProvider = entityprovidermock.NewEntityProviderInterfaceMock(suite.T())
+	suite.mockAuthnProvider = managermock.NewAuthnProviderManagerInterfaceMock(suite.T())
 
 	// Mock the embedded identifying executor first
 	identifyingMock := suite.createMockIdentifyingExecutor()
@@ -76,6 +79,7 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 
 	suite.executor = newProvisioningExecutor(suite.mockFlowFactory,
 		suite.mockGroupService, suite.mockRoleService, suite.mockEntityProvider)
+	suite.executor.authnProvider = suite.mockAuthnProvider
 }
 
 func (suite *ProvisioningExecutorTestSuite) createMockIdentifyingExecutor() core.ExecutorInterface {
@@ -110,6 +114,47 @@ func (suite *ProvisioningExecutorTestSuite) createMockProvisioningExecutor() cor
 	mockExec.On("GetInputs", mock.Anything).Return([]common.Input{}).Maybe()
 	mockExec.On("GetRequiredInputs", mock.Anything).Return([]common.Input{}).Maybe()
 	return mockExec
+}
+
+// makeAuthUserWithRuntimeAttrs creates an AuthUser with runtime attributes for testing.
+func makeAuthUserWithRuntimeAttrs(attrs map[string]interface{}) authnprovidermgr.AuthUser {
+	type authResultProxy struct {
+		RuntimeAttributes map[string]interface{} `json:"runtimeAttributes,omitempty"`
+	}
+	type authUserProxy struct {
+		AuthHistory []authResultProxy `json:"authHistory"`
+	}
+	raw, _ := json.Marshal(authUserProxy{
+		AuthHistory: []authResultProxy{{RuntimeAttributes: attrs}},
+	})
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal(raw, &authUser)
+	return authUser
+}
+
+// makeAuthenticatedAuthUser creates a fully authenticated AuthUser with the given user details.
+func makeAuthenticatedAuthUser(userID string) authnprovidermgr.AuthUser {
+	type authResultProxy struct {
+		IsVerified     bool   `json:"isVerified"`
+		LocalUserState string `json:"localUserState"`
+	}
+	type authUserProxy struct {
+		UserID      string            `json:"userId"`
+		UserType    string            `json:"userType"`
+		OUID        string            `json:"ouId"`
+		AuthHistory []authResultProxy `json:"authHistory"`
+	}
+	raw, _ := json.Marshal(authUserProxy{
+		UserID:   userID,
+		UserType: testUserType,
+		OUID:     testOUID,
+		AuthHistory: []authResultProxy{
+			{IsVerified: true, LocalUserState: "exists"},
+		},
+	})
+	var authUser authnprovidermgr.AuthUser
+	_ = json.Unmarshal(raw, &authUser)
+	return authUser
 }
 
 func (suite *ProvisioningExecutorTestSuite) TestExecute_NonRegistrationFlow() {
@@ -182,13 +227,17 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success() {
 				assignments[0].Type == role.AssigneeTypeUser
 		})).Return(nil)
 
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
+
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
+	assert.Equal(suite.T(), testNewUserID, resp.AuthUser.GetUserID())
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 	suite.mockGroupService.AssertExpectations(suite.T())
 	suite.mockRoleService.AssertExpectations(suite.T())
@@ -266,10 +315,8 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_AttributesFrom
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeRegistration,
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{"email": "test@example.com"},
-		},
-		NodeInputs: []common.Input{{Identifier: "email", Type: "string", Required: true}},
+		AuthUser:    makeAuthUserWithRuntimeAttrs(map[string]interface{}{"email": "test@example.com"}),
+		NodeInputs:  []common.Input{{Identifier: "email", Type: "string", Required: true}},
 	}
 
 	execResp := &common.ExecutorResponse{
@@ -320,15 +367,11 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Fil
 func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_WithAuthenticatedUserAttributes() {
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{"username": "testuser"},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: true,
-			UserID:          "user-123",
-			Attributes: map[string]interface{}{
-				"email":       "authenticated@example.com",
-				"given_name":  "Test",
-				"family_name": "User",
-			},
-		},
+		AuthUser: makeAuthUserWithRuntimeAttrs(map[string]interface{}{
+			"email":       "authenticated@example.com",
+			"given_name":  "Test",
+			"family_name": "User",
+		}),
 		RuntimeData: map[string]string{"phone": "+1234567890"},
 		NodeInputs:  []common.Input{},
 	}
@@ -351,13 +394,10 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Att
 		UserInputs: map[string]string{
 			"email": "userinput@example.com",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: true,
-			Attributes: map[string]interface{}{
-				"email": "authenticated@example.com",
-				"name":  "Authenticated Name",
-			},
-		},
+		AuthUser: makeAuthUserWithRuntimeAttrs(map[string]interface{}{
+			"email": "authenticated@example.com",
+			"name":  "Authenticated Name",
+		}),
 		RuntimeData: map[string]string{
 			"email": "runtime@example.com",
 			"phone": "+1234567890",
@@ -369,7 +409,7 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Att
 
 	// RuntimeData comes last in the loop, so it overwrites for 'email'
 	assert.Equal(suite.T(), "runtime@example.com", result["email"])
-	// AuthenticatedUser.Attributes should provide 'name' (not in other sources)
+	// AuthUser runtime attributes should provide 'name' (not in other sources)
 	assert.Equal(suite.T(), "Authenticated Name", result["name"])
 	// RuntimeData should provide 'phone' (not in other sources)
 	assert.Equal(suite.T(), "+1234567890", result["phone"])
@@ -380,13 +420,10 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Wit
 		UserInputs: map[string]string{
 			"username": "testuser",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: true,
-			Attributes: map[string]interface{}{
-				"email":      "authenticated@example.com",
-				"given_name": "Test",
-			},
-		},
+		AuthUser: makeAuthUserWithRuntimeAttrs(map[string]interface{}{
+			"email":      "authenticated@example.com",
+			"given_name": "Test",
+		}),
 		RuntimeData: map[string]string{
 			"phone": "+1234567890",
 		},
@@ -412,13 +449,10 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Wit
 		UserInputs: map[string]string{
 			"email": "userinput@example.com",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: true,
-			Attributes: map[string]interface{}{
-				"email": "authenticated@example.com",
-				"phone": "+9999999999",
-			},
-		},
+		AuthUser: makeAuthUserWithRuntimeAttrs(map[string]interface{}{
+			"email": "authenticated@example.com",
+			"phone": "+9999999999",
+		}),
 		RuntimeData: map[string]string{
 			"phone": "+1234567890",
 		},
@@ -433,22 +467,19 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Wit
 	// Note: GetInputs is mocked to return empty, so RuntimeData overwrites
 	// RuntimeData comes last in the loop and overwrites for 'phone'
 	assert.Equal(suite.T(), "+1234567890", result["phone"])
-	// email exists in all three, RuntimeData wins (no 'email' in RuntimeData, so AuthenticatedUser wins)
+	// email exists in all three, RuntimeData wins (no 'email' in RuntimeData, so AuthUser wins)
 	assert.Equal(suite.T(), "authenticated@example.com", result["email"])
 }
 
 func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_FilterNonUserAttributesFromAuthUser() {
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			IsAuthenticated: true,
-			Attributes: map[string]interface{}{
-				"email":  "authenticated@example.com",
-				"userID": "should-be-filtered",
-				"code":   "should-be-filtered",
-				"nonce":  "should-be-filtered",
-			},
-		},
+		AuthUser: makeAuthUserWithRuntimeAttrs(map[string]interface{}{
+			"email":  "authenticated@example.com",
+			"userID": "should-be-filtered",
+			"code":   "should-be-filtered",
+			"nonce":  "should-be-filtered",
+		}),
 		RuntimeData: map[string]string{},
 		NodeInputs:  []common.Input{},
 	}
@@ -535,16 +566,19 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_Proceed
 
 	// No group/role assignment mocks - assignments should be skipped
 
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
+
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
+	assert.Equal(suite.T(), testNewUserID, resp.AuthUser.GetUserID())
 	// userAutoProvisioned flag is not set in registration flows
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
-	// userAutoProvisioned flag is not set in registration flows
+	assert.Equal(suite.T(), testNewUserID, resp.AuthUser.GetUserID())
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 
 	// Verify no group/role methods were called
@@ -590,13 +624,17 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserEligibleForProvision
 		return u.OUID == testOUID && u.Type == testUserType
 	}), mock.Anything).Return(createdUser, nil)
 
+	authenticatedUser := makeAuthenticatedAuthUser("user-provisioned")
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
+
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), "user-provisioned", resp.AuthenticatedUser.UserID)
+	assert.True(suite.T(), resp.AuthUser.IsAuthenticated())
+	assert.Equal(suite.T(), "user-provisioned", resp.AuthUser.GetUserID())
 	assert.Equal(suite.T(), dataValueTrue, resp.RuntimeData[common.RuntimeKeyUserAutoProvisioned])
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 }
@@ -633,6 +671,10 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserAutoProvisionedFlag_
 	suite.mockEntityProvider.On("IdentifyEntity", attrs).Return(nil,
 		entityprovider.NewEntityProviderError(entityprovider.ErrorCodeEntityNotFound, "", ""))
 	suite.mockEntityProvider.On("CreateEntity", mock.Anything, mock.Anything).Return(createdUser, nil)
+
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -949,9 +991,6 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_AllAttributesI
 			"email":    "user@example.com",
 			"username": "testuser",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{},
-		},
 		NodeInputs: []common.Input{
 			{Identifier: "email", Type: "string", Required: true},
 			{Identifier: "username", Type: "string", Required: true},
@@ -1191,6 +1230,10 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_GroupWithExistingMembers
 
 	suite.mockRoleService.On("AddAssignments", mock.Anything, "test-role-id", mock.Anything).Return(nil)
 
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
+
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
@@ -1239,6 +1282,10 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_AuthFlow_AutoProvisionin
 	suite.mockGroupService.On("AddGroupMembers", mock.Anything, "test-group-id", mock.Anything).
 		Return(nil, nil)
 	suite.mockRoleService.On("AddAssignments", mock.Anything, "test-role-id", mock.Anything).Return(nil)
+
+	authenticatedUser := makeAuthenticatedAuthUser("user-provisioned")
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
 
 	resp, err := suite.executor.Execute(ctx)
 
@@ -1309,12 +1356,16 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success_WithGroupAndRole
 				assignments[0].Type == role.AssigneeTypeUser
 		})).Return(nil)
 
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
+
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
+	assert.Equal(suite.T(), testNewUserID, resp.AuthUser.GetUserID())
 
 	// Verify all mocks were called
 	suite.mockEntityProvider.AssertExpectations(suite.T())
@@ -1361,6 +1412,10 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_Success() {
 	suite.mockEntityProvider.On("CreateEntity", mock.MatchedBy(func(u *entityprovider.Entity) bool {
 		return u.OUID == testOUID
 	}), mock.Anything).Return(createdUser, nil)
+
+	authenticatedUser := makeAuthenticatedAuthUser(testNewUserID)
+	suite.mockAuthnProvider.On("AuthenticateResolvedUser", mock.Anything, createdUser, mock.Anything).
+		Return(authenticatedUser, nil)
 
 	resp, err := suite.executor.Execute(ctx)
 

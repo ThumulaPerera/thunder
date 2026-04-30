@@ -90,7 +90,7 @@ func (a *attributeCollector) Execute(ctx *core.NodeContext) (*common.ExecutorRes
 		return execResp, nil
 	}
 
-	if !a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if !ctx.AuthUser.IsAuthenticated() {
 		logger.Debug("User is not authenticated, cannot collect attributes")
 		execResp.Status = common.ExecFailure
 		execResp.FailureReason = failureReasonUserNotAuthenticated
@@ -137,7 +137,7 @@ func (a *attributeCollector) HasRequiredInputs(ctx *core.NodeContext,
 	}
 
 	// Update the executor response with the required inputs retrieved from authenticated user attributes.
-	if a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if ctx.AuthUser.IsAuthenticated() {
 		_, attrsResp, svcErr := a.authnProvider.GetUserAttributes(ctx.Context, nil, nil, ctx.AuthUser)
 		if svcErr == nil && attrsResp != nil && len(attrsResp.Attributes) > 0 {
 			logger.Debug("Authenticated user attributes found, updating executor response required inputs")

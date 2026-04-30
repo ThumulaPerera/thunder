@@ -116,7 +116,8 @@ func Initialize(
 	reg.RegisterExecutor(ExecutorNameAttributeUniquenessValidator, newAttributeUniquenessValidator(
 		flowFactory, userSchemaService, entityProvider))
 	reg.RegisterExecutor(ExecutorNameSMSExecutor, newSMSExecutor(flowFactory, notifSenderSvc, templateService))
-	reg.RegisterExecutor(ExecutorNameFederatedAuthResolver, newFederatedAuthResolverExecutor(flowFactory))
+	reg.RegisterExecutor(ExecutorNameFederatedAuthResolver,
+		newFederatedAuthResolverExecutor(flowFactory, authnProvider))
 
 	return reg
 }

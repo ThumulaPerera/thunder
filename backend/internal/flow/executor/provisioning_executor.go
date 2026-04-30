@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"slices"
 
-	authncm "github.com/asgardeo/thunder/internal/authn/common"
+	authnprovidermgr "github.com/asgardeo/thunder/internal/authnprovider/manager"
 	"github.com/asgardeo/thunder/internal/entityprovider"
 	"github.com/asgardeo/thunder/internal/flow/common"
 	"github.com/asgardeo/thunder/internal/flow/core"
@@ -38,6 +38,7 @@ import (
 type provisioningExecutor struct {
 	core.ExecutorInterface
 	identifyingExecutorInterface
+	authnProvider  authnprovidermgr.AuthnProviderManagerInterface
 	entityProvider entityprovider.EntityProviderInterface
 	groupService   group.GroupServiceInterface
 	roleService    role.RoleServiceInterface
@@ -201,22 +202,13 @@ func (p *provisioningExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorR
 		return execResp, nil
 	}
 
-	retAttributes := make(map[string]interface{})
-	if len(createdEntity.Attributes) > 0 {
-		if err := json.Unmarshal(createdEntity.Attributes, &retAttributes); err != nil {
-			logger.Error("Failed to unmarshal user attributes", log.Error(err))
-			return nil, err
-		}
+	authUser, svcErr := p.authnProvider.AuthenticateResolvedUser(ctx.Context, createdEntity, ctx.AuthUser)
+	if svcErr != nil {
+		logger.Error("Failed to authenticate provisioned user")
+		return nil, fmt.Errorf("failed to authenticate provisioned user")
 	}
 
-	authenticatedUser := authncm.AuthenticatedUser{
-		IsAuthenticated: true,
-		UserID:          createdEntity.ID,
-		OUID:            createdEntity.OUID,
-		UserType:        createdEntity.Type,
-		Attributes:      retAttributes,
-	}
-	execResp.AuthenticatedUser = authenticatedUser
+	execResp.AuthUser = authUser
 	execResp.Status = common.ExecComplete
 
 	// Set user id in runtime data
@@ -245,8 +237,8 @@ func (p *provisioningExecutor) HasRequiredInputs(ctx *core.NodeContext,
 	}
 
 	// Update the executor response with the required inputs retrieved from authenticated user attributes.
-	authnUserAttrs := ctx.AuthenticatedUser.Attributes
-	if len(authnUserAttrs) > 0 {
+	authUserRuntimeAttrs := ctx.AuthUser.GetRuntimeAttributes()
+	if len(authUserRuntimeAttrs) > 0 {
 		logger.Debug("Authenticated user attributes found, updating executor response required inputs")
 
 		// Clear the required data in the executor response to avoid duplicates.
@@ -257,7 +249,7 @@ func (p *provisioningExecutor) HasRequiredInputs(ctx *core.NodeContext,
 		}
 
 		for _, input := range missingAttributes {
-			attribute, exists := authnUserAttrs[input.Identifier]
+			attribute, exists := authUserRuntimeAttrs[input.Identifier]
 			if exists {
 				attributeStr, ok := attribute.(string)
 				if ok {
@@ -287,6 +279,8 @@ func (p *provisioningExecutor) getAttributesForProvisioning(ctx *core.NodeContex
 	attributesMap := make(map[string]interface{})
 	requiredInputAttrs := p.GetRequiredInputs(ctx)
 
+	authUserRuntimeAttributes := ctx.AuthUser.GetRuntimeAttributes()
+
 	// If no input attributes are defined, get all user attributes from the context.
 	if len(requiredInputAttrs) == 0 {
 		for key, value := range ctx.UserInputs {
@@ -294,7 +288,7 @@ func (p *provisioningExecutor) getAttributesForProvisioning(ctx *core.NodeContex
 				attributesMap[key] = value
 			}
 		}
-		for key, value := range ctx.AuthenticatedUser.Attributes {
+		for key, value := range authUserRuntimeAttributes {
 			if !slices.Contains(nonUserAttributes, key) {
 				attributesMap[key] = value
 			}
@@ -318,7 +312,7 @@ func (p *provisioningExecutor) getAttributesForProvisioning(ctx *core.NodeContex
 			attributesMap[inputAttr.Identifier] = value
 		} else if runtimeValue, exists := ctx.RuntimeData[inputAttr.Identifier]; exists {
 			attributesMap[inputAttr.Identifier] = runtimeValue
-		} else if authnValue, exists := ctx.AuthenticatedUser.Attributes[inputAttr.Identifier]; exists {
+		} else if authnValue, exists := authUserRuntimeAttributes[inputAttr.Identifier]; exists {
 			attributesMap[inputAttr.Identifier] = authnValue
 		}
 	}

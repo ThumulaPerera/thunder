@@ -103,7 +103,7 @@ func (a *authAssertExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorRes
 		RuntimeData:    make(map[string]string),
 	}
 
-	if a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+	if ctx.AuthUser.IsAuthenticated() {
 		token, err := a.generateAuthAssertion(ctx, logger)
 		if err != nil {
 			return nil, err
@@ -351,7 +351,7 @@ func (a *authAssertExecutor) resolveUserAttributes(ctx *core.NodeContext, reques
 		// Fetch from user/authentication provider
 		if ctx.AuthUser.GetUserID() != "" && fetchedAttributes == nil {
 			var err error
-			if a.authnProvider.IsAuthenticated(ctx.AuthUser) {
+			if ctx.AuthUser.IsAuthenticated() {
 				metadata := a.buildGetAttributesMetadata(ctx)
 				fetchedAttributes, err = a.getUserAttributesFromAuthnProvider(ctx.Context,
 					requestedAttributes, metadata, ctx.AuthUser)

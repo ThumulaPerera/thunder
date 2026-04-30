@@ -58,28 +58,23 @@ func (s *ManagerTestSuite) TestAuthenticateUser_Success() {
 			OUID:                      "ou-1",
 			Token:                     "tok",
 			IsAttributeValuesIncluded: false,
-			AttributesResponse:        nil,
+			AttributesResponse:        &authnprovidercm.AttributesResponse{},
 			IsExistingUser:            true,
 		}, (*serviceerror.ServiceError)(nil))
 
-	returnedAuthUser, result, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
+	returnedAuthUser, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
 		nil, meta, AuthUser{})
 
 	s.Nil(svcErr)
-	s.NotNil(result)
-	s.Equal("user-1", result.UserID)
-	s.Equal("ou-1", result.OUID)
-	s.Equal("customer", result.UserType)
-
-	s.True(s.mgr.IsAuthenticated(returnedAuthUser))
+	s.True(returnedAuthUser.IsAuthenticated())
 	s.Equal("user-1", returnedAuthUser.userID)
 	s.Equal("customer", returnedAuthUser.userType)
 	s.Equal("ou-1", returnedAuthUser.ouID)
 
-	pd, ok := returnedAuthUser.providersAuthData[defaultProvider]
-	s.True(ok)
-	s.Equal("tok", pd.token)
-	s.False(pd.isAttributeValuesIncluded)
+	s.Require().Len(returnedAuthUser.authHistory, 1)
+	ar := returnedAuthUser.authHistory[0]
+	s.Equal("tok", ar.token)
+	s.False(ar.isProviderAttributeValuesIncluded)
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_FederatedNewUser() {
@@ -95,6 +90,7 @@ func (s *ManagerTestSuite) TestAuthenticateUser_FederatedNewUser() {
 	}
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
 		Return(&authnprovidercm.AuthnResult{
+			AuthType:                  authnprovidercm.AuthTypeFederated,
 			IsExistingUser:            false,
 			IsAmbiguousUser:           false,
 			ExternalSub:               "ext-sub-123",
@@ -103,21 +99,18 @@ func (s *ManagerTestSuite) TestAuthenticateUser_FederatedNewUser() {
 			AttributesResponse:        attrResp,
 		}, (*serviceerror.ServiceError)(nil))
 
-	returnedAuthUser, result, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
+	returnedAuthUser, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
 		nil, meta, AuthUser{})
 
 	s.Nil(svcErr)
-	s.NotNil(result)
-	s.False(result.IsExistingUser)
-	s.False(result.IsAmbiguousUser)
-	s.Equal("ext-sub-123", result.ExternalSub)
-	s.Equal(map[string]interface{}{"email": "new@example.com"}, result.ExternalClaims)
+	s.False(returnedAuthUser.IsAuthenticated())
 
-	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
-	data, ok := returnedAuthUser.providersAuthData[defaultProvider]
-	s.True(ok)
-	s.True(data.isAttributeValuesIncluded)
-	s.Equal(attrResp, data.attributes)
+	s.Require().Len(returnedAuthUser.authHistory, 1)
+	ar := returnedAuthUser.authHistory[0]
+	s.False(ar.isProviderAttributeValuesIncluded)
+	s.Equal("ext-sub-123", returnedAuthUser.GetLastFederatedSub())
+	s.Equal("new@example.com", ar.runtimeAttributes["email"])
+	s.False(returnedAuthUser.IsLocalUserAmbiguous())
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_ClientError() {
@@ -133,14 +126,13 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ClientError() {
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
 		Return((*authnprovidercm.AuthnResult)(nil), provErr)
 
-	returnedAuthUser, result, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
+	returnedAuthUser, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
 		nil, meta, AuthUser{})
 
 	s.NotNil(svcErr)
 	s.Equal(ErrorAuthenticationFailed.Code, svcErr.Code)
 	s.Equal(serviceerror.ClientErrorType, svcErr.Type)
-	s.Nil(result)
-	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
+	s.False(returnedAuthUser.IsAuthenticated())
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_UserNotFound() {
@@ -176,15 +168,14 @@ func (s *ManagerTestSuite) assertAuthenticateUserClientErrorMapping(
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
 		Return((*authnprovidercm.AuthnResult)(nil), provErr)
 
-	returnedAuthUser, result, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
+	returnedAuthUser, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
 		nil, meta, AuthUser{})
 
 	s.NotNil(svcErr)
 	s.Equal(expectedServiceErrorCode, svcErr.Code)
 	s.Equal(serviceerror.ClientErrorType, svcErr.Type)
 	s.Equal(providerErrorDescription, svcErr.ErrorDescription.DefaultValue)
-	s.Nil(result)
-	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
+	s.False(returnedAuthUser.IsAuthenticated())
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_ServerError() {
@@ -200,14 +191,13 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ServerError() {
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
 		Return((*authnprovidercm.AuthnResult)(nil), provErr)
 
-	returnedAuthUser, result, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
+	returnedAuthUser, svcErr := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials,
 		nil, meta, AuthUser{})
 
 	s.NotNil(svcErr)
 	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
 	s.Equal(serviceerror.ServerErrorType, svcErr.Type)
-	s.Nil(result)
-	s.False(s.mgr.IsAuthenticated(returnedAuthUser))
+	s.False(returnedAuthUser.IsAuthenticated())
 }
 
 func (s *ManagerTestSuite) TestAuthenticateUser_ReAuth() {
@@ -217,9 +207,11 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ReAuth() {
 
 	firstResult := &authnprovidercm.AuthnResult{
 		UserID: "user-1", UserType: "customer", OUID: "ou-1", Token: "tok-first", IsExistingUser: true,
+		AttributesResponse: &authnprovidercm.AttributesResponse{},
 	}
 	secondResult := &authnprovidercm.AuthnResult{
 		UserID: "user-1", UserType: "customer", OUID: "ou-1", Token: "tok-second", IsExistingUser: true,
+		AttributesResponse: &authnprovidercm.AttributesResponse{},
 	}
 
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
@@ -227,19 +219,18 @@ func (s *ManagerTestSuite) TestAuthenticateUser_ReAuth() {
 	s.mockProvider.On("Authenticate", context.Background(), identifiers, credentials, meta).
 		Return(secondResult, (*serviceerror.ServiceError)(nil)).Once()
 
-	au1, _, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, AuthUser{})
-	au2, _, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, au1)
+	au1, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, AuthUser{})
+	au2, _ := s.mgr.AuthenticateUser(context.Background(), identifiers, credentials, nil, meta, au1)
 
-	pd, ok := au2.providersAuthData[defaultProvider]
-	s.True(ok)
-	s.Equal("tok-second", pd.token, "second call must overwrite provider data")
+	s.Require().Len(au2.authHistory, 2)
+	s.Equal("tok-second", au2.authHistory[1].token, "second call must append a new auth history entry")
 }
 
 func (s *ManagerTestSuite) TestGetUserAvailableAttributes_EmptyAuthUser() {
 	attrs, svcErr := s.mgr.GetUserAvailableAttributes(context.Background(), AuthUser{})
-	s.Nil(attrs)
-	s.NotNil(svcErr)
-	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
+	s.Nil(svcErr)
+	s.NotNil(attrs)
+	s.Empty(attrs.Attributes)
 }
 
 func (s *ManagerTestSuite) TestGetUserAvailableAttributes_WithData() {
@@ -252,27 +243,27 @@ func (s *ManagerTestSuite) TestGetUserAvailableAttributes_WithData() {
 		userID:   "user-1",
 		userType: "person",
 		ouID:     "ou-1",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {
-				token:                     "tok",
-				attributes:                expectedAttrs,
-				isAttributeValuesIncluded: true,
+		authHistory: []*AuthResult{
+			{
+				token:                             "tok",
+				providerAttributes:                map[string]interface{}{"email": "a@b.com"},
+				isProviderAttributeValuesIncluded: true,
 			},
 		},
 	}
 
 	attrs, svcErr := s.mgr.GetUserAvailableAttributes(context.Background(), authUser)
 	s.Nil(svcErr)
-	s.Equal(expectedAttrs, attrs)
+	s.Equal(expectedAttrs.Attributes, attrs.Attributes)
 	// No provider call should have been made
 	s.mockProvider.AssertNotCalled(s.T(), "GetAttributes")
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_EmptyAuthUser() {
 	_, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), nil, nil, AuthUser{})
-	s.Nil(attrs)
-	s.NotNil(svcErr)
-	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
+	s.Nil(svcErr)
+	s.NotNil(attrs)
+	s.Empty(attrs.Attributes)
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheHit() {
@@ -285,36 +276,36 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheHit() {
 		userID:   "user-1",
 		userType: "person",
 		ouID:     "ou-1",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {
-				token:                     "tok",
-				attributes:                expectedAttrs,
-				isAttributeValuesIncluded: true,
+		authHistory: []*AuthResult{
+			{
+				token:                             "tok",
+				providerAttributes:                map[string]interface{}{"email": "a@b.com"},
+				isProviderAttributeValuesIncluded: true,
 			},
 		},
 	}
 
 	retAuthUser, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), nil, nil, authUser)
 	s.Nil(svcErr)
-	s.Equal(expectedAttrs, attrs)
+	s.Equal(expectedAttrs.Attributes, attrs.Attributes)
 	s.Equal(authUser, retAuthUser)
 	s.mockProvider.AssertNotCalled(s.T(), "GetAttributes")
 }
 
 func (s *ManagerTestSuite) TestGetUserAvailableAttributes_NoProviderData() {
-	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no provider data set
+	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no auth history
 	attrs, svcErr := s.mgr.GetUserAvailableAttributes(context.Background(), authUser)
-	s.Nil(attrs)
-	s.NotNil(svcErr)
-	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
+	s.Nil(svcErr)
+	s.NotNil(attrs)
+	s.Empty(attrs.Attributes)
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_NoProviderData() {
-	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no provider data set
+	authUser := AuthUser{userID: "user-1", userType: "person", ouID: "ou-1"} // authenticated but no auth history
 	_, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), nil, nil, authUser)
-	s.Nil(attrs)
-	s.NotNil(svcErr)
-	s.Equal(serviceerror.InternalServerError.Code, svcErr.Code)
+	s.Nil(svcErr)
+	s.NotNil(attrs)
+	s.Empty(attrs.Attributes)
 }
 
 func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissServerError() {
@@ -322,8 +313,8 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissServerError() {
 		userID:   "user-1",
 		userType: "person",
 		ouID:     "ou-1",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {token: "tok", isAttributeValuesIncluded: false},
+		authHistory: []*AuthResult{
+			{token: "tok", isProviderAttributeValuesIncluded: false},
 		},
 	}
 
@@ -350,8 +341,8 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMissClientError() {
 		userID:   "user-1",
 		userType: "person",
 		ouID:     "ou-1",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {token: "expired-tok", isAttributeValuesIncluded: false},
+		authHistory: []*AuthResult{
+			{token: "expired-tok", isProviderAttributeValuesIncluded: false},
 		},
 	}
 
@@ -378,11 +369,11 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMiss() {
 		userID:   "user-1",
 		userType: "person",
 		ouID:     "ou-1",
-		providersAuthData: map[providerKey]providerData{
-			defaultProvider: {
-				token:                     "tok",
-				attributes:                nil,
-				isAttributeValuesIncluded: false,
+		authHistory: []*AuthResult{
+			{
+				token:                             "tok",
+				providerAttributes:                nil,
+				isProviderAttributeValuesIncluded: false,
 			},
 		},
 	}
@@ -401,9 +392,8 @@ func (s *ManagerTestSuite) TestGetUserAttributes_CacheMiss() {
 
 	retAuthUser, attrs, svcErr := s.mgr.GetUserAttributes(context.Background(), requestedAttrs, nil, authUser)
 	s.Nil(svcErr)
-	s.Equal(fetchedAttrs, attrs)
-	retData, ok := retAuthUser.providersAuthData[defaultProvider]
-	s.True(ok)
-	s.True(retData.isAttributeValuesIncluded)
-	s.Equal(fetchedAttrs, retData.attributes)
+	s.Equal(fetchedAttrs.Attributes, attrs.Attributes)
+	s.Require().Len(retAuthUser.authHistory, 1)
+	s.True(retAuthUser.authHistory[0].isProviderAttributeValuesIncluded)
+	s.Equal(map[string]interface{}{"email": "fetched@b.com"}, retAuthUser.authHistory[0].providerAttributes)
 }
