@@ -1280,10 +1280,21 @@ func (p *parameterizer) renderTemplateSequence(buf *bytes.Buffer, node *yaml.Nod
 func (p *parameterizer) renderMappingValue(buf *bytes.Buffer, valueNode *yaml.Node, indent int) error {
 	// Check if value needs special handling
 	if valueNode.Kind == yaml.ScalarNode && strings.HasPrefix(valueNode.Value, "{{") {
-		// Template value - write inline
-		buf.WriteString(" ")
-		buf.WriteString(valueNode.Value)
-		buf.WriteString("\n")
+		if templateVariablePattern.MatchString(valueNode.Value) {
+			// Go template parameterization variable (e.g. {{.MY_VAR}}) - write inline without quotes.
+			// These are replaced before the file is used as YAML, so quoting is not needed.
+			buf.WriteString(" ")
+			buf.WriteString(valueNode.Value)
+			buf.WriteString("\n")
+		} else {
+			// Non-parameterization value starting with {{ (e.g. i18n refs like {{ t(key) }}).
+			// Must be quoted because bare { is a YAML flow-mapping indicator.
+			// Use single-quoted YAML strings to avoid escaping issues with backslashes.
+			buf.WriteString(` '`)
+			buf.WriteString(strings.ReplaceAll(valueNode.Value, `'`, `''`))
+			buf.WriteString(`'`)
+			buf.WriteString("\n")
+		}
 	} else if p.isTemplateSequence(valueNode) {
 		// Template sequence - render template syntax
 		buf.WriteString("\n")
@@ -1325,9 +1336,20 @@ func (p *parameterizer) renderSequenceItemMapping(buf *bytes.Buffer, item *yaml.
 		buf.WriteString(":")
 
 		if valueNode.Kind == yaml.ScalarNode {
-			// Template or regular scalar value
 			buf.WriteString(" ")
-			buf.WriteString(valueNode.Value)
+			val := valueNode.Value
+			// Quote values that begin with { or [ (YAML flow-collection indicators) unless
+			// they are actual Go template parameterization variables like {{.MY_VAR}}.
+			if (strings.HasPrefix(val, "{") || strings.HasPrefix(val, "[")) &&
+				!templateVariablePattern.MatchString(val) {
+				// Use single-quoted YAML strings to avoid escaping issues with backslashes
+				// in values that contain JSON (e.g. meta field with \" sequences).
+				buf.WriteString(`'`)
+				buf.WriteString(strings.ReplaceAll(val, `'`, `''`))
+				buf.WriteString(`'`)
+			} else {
+				buf.WriteString(val)
+			}
 			buf.WriteString("\n")
 		} else if p.isTemplateSequence(valueNode) {
 			// Template sequence

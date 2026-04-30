@@ -1764,6 +1764,92 @@ func TestUserSchemaImportExportSymmetry(t *testing.T) {
 }
 
 // TestUserSchemaExportFormat verifies the exact export format
+// TestRenderNode_I18nRefsInSequenceItemAreQuoted tests that i18n template references
+// (e.g. {{ t(key) }}) in sequence-item mapping values are quoted in the exported YAML
+// so that the output is valid YAML and can be re-imported without parse errors.
+// Regression test for: message field in flow PROMPT nodes exported without quotes.
+func TestRenderNode_I18nRefsInSequenceItemAreQuoted(t *testing.T) {
+	type Node struct {
+		ID      string `yaml:"id"`
+		Type    string `yaml:"type"`
+		Message string `yaml:"message,omitempty"`
+		Next    string `yaml:"next,omitempty"`
+	}
+	type Flow struct {
+		Name  string `yaml:"name"`
+		Nodes []Node `yaml:"nodes"`
+	}
+
+	obj := &Flow{
+		Name: "User Onboarding Flow",
+		Nodes: []Node{
+			{
+				ID:      "invite_email_service_unavailable",
+				Type:    "PROMPT",
+				Message: "{{ t(onboarding:forms.invite_email_unavailable.title) }}",
+				Next:    "invite_link_status",
+			},
+			{
+				ID:      "invite_link_status",
+				Type:    "PROMPT",
+				Message: "The invite link is ready to share",
+				Next:    "invite_verify",
+			},
+		},
+	}
+
+	p := newParameterizer(templatingRules{})
+	// Use empty (non-nil) rules to exercise the custom renderNode path (same as flows)
+	result, _, err := p.ToParameterizedYAML(
+		obj, "Flow", "User Onboarding Flow",
+		toDeclarativeResourceRules(&resourceRules{}))
+	require.NoError(t, err)
+
+	// The i18n reference must be single-quoted so the output is valid YAML.
+	assert.Contains(t, result, `message: '{{ t(onboarding:forms.invite_email_unavailable.title) }}'`,
+		"i18n reference in message field should be quoted in exported YAML")
+
+	// Plain string messages must remain unquoted.
+	assert.Contains(t, result, "message: The invite link is ready to share",
+		"plain string message should remain unquoted")
+
+	// Verify the output parses as valid YAML and round-trips correctly.
+	var parsed Flow
+	require.NoError(t, yaml.Unmarshal([]byte(result), &parsed),
+		"exported YAML must be parseable")
+	assert.Equal(t, "{{ t(onboarding:forms.invite_email_unavailable.title) }}",
+		parsed.Nodes[0].Message)
+	assert.Equal(t, "The invite link is ready to share", parsed.Nodes[1].Message)
+}
+
+// TestRenderMappingValue_I18nRefsAreQuoted tests that i18n refs at the mapping level
+// are also quoted, distinguishing them from real parameterization variables.
+func TestRenderMappingValue_I18nRefsAreQuoted(t *testing.T) {
+	type Resource struct {
+		Name    string `yaml:"name"`
+		Message string `yaml:"message,omitempty"`
+		// A real parameterization variable placeholder (written unquoted)
+		Callback string `yaml:"callbackUrl,omitempty"`
+	}
+
+	obj := &Resource{
+		Name:     "Test",
+		Message:  "{{ t(signup:forms.credentials.title) }}",
+		Callback: "{{.TEST_CALLBACK_URL}}",
+	}
+
+	p := newParameterizer(templatingRules{})
+	result, _, err := p.ToParameterizedYAML(
+		obj, "Application", "Test",
+		toDeclarativeResourceRules(&resourceRules{Variables: []string{"Callback"}}))
+	require.NoError(t, err)
+
+	// i18n reference must be single-quoted.
+	assert.Contains(t, result, `message: '{{ t(signup:forms.credentials.title) }}'`)
+	// Real parameterization variable must remain unquoted (Go template syntax).
+	assert.Contains(t, result, `callbackUrl: {{.TEST_CALLBACK_URL}}`)
+}
+
 func TestUserSchemaExportFormat(t *testing.T) {
 	type UserSchema struct {
 		ID                    string          `yaml:"id"`
