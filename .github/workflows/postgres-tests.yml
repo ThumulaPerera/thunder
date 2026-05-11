@@ -46,7 +46,7 @@ jobs:
       distribution-path: ${{ steps.build.outputs.distribution-path }}
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
         with:
           fetch-depth: 0
 
@@ -145,7 +145,7 @@ jobs:
           --health-retries 5
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
 
       - name: ⚙️ Set up Go Environment
         uses: ./.github/actions/setup-go

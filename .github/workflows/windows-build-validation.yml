@@ -30,7 +30,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
 
       - name: ⚙️ Set up Go Environment
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -144,7 +144,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
 
       - name: ⚙️ Set up Go Environment
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -175,7 +175,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
 
       - name: ⚙️ Set up Go Environment
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -232,7 +232,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 📥 Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4 # v4
 
       - name: ⚙️ Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
