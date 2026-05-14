@@ -24,17 +24,17 @@ import (
 	"fmt"
 	"slices"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	authnoauth "github.com/thunder-id/thunder-id/internal/authn/oauth"
-	authnprovidermgr "github.com/thunder-id/thunder-id/internal/authnprovider/manager"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/idp"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	systemutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	authnoauth "github.com/thunder-id/thunderid/internal/authn/oauth"
+	authnprovidermgr "github.com/thunder-id/thunderid/internal/authnprovider/manager"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	systemutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 const (

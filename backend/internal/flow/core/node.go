@@ -19,8 +19,8 @@
 package core
 
 import (
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // NodeInterface defines the interface for nodes in the graph

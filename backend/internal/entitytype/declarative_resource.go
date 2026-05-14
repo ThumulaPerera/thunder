@@ -24,13 +24,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/entitytype/model"
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/security"
+	"github.com/thunder-id/thunderid/internal/entitytype/model"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/security"
 
 	"gopkg.in/yaml.v3"
 )

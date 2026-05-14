@@ -22,11 +22,11 @@ package service
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	dbmodel "github.com/thunder-id/thunder-id/internal/system/database/model"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/model"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	dbmodel "github.com/thunder-id/thunderid/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/model"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // HealthCheckServiceInterface defines the interface for the health check service.

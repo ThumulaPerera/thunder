@@ -26,16 +26,16 @@ import (
 
 	"encoding/json"
 
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/group"
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
-	resourcepkg "github.com/thunder-id/thunder-id/internal/resource"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/group"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
+	resourcepkg "github.com/thunder-id/thunderid/internal/resource"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 const loggerComponentName = "RoleMgtService"

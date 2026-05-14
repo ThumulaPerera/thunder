@@ -7,8 +7,8 @@ package flowmetamock
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/flow/flowmeta"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/flow/flowmeta"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 	mock "github.com/stretchr/testify/mock"
 )
 

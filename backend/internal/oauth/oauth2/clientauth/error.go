@@ -21,7 +21,7 @@ package clientauth
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
 )
 
 // authError represents an authentication error.

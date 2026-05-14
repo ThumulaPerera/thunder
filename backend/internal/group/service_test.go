@@ -28,17 +28,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/entity"
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/security"
-	"github.com/thunder-id/thunder-id/internal/system/sysauthz"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
-	"github.com/thunder-id/thunder-id/tests/mocks/entitymock"
-	"github.com/thunder-id/thunder-id/tests/mocks/entitytypemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oumock"
-	"github.com/thunder-id/thunder-id/tests/mocks/sysauthzmock"
+	"github.com/thunder-id/thunderid/internal/entity"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/security"
+	"github.com/thunder-id/thunderid/internal/system/sysauthz"
+	"github.com/thunder-id/thunderid/internal/system/utils"
+	"github.com/thunder-id/thunderid/tests/mocks/entitymock"
+	"github.com/thunder-id/thunderid/tests/mocks/entitytypemock"
+	"github.com/thunder-id/thunderid/tests/mocks/oumock"
+	"github.com/thunder-id/thunderid/tests/mocks/sysauthzmock"
 )
 
 // stubTransactioner is a stub implementation of Transactioner for testing.

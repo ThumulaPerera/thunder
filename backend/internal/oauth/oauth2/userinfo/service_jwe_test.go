@@ -31,17 +31,17 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	appmodel "github.com/thunder-id/thunder-id/internal/application/model"
-	certmodel "github.com/thunder-id/thunder-id/internal/cert"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/jwksresolver"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwe"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
+	appmodel "github.com/thunder-id/thunderid/internal/application/model"
+	certmodel "github.com/thunder-id/thunderid/internal/cert"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/jwksresolver"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwe"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwemock"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
 )
 
 // JWEUserInfoTestSuite defines the test suite for JWE/JWS userinfo generation.

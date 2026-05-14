@@ -27,9 +27,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab/hash"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
-	"github.com/thunder-id/thunder-id/tests/mocks/crypto/hashmock"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab/hash"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
+	"github.com/thunder-id/thunderid/tests/mocks/crypto/hashmock"
 )
 
 type ServiceTestSuite struct {

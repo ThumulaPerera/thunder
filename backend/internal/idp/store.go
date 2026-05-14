@@ -23,12 +23,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	dbmodel "github.com/thunder-id/thunder-id/internal/system/database/model"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	dbmodel "github.com/thunder-id/thunderid/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 var getDBProvider = provider.GetDBProvider

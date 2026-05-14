@@ -23,7 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
 )
 
 type UtilsTestSuite struct {

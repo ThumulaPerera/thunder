@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
 )
 
 // mockSubscriberV2 is a mock subscriber for testing with category support

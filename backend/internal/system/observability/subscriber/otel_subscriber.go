@@ -30,11 +30,11 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
-	otelconfig "github.com/thunder-id/thunder-id/internal/system/observability/opentelemetry"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
+	otelconfig "github.com/thunder-id/thunderid/internal/system/observability/opentelemetry"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 const otelSubscriberComponentName = "OTelSubscriber"

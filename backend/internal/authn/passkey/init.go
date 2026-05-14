@@ -19,9 +19,9 @@
 package passkey
 
 import (
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
 )
 
 // Initialize initializes the WebAuthn authentication service.

@@ -19,8 +19,8 @@
 package consent
 
 import (
-	"github.com/thunder-id/thunder-id/internal/consent"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/consent"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
 )
 
 // Initialize initializes the consent enforcer service and other related components.

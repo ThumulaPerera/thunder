@@ -19,21 +19,21 @@
 package executor
 
 import (
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	notifcm "github.com/thunder-id/thunder-id/internal/notification/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/template"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
-	"github.com/thunder-id/thunder-id/tests/mocks/notification/notificationmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/templatemock"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	notifcm "github.com/thunder-id/thunderid/internal/notification/common"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/template"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
+	"github.com/thunder-id/thunderid/tests/mocks/notification/notificationmock"
+	"github.com/thunder-id/thunderid/tests/mocks/templatemock"
 )
 
 const testRenderedSMSBody = "Your notification from the system."

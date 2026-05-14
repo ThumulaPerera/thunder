@@ -24,14 +24,14 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/thunder-id/thunder-id/internal/design/common"
-	"github.com/thunder-id/thunder-id/internal/design/resolve"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	i18nmgt "github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/design/common"
+	"github.com/thunder-id/thunderid/internal/design/resolve"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // MetaType represents the type of metadata being requested.

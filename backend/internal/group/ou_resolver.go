@@ -21,7 +21,7 @@ package group
 import (
 	"context"
 
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
 )
 
 // ouGroupResolverAdapter implements oupkg.OUGroupResolver using the group store.

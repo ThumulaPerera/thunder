@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // Transactioner provides transaction management with automatic nesting detection.

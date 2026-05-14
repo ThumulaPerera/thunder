@@ -21,9 +21,9 @@ package user
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // ResolveDisplayAttributePaths collects unique user types and resolves their display

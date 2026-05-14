@@ -24,9 +24,9 @@ import (
 	"slices"
 	"strings"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/pkce"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/pkce"
 )
 
 // ValidateAuthorizationRequestParams validates the common authorization request parameters

@@ -22,9 +22,9 @@ package jwt
 import (
 	"time"
 
-	httpservice "github.com/thunder-id/thunder-id/internal/system/http"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider/defaultkm"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider/defaultkm/pkiservice"
+	httpservice "github.com/thunder-id/thunderid/internal/system/http"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider/defaultkm"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider/defaultkm/pkiservice"
 )
 
 // Initialize initializes the JWT service.

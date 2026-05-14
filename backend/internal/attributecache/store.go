@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	dbprovider "github.com/thunder-id/thunder-id/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	dbprovider "github.com/thunder-id/thunderid/internal/system/database/provider"
 )
 
 // attributeCacheStoreInterface defines the interface for the attribute cache store.

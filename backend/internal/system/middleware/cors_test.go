@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/cors"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/cors"
 )
 
 type CORSMiddlewareTestSuite struct {

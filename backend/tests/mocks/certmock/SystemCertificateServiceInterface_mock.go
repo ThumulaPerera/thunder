@@ -7,7 +7,7 @@ package certmock
 import (
 	"crypto/tls"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/config"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -21,7 +21,7 @@ package template
 import (
 	"fmt"
 
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
 
 	"gopkg.in/yaml.v3"
 )

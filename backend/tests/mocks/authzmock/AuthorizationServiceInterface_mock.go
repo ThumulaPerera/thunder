@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/authz"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/authz"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // NewAuthorizationServiceInterfaceMock creates a new instance of AuthorizationServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

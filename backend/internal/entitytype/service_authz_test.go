@@ -27,14 +27,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/system/security"
-	"github.com/thunder-id/thunder-id/internal/system/sysauthz"
-	"github.com/thunder-id/thunder-id/tests/mocks/consentmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oumock"
-	"github.com/thunder-id/thunder-id/tests/mocks/sysauthzmock"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/security"
+	"github.com/thunder-id/thunderid/internal/system/sysauthz"
+	"github.com/thunder-id/thunderid/tests/mocks/consentmock"
+	"github.com/thunder-id/thunderid/tests/mocks/oumock"
+	"github.com/thunder-id/thunderid/tests/mocks/sysauthzmock"
 )
 
 // ---------------------------------------------------------------------------

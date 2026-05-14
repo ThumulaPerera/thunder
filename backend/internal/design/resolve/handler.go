@@ -22,11 +22,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/design/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/apierror"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/design/common"
+	"github.com/thunder-id/thunderid/internal/system/error/apierror"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 const handlerLogger = "DesignResolveHandler"

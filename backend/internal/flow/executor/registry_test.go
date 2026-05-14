@@ -24,9 +24,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
 )
 
 type ExecutorRegistryTestSuite struct {

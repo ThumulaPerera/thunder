@@ -31,6 +31,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import {OrganizationUnitTreePicker} from '@thunderid/configure-organization-units';
 import {CopyableTextAdapter, type FlowComponent} from '@thunderid/design';
 import {useLogger} from '@thunderid/logger/react';
+import type {ApiError} from '@thunderid/types';
 import {
   Box,
   Stack,
@@ -54,6 +55,7 @@ import {useForm, Controller} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {useNavigate} from 'react-router';
 import {z} from 'zod';
+import CredentialFieldInput from '../components/CredentialFieldInput';
 
 /** Typed shape for flow sub-components */
 type FlowSubComponent = EmbeddedFlowComponent & {
@@ -89,6 +91,39 @@ function deriveStepLabel(
   }
 
   return '';
+}
+
+const FLOW_NOT_FOUND_ERROR_CODE = 'FLM-1003';
+
+function containsFlowNotFoundText(value: string | undefined): boolean {
+  return value?.toLowerCase().includes('flow not found') ?? false;
+}
+
+function isMissingOnboardingFlow(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const flowError = error as Error & {
+    code?: string;
+    failureReason?: string;
+    response?: {
+      data?: ApiError;
+      status?: number;
+    };
+    status?: number;
+  };
+  const {response} = flowError;
+  const apiError = response?.data;
+
+  return (
+    apiError?.code === FLOW_NOT_FOUND_ERROR_CODE ||
+    flowError.code === FLOW_NOT_FOUND_ERROR_CODE ||
+    containsFlowNotFoundText(apiError?.message) ||
+    containsFlowNotFoundText(apiError?.description) ||
+    containsFlowNotFoundText(flowError.message) ||
+    containsFlowNotFoundText(flowError.failureReason)
+  );
 }
 
 const getOptionValue = (option: unknown): string => {
@@ -168,6 +203,7 @@ function InviteUserStepContent({
                 comp.type === 'TEXT_INPUT' ||
                 comp.type === 'EMAIL_INPUT' ||
                 comp.type === 'PHONE_INPUT' ||
+                comp.type === 'PASSWORD_INPUT' ||
                 comp.type === 'SELECT' ||
                 comp.type === 'OU_SELECT') &&
               comp.ref
@@ -177,7 +213,9 @@ function InviteUserStepContent({
               if (comp.type === 'EMAIL_INPUT') {
                 fieldSchema = z.string().email('Please enter a valid email address');
               } else if (comp.type === 'PHONE_INPUT') {
-                fieldSchema = z.string().check(z.regex(/^\+?[0-9\s\-().]{7,20}$/, 'Please enter a valid phone number'));
+                fieldSchema = z.string().regex(/^\+?[0-9\s\-().]{7,20}$/, 'Please enter a valid phone number');
+              } else if (comp.type === 'PASSWORD_INPUT') {
+                fieldSchema = z.string();
               }
 
               const labelText = typeof comp.label === 'string' ? comp.label : comp.ref;
@@ -318,6 +356,34 @@ function InviteUserStepContent({
                   field.onChange(e);
                   handleInputChangeFn(ref, e.target.value);
                 }}
+              />
+            )}
+          />
+        </FormControl>
+      );
+    }
+
+    if (type === 'PASSWORD_INPUT') {
+      return (
+        <FormControl key={component.id ?? index} required={required}>
+          <FormLabel htmlFor={ref}>{resolve(labelText) ?? labelText}</FormLabel>
+          <Controller
+            name={ref}
+            control={formControl}
+            rules={{required: required ? `${resolve(labelText) ?? labelText} is required` : false}}
+            render={({field}) => (
+              <CredentialFieldInput
+                id={ref}
+                name={field.name}
+                value={(field.value as string) ?? ''}
+                placeholder={resolve(placeholderText) ?? placeholderText}
+                required={required ?? false}
+                error={!!formErrors[ref]}
+                helperText={formErrors[ref]?.message as string}
+                color={formErrors[ref] ? 'error' : 'primary'}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                inputRef={field.ref}
               />
             )}
           />
@@ -668,7 +734,7 @@ function InviteUserStepContent({
         })}
       </Stack>
       {!hasInteractiveComponents && (
-        <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{mt: 4}}>
+        <Stack direction="row" spacing={2} justifyContent="center" sx={{mt: 4}}>
           <Button variant="outlined" onClick={handleClose}>
             {t('common:actions.close', 'Close')}
           </Button>
@@ -679,7 +745,7 @@ function InviteUserStepContent({
               onResetLocalState();
             }}
           >
-            {t('users:inviteAnother', 'Invite Another User')}
+            {t('users:addAnother', 'Add Another User')}
           </Button>
         </Stack>
       )}
@@ -767,6 +833,15 @@ export default function UserInvitePage(): JSX.Element {
     });
   }, [navigate, logger]);
 
+  const handleManualCreateFallback = useCallback(() => {
+    logger.info('Falling back to manual user creation because the onboarding flow is unavailable');
+    (async () => {
+      await navigate('/users/create');
+    })().catch((err: unknown) => {
+      logger.error('Failed to navigate to fallback user creation page', {error: err});
+    });
+  }, [navigate, logger]);
+
   const handleStepLabelChange = useCallback(
     (label: string) => {
       if (label !== prevStepLabelRef.current) {
@@ -801,10 +876,10 @@ export default function UserInvitePage(): JSX.Element {
     setFlowError(null);
   }, []);
 
-  // Compute progress from breadcrumb trail
-  // Without OU step: 3 steps (user type, email, user details + credential)
-  // With OU step: 4 steps (user type, OU, email, user details + credential)
-  const totalSteps = hasOuStep ? 4 : 3;
+  // Compute progress from breadcrumb trail.
+  // Without OU step: user type, onboarding choice, email/details, completion path.
+  // With OU step: add one extra OU selection step.
+  const totalSteps = hasOuStep ? 5 : 4;
   const progress = Math.min((breadcrumbs.length / totalSteps) * 100, 100);
 
   return (
@@ -838,7 +913,7 @@ export default function UserInvitePage(): JSX.Element {
               })}
               {breadcrumbs.length === 0 && (
                 <Typography variant="h5" color="text.primary">
-                  {t('users:inviteUser', 'Invite User')}
+                  {t('users:addUser', 'Add User')}
                 </Typography>
               )}
             </Breadcrumbs>
@@ -869,9 +944,17 @@ export default function UserInvitePage(): JSX.Element {
             >
               <InviteUser
                 onError={(err: Error) => {
+                  if (isMissingOnboardingFlow(err)) {
+                    handleManualCreateFallback();
+                    return;
+                  }
                   logger.error('User onboarding error', {error: err});
                 }}
                 onFlowChange={(response: any) => {
+                  if (isMissingOnboardingFlow(response)) {
+                    handleManualCreateFallback();
+                    return;
+                  }
                   setFlowError((response?.failureReason as string | null) ?? null);
                 }}
               >

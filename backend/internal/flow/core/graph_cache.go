@@ -22,7 +22,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/thunder-id/thunder-id/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/cache"
 )
 
 // GraphCacheInterface defines operations for caching graphs.

@@ -25,14 +25,14 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
-	i18nmgt "github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
+	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
 )
 
 // Initialize initializes the application service and registers its routes.

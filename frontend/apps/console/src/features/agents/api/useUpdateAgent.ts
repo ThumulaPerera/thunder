@@ -51,10 +51,10 @@ export default function useUpdateAgent(): UseMutationResult<Agent, Error, Update
     onSuccess: (_, {agentId}) => {
       queryClient.invalidateQueries({queryKey: [AgentQueryKeys.AGENT, agentId]}).catch(() => undefined);
       queryClient.invalidateQueries({queryKey: [AgentQueryKeys.AGENTS]}).catch(() => undefined);
-      showToast(t('edit.save.success', 'Agent saved successfully'), 'success');
+      showToast(t('update.success'), 'success');
     },
     onError: (error) => {
-      showToast(getErrorMessage(error, t, 'edit.save.error'), 'error');
+      showToast(getErrorMessage(error, t, 'update.error'), 'error');
     },
   });
 }

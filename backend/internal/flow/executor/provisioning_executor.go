@@ -26,14 +26,14 @@ import (
 	"sort"
 	"strings"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/group"
-	"github.com/thunder-id/thunder-id/internal/role"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/group"
+	"github.com/thunder-id/thunderid/internal/role"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // provisioningExecutor implements the ExecutorInterface for user provisioning in a flow.

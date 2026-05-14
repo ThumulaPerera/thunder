@@ -21,14 +21,14 @@ package provider
 import (
 	"time"
 
-	authncommon "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/authn/otp"
-	"github.com/thunder-id/thunder-id/internal/authn/passkey"
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/idp"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	systemhttp "github.com/thunder-id/thunder-id/internal/system/http"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	authncommon "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/authn/otp"
+	"github.com/thunder-id/thunderid/internal/authn/passkey"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	systemhttp "github.com/thunder-id/thunderid/internal/system/http"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // InitializeAuthnProvider initializes the authentication provider.

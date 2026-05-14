@@ -21,8 +21,8 @@ package sysauthz
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/security"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/security"
 )
 
 // policyDecision is the outcome of a single policy evaluation.

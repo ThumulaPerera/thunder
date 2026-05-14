@@ -22,16 +22,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/flow/flowexec"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/par"
-	"github.com/thunder-id/thunder-id/internal/resource"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/constants"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/flow/flowexec"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/par"
+	"github.com/thunder-id/thunderid/internal/resource"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/constants"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // Initialize initializes the authorization handler and registers its routes.

@@ -21,8 +21,8 @@ package inboundclient
 import (
 	"errors"
 
-	"github.com/thunder-id/thunder-id/internal/cert"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/cert"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 var (

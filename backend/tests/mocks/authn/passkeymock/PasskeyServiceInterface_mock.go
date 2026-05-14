@@ -7,9 +7,9 @@ package passkeymock
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/authn/passkey"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/authn/passkey"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 	mock "github.com/stretchr/testify/mock"
 )
 

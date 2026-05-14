@@ -27,9 +27,9 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // updateFlowScript atomically updates a flow context preserving its TTL.

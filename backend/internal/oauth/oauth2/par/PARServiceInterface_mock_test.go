@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	model0 "github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
+	"github.com/thunder-id/thunderid/internal/inboundclient/model"
+	model0 "github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
 )
 
 // NewPARServiceInterfaceMock creates a new instance of PARServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

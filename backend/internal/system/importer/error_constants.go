@@ -20,19 +20,19 @@
 package importer
 
 import (
-	"github.com/thunder-id/thunder-id/internal/application"
-	layoutmgt "github.com/thunder-id/thunder-id/internal/design/layout/mgt"
-	thememgt "github.com/thunder-id/thunder-id/internal/design/theme/mgt"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	flowmgt "github.com/thunder-id/thunder-id/internal/flow/mgt"
-	"github.com/thunder-id/thunder-id/internal/group"
-	"github.com/thunder-id/thunder-id/internal/idp"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/resource"
-	"github.com/thunder-id/thunder-id/internal/role"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/user"
+	"github.com/thunder-id/thunderid/internal/application"
+	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
+	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
+	"github.com/thunder-id/thunderid/internal/group"
+	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/resource"
+	"github.com/thunder-id/thunderid/internal/role"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/user"
 )
 
 // notFoundErrorCodes is the set of service error codes that represent a resource-not-found condition

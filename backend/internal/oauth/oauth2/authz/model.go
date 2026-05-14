@@ -21,7 +21,7 @@ package authz
 import (
 	"time"
 
-	oauth2model "github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
+	oauth2model "github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
 )
 
 // OAuthMessage represents the OAuth message.

@@ -21,9 +21,9 @@
 package assert
 
 import (
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // TODO: Refactor this to be a centralized auth assertion generator with appropriate token generation logics.

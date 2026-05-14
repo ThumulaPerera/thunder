@@ -29,10 +29,10 @@ import (
 	// Use crypto/sha1 only for JWKS x5t as required by spec for thumbprint.
 	"crypto/sha1" //nolint:gosec
 
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab/hash"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider/defaultkm/pkiservice"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab/hash"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider/defaultkm/pkiservice"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // JWKSServiceInterface defines the interface for JWKS service.

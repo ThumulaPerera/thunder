@@ -19,8 +19,8 @@
 package github
 
 import (
-	authnoauth "github.com/thunder-id/thunder-id/internal/authn/oauth"
-	syshttp "github.com/thunder-id/thunder-id/internal/system/http"
+	authnoauth "github.com/thunder-id/thunderid/internal/authn/oauth"
+	syshttp "github.com/thunder-id/thunderid/internal/system/http"
 )
 
 // Initialize initializes the GitHub OAuth authentication service.

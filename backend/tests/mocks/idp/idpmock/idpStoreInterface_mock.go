@@ -8,7 +8,7 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/idp"
+	"github.com/thunder-id/thunderid/internal/idp"
 )
 
 // newIdpStoreInterfaceMock creates a new instance of idpStoreInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

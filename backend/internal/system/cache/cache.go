@@ -22,7 +22,7 @@ package cache
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // CacheInterface defines the common interface for cache operations.

@@ -24,12 +24,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/idp"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	oauth2model "github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/utils"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/idp"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	oauth2model "github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
 )
 
 // TokenValidatorInterface defines the interface for validating tokens.

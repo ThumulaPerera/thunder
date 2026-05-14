@@ -19,8 +19,8 @@
 package authz
 
 import (
-	"github.com/thunder-id/thunder-id/internal/authz/engine"
-	"github.com/thunder-id/thunder-id/internal/role"
+	"github.com/thunder-id/thunderid/internal/authz/engine"
+	"github.com/thunder-id/thunderid/internal/role"
 )
 
 // Initialize creates and initializes the authorization service with the RBAC engine.

@@ -23,8 +23,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/system/database/model"
-	"github.com/thunder-id/thunder-id/internal/system/database/utils"
+	"github.com/thunder-id/thunderid/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/database/utils"
 )
 
 const (

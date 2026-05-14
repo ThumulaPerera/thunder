@@ -28,9 +28,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 type OAuth2UtilsTestSuite struct {

@@ -21,9 +21,9 @@ package introspect
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // tokenIntrospectionHandler handles OAuth 2.0 token introspection requests.

@@ -27,8 +27,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/auth"
 
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // NewTokenVerifier creates a TokenVerifier function that verifies tokens

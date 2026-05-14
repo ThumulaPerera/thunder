@@ -19,17 +19,17 @@
 package inboundclient
 
 import (
-	"github.com/thunder-id/thunder-id/internal/cert"
-	"github.com/thunder-id/thunder-id/internal/consent"
-	layoutmgt "github.com/thunder-id/thunder-id/internal/design/layout/mgt"
-	thememgt "github.com/thunder-id/thunder-id/internal/design/theme/mgt"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	flowmgt "github.com/thunder-id/thunder-id/internal/flow/mgt"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	dre "github.com/thunder-id/thunder-id/internal/system/declarative_resource/entity"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/cert"
+	"github.com/thunder-id/thunderid/internal/consent"
+	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
+	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	dre "github.com/thunder-id/thunderid/internal/system/declarative_resource/entity"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // Initialize initializes the inbound client service.

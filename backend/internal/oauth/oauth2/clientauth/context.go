@@ -21,7 +21,7 @@ package clientauth
 import (
 	"context"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
 )
 
 type contextKey string

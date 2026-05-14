@@ -19,7 +19,7 @@
 package executor
 
 import (
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"context"
 	"testing"
@@ -28,13 +28,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/security"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oumock"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/security"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
+	"github.com/thunder-id/thunderid/tests/mocks/oumock"
 )
 
 const testParentOUID = "parent-ou-123"

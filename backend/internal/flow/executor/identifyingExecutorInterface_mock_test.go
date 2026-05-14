@@ -6,7 +6,7 @@ package executor
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/common"
 )
 
 // newIdentifyingExecutorInterfaceMock creates a new instance of identifyingExecutorInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

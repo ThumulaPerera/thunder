@@ -19,11 +19,11 @@
 package entity
 
 import (
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab/hash"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab/hash"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // Initialize initializes the entity service.

@@ -18,7 +18,7 @@
 
 package model
 
-import "github.com/thunder-id/thunder-id/internal/system/utils"
+import "github.com/thunder-id/thunderid/internal/system/utils"
 
 // OAuthParameters represents the parameters required for OAuth2 authorization.
 type OAuthParameters struct {

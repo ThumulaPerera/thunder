@@ -24,12 +24,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	dbmodel "github.com/thunder-id/thunder-id/internal/system/database/model"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	dbmodel "github.com/thunder-id/thunderid/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // entityStoreInterface defines the interface for entity store operations.

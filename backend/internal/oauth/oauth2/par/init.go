@@ -22,15 +22,15 @@ import (
 	"context"
 	"net/http"
 
-	authnprovidermgr "github.com/thunder-id/thunder-id/internal/authnprovider/manager"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/clientauth"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/discovery"
-	"github.com/thunder-id/thunder-id/internal/resource"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
+	authnprovidermgr "github.com/thunder-id/thunderid/internal/authnprovider/manager"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/clientauth"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/discovery"
+	"github.com/thunder-id/thunderid/internal/resource"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
 )
 
 // Initialize initializes the PAR handler and registers its routes.

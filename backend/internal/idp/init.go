@@ -23,12 +23,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // Initialize initializes the IDP service and registers its routes.

@@ -23,12 +23,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/flow/executor"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/flow/executor"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // graphBuilderInterface defines the interface for building flow graphs.

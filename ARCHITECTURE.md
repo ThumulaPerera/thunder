@@ -1,6 +1,6 @@
 # ThunderID – Architecture Reference
 
-Go IAM server (`github.com/thunder-id/thunder-id`). Single binary serving a REST API + two React SPAs (`/gate`, `/console`).
+Go IAM server (`github.com/thunder-id/thunderid`). Single binary serving a REST API + two React SPAs (`/gate`, `/console`).
 
 ## Structure
 

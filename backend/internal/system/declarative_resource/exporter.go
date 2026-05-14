@@ -21,8 +21,8 @@ package declarativeresource
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // ResourceRules defines variables and array variables to parameterize for a resource type.

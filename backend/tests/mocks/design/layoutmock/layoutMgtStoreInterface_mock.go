@@ -6,7 +6,7 @@ package layoutmock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/design/layout/mgt"
+	"github.com/thunder-id/thunderid/internal/design/layout/mgt"
 )
 
 // newLayoutMgtStoreInterfaceMock creates a new instance of layoutMgtStoreInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

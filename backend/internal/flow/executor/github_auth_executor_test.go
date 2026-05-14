@@ -23,14 +23,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	authnoauth "github.com/thunder-id/thunder-id/internal/authn/oauth"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/tests/mocks/authn/githubmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/authn/oauthmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/authnprovider/managermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/entitytypemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
-	"github.com/thunder-id/thunder-id/tests/mocks/idp/idpmock"
+	authnoauth "github.com/thunder-id/thunderid/internal/authn/oauth"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/tests/mocks/authn/githubmock"
+	"github.com/thunder-id/thunderid/tests/mocks/authn/oauthmock"
+	"github.com/thunder-id/thunderid/tests/mocks/authnprovider/managermock"
+	"github.com/thunder-id/thunderid/tests/mocks/entitytypemock"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
+	"github.com/thunder-id/thunderid/tests/mocks/idp/idpmock"
 )
 
 type GithubAuthExecutorTestSuite struct {

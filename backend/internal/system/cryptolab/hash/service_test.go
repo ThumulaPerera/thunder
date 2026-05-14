@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/argon2"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/config"
 )
 
 const (

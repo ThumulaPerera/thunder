@@ -21,10 +21,10 @@ package jwks
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/system/error/apierror"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/error/apierror"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // jwksHandler handles requests for the JSON Web Key Set (JWKS).

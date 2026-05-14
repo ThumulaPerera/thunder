@@ -34,15 +34,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	httpservice "github.com/thunder-id/thunder-id/internal/system/http"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jws"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider/defaultkm/pkiservice"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	httpservice "github.com/thunder-id/thunderid/internal/system/http"
+	"github.com/thunder-id/thunderid/internal/system/jose/jws"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider/defaultkm/pkiservice"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // JWTServiceInterface defines the interface for JWT operations.

@@ -19,7 +19,7 @@
 package otp
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"context"
 	"testing"
@@ -27,12 +27,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	notifcommon "github.com/thunder-id/thunder-id/internal/notification/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/entityprovidermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/notification/notificationmock"
+	"github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	notifcommon "github.com/thunder-id/thunderid/internal/notification/common"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/entityprovidermock"
+	"github.com/thunder-id/thunderid/tests/mocks/notification/notificationmock"
 )
 
 const (

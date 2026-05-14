@@ -24,15 +24,15 @@ import (
 	"encoding/json"
 	"errors"
 
-	authncommon "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/authn/otp"
-	"github.com/thunder-id/thunder-id/internal/authn/passkey"
-	authnprovidercm "github.com/thunder-id/thunder-id/internal/authnprovider/common"
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/idp"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	authncommon "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/authn/otp"
+	"github.com/thunder-id/thunderid/internal/authn/passkey"
+	authnprovidercm "github.com/thunder-id/thunderid/internal/authnprovider/common"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 type defaultAuthnProvider struct {

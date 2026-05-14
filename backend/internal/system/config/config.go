@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/system/cors"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/cors"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 
 	yaml "gopkg.in/yaml.v3"
 )

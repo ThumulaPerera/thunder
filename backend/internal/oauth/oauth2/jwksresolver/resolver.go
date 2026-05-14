@@ -29,12 +29,12 @@ import (
 	"net/http"
 	"net/url"
 
-	certmodel "github.com/thunder-id/thunder-id/internal/cert"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	syshttp "github.com/thunder-id/thunder-id/internal/system/http"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jws"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	certmodel "github.com/thunder-id/thunderid/internal/cert"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	syshttp "github.com/thunder-id/thunderid/internal/system/http"
+	"github.com/thunder-id/thunderid/internal/system/jose/jws"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // KeyUsePolicy controls how the "use" field in a JWK is interpreted when selecting an encryption key.

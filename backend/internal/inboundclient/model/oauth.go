@@ -27,12 +27,12 @@ import (
 	"slices"
 	"strings"
 
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwe"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jws"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwe"
+	"github.com/thunder-id/thunderid/internal/system/jose/jws"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // InboundAuthType identifies the kind of inbound authentication configured for an entity.

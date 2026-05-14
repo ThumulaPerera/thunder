@@ -25,22 +25,22 @@ import (
 	"errors"
 	"fmt"
 
-	appmodel "github.com/thunder-id/thunder-id/internal/application/model"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	flowmgt "github.com/thunder-id/thunder-id/internal/flow/mgt"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	sysContext "github.com/thunder-id/thunder-id/internal/system/context"
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/observability"
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	appmodel "github.com/thunder-id/thunderid/internal/application/model"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	sysContext "github.com/thunder-id/thunderid/internal/system/context"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/observability"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // FlowExecServiceInterface defines the interface for flow orchestration and acts as the
@@ -478,7 +478,7 @@ func (s *flowExecService) encryptEngineContext(ctx context.Context, engineCtx *E
 		return nil, fmt.Errorf("failed to serialize engine context: %w", err)
 	}
 	params := cryptolab.AlgorithmParams{Algorithm: cryptolab.AlgorithmAESGCM}
-	ciphertext, _, err := s.cryptoSvc.Encrypt(ctx, kmprovider.KeyRef{}, params, []byte(serialized.Context))
+	ciphertext, _, err := s.cryptoSvc.Encrypt(ctx, nil, params, []byte(serialized.Context))
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt context: %w", err)
 	}
@@ -660,7 +660,7 @@ func (s *flowExecService) getFlowContext(ctx context.Context, executionID string
 
 	if isContextEncrypted(dbModel.Context) {
 		decryptParams := cryptolab.AlgorithmParams{Algorithm: cryptolab.AlgorithmAESGCM}
-		decrypted, decryptErr := s.cryptoSvc.Decrypt(ctx, kmprovider.KeyRef{}, decryptParams, []byte(dbModel.Context))
+		decrypted, decryptErr := s.cryptoSvc.Decrypt(ctx, nil, decryptParams, []byte(dbModel.Context))
 		if decryptErr != nil {
 			logger.Error("Failed to decrypt flow context",
 				log.String(log.LoggerKeyExecutionID, executionID), log.Error(decryptErr))

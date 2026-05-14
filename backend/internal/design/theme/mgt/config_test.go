@@ -23,8 +23,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
 )
 
 // ConfigTestSuite tests theme configuration functions.

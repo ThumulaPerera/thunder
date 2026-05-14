@@ -21,19 +21,19 @@ package importer
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/application"
-	layoutmgt "github.com/thunder-id/thunder-id/internal/design/layout/mgt"
-	thememgt "github.com/thunder-id/thunder-id/internal/design/theme/mgt"
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	flowmgt "github.com/thunder-id/thunder-id/internal/flow/mgt"
-	"github.com/thunder-id/thunder-id/internal/group"
-	"github.com/thunder-id/thunder-id/internal/idp"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/resource"
-	"github.com/thunder-id/thunder-id/internal/role"
-	i18nmgt "github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
-	"github.com/thunder-id/thunder-id/internal/user"
+	"github.com/thunder-id/thunderid/internal/application"
+	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
+	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	flowmgt "github.com/thunder-id/thunderid/internal/flow/mgt"
+	"github.com/thunder-id/thunderid/internal/group"
+	"github.com/thunder-id/thunderid/internal/idp"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/resource"
+	"github.com/thunder-id/thunderid/internal/role"
+	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/user"
 )
 
 // Initialize wires the importer service and registers its HTTP routes.

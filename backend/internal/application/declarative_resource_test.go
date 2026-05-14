@@ -26,14 +26,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/application"
-	"github.com/thunder-id/thunder-id/internal/application/model"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/tests/mocks/applicationmock"
+	"github.com/thunder-id/thunderid/internal/application"
+	"github.com/thunder-id/thunderid/internal/application/model"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/tests/mocks/applicationmock"
 )
 
 // ApplicationExporterTestSuite tests the applicationExporter.

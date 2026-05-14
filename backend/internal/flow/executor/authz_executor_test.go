@@ -19,7 +19,7 @@
 package executor
 
 import (
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"context"
 	"testing"
@@ -27,15 +27,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	authzsvc "github.com/thunder-id/thunder-id/internal/authz"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/authzmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/entityprovidermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	authzsvc "github.com/thunder-id/thunderid/internal/authz"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/authzmock"
+	"github.com/thunder-id/thunderid/tests/mocks/entityprovidermock"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
 )
 
 const testExistingUser123ID = "existing-user-123"

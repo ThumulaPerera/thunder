@@ -22,10 +22,10 @@ package handler
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/model"
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/service"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/model"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/service"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // HealthCheckHandler defines the handler for managing health check API requests.

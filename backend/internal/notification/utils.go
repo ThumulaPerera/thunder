@@ -26,10 +26,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/notification/common"
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/notification/common"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 )
 
 var matchString = regexp.MatchString

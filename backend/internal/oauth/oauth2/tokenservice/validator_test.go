@@ -19,7 +19,7 @@
 package tokenservice
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"context"
 	"encoding/base64"
@@ -31,13 +31,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/idp"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/idp/idpmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
+	"github.com/thunder-id/thunderid/internal/idp"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/idp/idpmock"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
 )
 
 const (

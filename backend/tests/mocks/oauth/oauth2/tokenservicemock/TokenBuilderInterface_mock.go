@@ -6,8 +6,8 @@ package tokenservicemock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/tokenservice"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/tokenservice"
 )
 
 // NewTokenBuilderInterfaceMock creates a new instance of TokenBuilderInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -27,13 +27,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	i18ncore "github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	"github.com/thunder-id/thunder-id/internal/system/sysauthz"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
-	"github.com/thunder-id/thunder-id/tests/mocks/sysauthzmock"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	i18ncore "github.com/thunder-id/thunderid/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/sysauthz"
+	"github.com/thunder-id/thunderid/internal/system/utils"
+	"github.com/thunder-id/thunderid/tests/mocks/sysauthzmock"
 )
 
 type OrganizationUnitServiceTestSuite struct {

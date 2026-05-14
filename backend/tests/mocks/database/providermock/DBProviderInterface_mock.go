@@ -6,8 +6,8 @@ package providermock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // NewDBProviderInterfaceMock creates a new instance of DBProviderInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

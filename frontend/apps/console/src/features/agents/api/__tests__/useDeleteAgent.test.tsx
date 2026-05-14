@@ -102,4 +102,19 @@ describe('useDeleteAgent', () => {
 
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({queryKey: [AgentQueryKeys.AGENTS]});
   });
+
+  it('should remove the deleted agent from the cache on success', async () => {
+    mockHttpRequest.mockResolvedValueOnce(undefined);
+
+    const {result, queryClient} = renderHook(() => useDeleteAgent());
+    const removeQueriesSpy = vi.spyOn(queryClient, 'removeQueries');
+
+    result.current.mutate(agentId);
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(removeQueriesSpy).toHaveBeenCalledWith({queryKey: [AgentQueryKeys.AGENT, agentId]});
+  });
 });

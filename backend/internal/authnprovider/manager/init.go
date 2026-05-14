@@ -19,12 +19,12 @@
 package manager
 
 import (
-	authncommon "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/authn/otp"
-	"github.com/thunder-id/thunder-id/internal/authn/passkey"
-	"github.com/thunder-id/thunder-id/internal/authnprovider/provider"
-	"github.com/thunder-id/thunder-id/internal/entity"
-	"github.com/thunder-id/thunder-id/internal/idp"
+	authncommon "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/authn/otp"
+	"github.com/thunder-id/thunderid/internal/authn/passkey"
+	"github.com/thunder-id/thunderid/internal/authnprovider/provider"
+	"github.com/thunder-id/thunderid/internal/entity"
+	"github.com/thunder-id/thunderid/internal/idp"
 )
 
 // InitializeAuthnProviderManager initializes and returns an AuthnProviderManagerInterface.

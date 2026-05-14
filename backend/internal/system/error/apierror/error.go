@@ -20,7 +20,7 @@
 package apierror
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 )
 
 // ErrorResponse defines an API error response with i18n support.

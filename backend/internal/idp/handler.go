@@ -23,11 +23,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/error/apierror"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/error/apierror"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // idpHandler is the handler for identity provider management operations.

@@ -220,7 +220,7 @@ export default function CommunitySection(): JSX.Element {
               title="Contribute"
               description={`Help shape ${productName} by submitting features, fixes, or improvements.`}
               linkLabel="Start Contributing"
-              href="https://github.com/thunder-id/thunder-id/blob/main/CONTRIBUTING.md"
+              href="https://github.com/thunder-id/thunderid/blob/main/CONTRIBUTING.md"
             />
             <CommunityCard
               icon={<IssueIcon />}
@@ -228,7 +228,7 @@ export default function CommunitySection(): JSX.Element {
               title="Report issues"
               description={`Identify bugs and suggest enhancements to make ${productName} better for everyone.`}
               linkLabel="Open an Issue"
-              href="https://github.com/thunder-id/thunder-id/issues"
+              href="https://github.com/thunder-id/thunderid/issues"
             />
             <CommunityCard
               icon={<DiscordIcon />}

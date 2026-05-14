@@ -22,8 +22,8 @@ import (
 	"context"
 	"fmt"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
 )
 
 // loadDeclarativeResources loads inbound clients from the consumer's YAML directory into the

@@ -25,10 +25,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	authnprovidercm "github.com/thunder-id/thunder-id/internal/authnprovider/common"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	authnprovidercm "github.com/thunder-id/thunderid/internal/authnprovider/common"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
 )
 
 const (

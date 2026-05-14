@@ -23,9 +23,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
-	"github.com/thunder-id/thunder-id/internal/system/observability/subscriber"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/observability/subscriber"
 )
 
 // CategoryPublisherInterface is an event bus interface with category-based routing.

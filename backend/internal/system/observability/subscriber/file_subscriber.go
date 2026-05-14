@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/observability/adapter"
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
-	"github.com/thunder-id/thunder-id/internal/system/observability/formatter"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/observability/adapter"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/observability/formatter"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 const fileSubscriberComponentName = "FileSubscriber"

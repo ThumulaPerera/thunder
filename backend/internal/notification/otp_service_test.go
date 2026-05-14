@@ -31,16 +31,16 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/notification/common"
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab/hash"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/template"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/notification/messagemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/templatemock"
+	"github.com/thunder-id/thunderid/internal/notification/common"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab/hash"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/template"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
+	"github.com/thunder-id/thunderid/tests/mocks/notification/messagemock"
+	"github.com/thunder-id/thunderid/tests/mocks/templatemock"
 )
 
 type OTPServiceTestSuite struct {

@@ -19,8 +19,8 @@
 package otp
 
 import (
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/notification"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/notification"
 )
 
 // Initialize initializes the OTP authentication service.

@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/mgt"
 )
 
 // NewI18nServiceInterfaceMock creates a new instance of I18nServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

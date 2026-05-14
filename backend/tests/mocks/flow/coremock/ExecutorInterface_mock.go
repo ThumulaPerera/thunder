@@ -6,8 +6,8 @@ package coremock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
 )
 
 // NewExecutorInterfaceMock creates a new instance of ExecutorInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

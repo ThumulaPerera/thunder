@@ -5,8 +5,8 @@
 package oauthmock
 
 import (
-	"github.com/thunder-id/thunder-id/internal/authn/oauth"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/authn/oauth"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -25,12 +25,12 @@ import (
 	"strings"
 	"time"
 
-	appmodel "github.com/thunder-id/thunder-id/internal/application/model"
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	authnprovidercm "github.com/thunder-id/thunder-id/internal/authnprovider/common"
-	managerpkg "github.com/thunder-id/thunder-id/internal/authnprovider/manager"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
+	appmodel "github.com/thunder-id/thunderid/internal/application/model"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	authnprovidercm "github.com/thunder-id/thunderid/internal/authnprovider/common"
+	managerpkg "github.com/thunder-id/thunderid/internal/authnprovider/manager"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
 )
 
 // EngineContext holds the overall context used by the flow engine during execution.

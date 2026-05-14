@@ -19,7 +19,7 @@
 package flowexec
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/database/model"
 )
 
 var (

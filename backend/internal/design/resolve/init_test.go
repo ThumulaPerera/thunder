@@ -26,11 +26,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/design/common"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/applicationmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/design/layoutmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/design/thememock"
+	"github.com/thunder-id/thunderid/internal/design/common"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/applicationmock"
+	"github.com/thunder-id/thunderid/tests/mocks/design/layoutmock"
+	"github.com/thunder-id/thunderid/tests/mocks/design/thememock"
 )
 
 // Test Suite

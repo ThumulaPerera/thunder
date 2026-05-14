@@ -1,4 +1,4 @@
-module github.com/thunder-id/thunder-id/tests/integration
+module github.com/thunder-id/thunderid/tests/integration
 
 go 1.26
 

@@ -24,9 +24,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/notification/common"
-	"github.com/thunder-id/thunder-id/internal/system/cmodels"
-	"github.com/thunder-id/thunder-id/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/notification/common"
+	"github.com/thunder-id/thunderid/internal/system/cmodels"
+	"github.com/thunder-id/thunderid/internal/system/config"
 )
 
 type UtilsTestSuite struct {

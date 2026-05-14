@@ -24,7 +24,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/thunder-id/thunder-id/internal/system/declarative_resource/entity"
+	"github.com/thunder-id/thunderid/internal/system/declarative_resource/entity"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

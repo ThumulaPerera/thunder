@@ -21,14 +21,14 @@ package application
 import (
 	"net/http"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
 
-	"github.com/thunder-id/thunder-id/internal/application/model"
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/system/error/apierror"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/application/model"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/system/error/apierror"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // ApplicationHandler defines the handler for managing application API requests.

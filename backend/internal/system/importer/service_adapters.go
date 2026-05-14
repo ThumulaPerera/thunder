@@ -23,19 +23,19 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/thunder-id/thunder-id/internal/entitytype"
-	"github.com/thunder-id/thunder-id/internal/group"
-	"github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/resource"
-	"github.com/thunder-id/thunder-id/internal/role"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	i18nmgt "github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
-	"github.com/thunder-id/thunder-id/internal/user"
+	"github.com/thunder-id/thunderid/internal/entitytype"
+	"github.com/thunder-id/thunderid/internal/group"
+	"github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/resource"
+	"github.com/thunder-id/thunderid/internal/role"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
+	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/user"
 
-	layoutmgt "github.com/thunder-id/thunder-id/internal/design/layout/mgt"
-	thememgt "github.com/thunder-id/thunder-id/internal/design/theme/mgt"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
+	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
+	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
 )
 
 type roleDeclarativeYAML struct {

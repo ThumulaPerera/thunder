@@ -22,8 +22,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // cachedBackedEntityTypeStore wraps a entityTypeStoreInterface with in-memory caching

@@ -23,9 +23,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/application/model"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/application/model"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
 )
 
 // ApplicationStoreTestSuite covers helpers remaining in the application package after the

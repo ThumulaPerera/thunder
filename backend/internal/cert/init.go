@@ -19,8 +19,8 @@
 package cert
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
 )
 
 // Initialize initializes and returns the certificate service.

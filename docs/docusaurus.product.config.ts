@@ -65,18 +65,18 @@ const DocusaurusProductConfig = {
       'ThunderID is a modern, open-source identity management service designed for teams building secure, customizable authentication experiences across applications, services, and AI agents.',
     source: {
       github: {
-        name: 'thunder-id',
-        fullName: 'thunder-id/thunder-id',
-        url: 'https://github.com/thunder-id/thunder-id',
-        discussionsUrl: 'https://github.com/thunder-id/thunder-id/discussions',
-        issuesUrl: 'https://github.com/thunder-id/thunder-id/issues',
-        releasesUrl: 'https://github.com/thunder-id/thunder-id/releases',
+        name: 'thunderid',
+        fullName: 'thunder-id/thunderid',
+        url: 'https://github.com/thunder-id/thunderid',
+        discussionsUrl: 'https://github.com/thunder-id/thunderid/discussions',
+        issuesUrl: 'https://github.com/thunder-id/thunderid/issues',
+        releasesUrl: 'https://github.com/thunder-id/thunderid/releases',
         editUrls: {
-          blog: 'https://github.com/thunder-id/thunder-id/tree/main/blog/',
-          content: 'https://github.com/thunder-id/thunder-id/tree/main/docs/',
+          blog: 'https://github.com/thunder-id/thunderid/tree/main/blog/',
+          content: 'https://github.com/thunder-id/thunderid/tree/main/docs/',
         },
         owner: {
-          name: 'thunder-id',
+          name: 'thunderid',
         },
       },
     },
@@ -92,9 +92,7 @@ const DocusaurusProductConfig = {
     },
     deployment: {
       production: {
-        baseUrl: 'thunder-id',
-        // TODO: Docusaurus doesn't seem to allow subpaths in the URL yet.
-        // Can't use the GitHub pages URL until then.
+        baseUrl: '',
         url: 'https://thunderid.dev',
       },
     },

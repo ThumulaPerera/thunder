@@ -8,10 +8,10 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
-	"github.com/thunder-id/thunder-id/internal/flow/mgt"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
+	"github.com/thunder-id/thunderid/internal/flow/mgt"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // NewFlowMgtServiceInterfaceMock creates a new instance of FlowMgtServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

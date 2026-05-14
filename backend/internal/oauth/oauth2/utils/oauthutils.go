@@ -26,9 +26,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // GetURIWithQueryParams constructs a URI with the given query parameters.

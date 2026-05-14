@@ -19,7 +19,7 @@
 package introspect
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"context"
 	"crypto/rand"
@@ -29,10 +29,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

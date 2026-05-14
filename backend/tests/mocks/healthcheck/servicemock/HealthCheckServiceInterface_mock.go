@@ -6,7 +6,7 @@ package servicemock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/model"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/model"
 )
 
 // NewHealthCheckServiceInterfaceMock creates a new instance of HealthCheckServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

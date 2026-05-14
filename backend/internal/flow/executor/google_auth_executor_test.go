@@ -23,14 +23,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	authnoidc "github.com/thunder-id/thunder-id/internal/authn/oidc"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/tests/mocks/authn/googlemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/authn/oidcmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/authnprovider/managermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/entitytypemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/flow/coremock"
-	"github.com/thunder-id/thunder-id/tests/mocks/idp/idpmock"
+	authnoidc "github.com/thunder-id/thunderid/internal/authn/oidc"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/tests/mocks/authn/googlemock"
+	"github.com/thunder-id/thunderid/tests/mocks/authn/oidcmock"
+	"github.com/thunder-id/thunderid/tests/mocks/authnprovider/managermock"
+	"github.com/thunder-id/thunderid/tests/mocks/entitytypemock"
+	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
+	"github.com/thunder-id/thunderid/tests/mocks/idp/idpmock"
 )
 
 type GoogleAuthExecutorTestSuite struct {

@@ -23,8 +23,8 @@ import (
 	"errors"
 	"fmt"
 
-	authncm "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
+	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
 )
 
 // getAuthnServiceName returns the authn service name for an executor.

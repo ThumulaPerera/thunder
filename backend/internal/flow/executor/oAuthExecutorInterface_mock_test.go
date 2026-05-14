@@ -6,10 +6,10 @@ package executor
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	common0 "github.com/thunder-id/thunder-id/internal/authn/common"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/flow/common"
-	"github.com/thunder-id/thunder-id/internal/flow/core"
+	common0 "github.com/thunder-id/thunderid/internal/authn/common"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/flow/common"
+	"github.com/thunder-id/thunderid/internal/flow/core"
 )
 
 // newOAuthExecutorInterfaceMock creates a new instance of oAuthExecutorInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

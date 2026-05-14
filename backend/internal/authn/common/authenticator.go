@@ -22,7 +22,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/thunder-id/thunder-id/internal/idp"
+	"github.com/thunder-id/thunderid/internal/idp"
 )
 
 var (

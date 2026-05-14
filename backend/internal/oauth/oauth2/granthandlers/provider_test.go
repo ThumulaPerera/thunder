@@ -24,15 +24,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/tests/mocks/attributecachemock"
-	rbacauthzmock "github.com/thunder-id/thunder-id/tests/mocks/authzmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/entityprovidermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oauth/oauth2/authzmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oauth/oauth2/tokenservicemock"
-	"github.com/thunder-id/thunder-id/tests/mocks/oumock"
-	"github.com/thunder-id/thunder-id/tests/mocks/resourcemock"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/tests/mocks/attributecachemock"
+	rbacauthzmock "github.com/thunder-id/thunderid/tests/mocks/authzmock"
+	"github.com/thunder-id/thunderid/tests/mocks/entityprovidermock"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
+	"github.com/thunder-id/thunderid/tests/mocks/oauth/oauth2/authzmock"
+	"github.com/thunder-id/thunderid/tests/mocks/oauth/oauth2/tokenservicemock"
+	"github.com/thunder-id/thunderid/tests/mocks/oumock"
+	"github.com/thunder-id/thunderid/tests/mocks/resourcemock"
 )
 
 type GrantHandlerProviderTestSuite struct {

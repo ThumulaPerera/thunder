@@ -24,10 +24,10 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider"
-	"github.com/thunder-id/thunder-id/internal/system/kmprovider/defaultkm/pkiservice"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider"
+	"github.com/thunder-id/thunderid/internal/system/kmprovider/defaultkm/pkiservice"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 var (

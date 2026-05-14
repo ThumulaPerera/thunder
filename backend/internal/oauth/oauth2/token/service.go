@@ -26,16 +26,16 @@ import (
 	"strings"
 	"time"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/granthandlers"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/scope"
-	sysContext "github.com/thunder-id/thunder-id/internal/system/context"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/observability"
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/granthandlers"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	"github.com/thunder-id/thunderid/internal/oauth/scope"
+	sysContext "github.com/thunder-id/thunderid/internal/system/context"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/observability"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // TokenServiceInterface defines the interface for OAuth 2.0 token processing.

@@ -128,7 +128,11 @@ vi.mock('@thunderid/configure-users', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, fallback?: string | {defaultValue?: string}) => {
+      if (typeof fallback === 'string') return fallback || key;
+      if (fallback && typeof fallback === 'object') return fallback.defaultValue ?? key;
+      return key;
+    },
   }),
 }));
 

@@ -22,8 +22,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/thunder-id/thunder-id/internal/system/cache"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/cache"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 // cacheBackedEntityStore wraps an entityStoreInterface with in-memory caching

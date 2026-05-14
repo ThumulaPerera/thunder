@@ -8,9 +8,9 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/cert"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	"github.com/thunder-id/thunder-id/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/cert"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	"github.com/thunder-id/thunderid/internal/inboundclient/model"
 )
 
 // NewInboundClientServiceInterfaceMock creates a new instance of InboundClientServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

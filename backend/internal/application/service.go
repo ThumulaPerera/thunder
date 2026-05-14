@@ -26,21 +26,21 @@ import (
 
 	"encoding/json"
 
-	"github.com/thunder-id/thunder-id/internal/application/model"
-	"github.com/thunder-id/thunder-id/internal/cert"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	oauthutils "github.com/thunder-id/thunder-id/internal/oauth/oauth2/utils"
-	oupkg "github.com/thunder-id/thunder-id/internal/ou"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
-	i18nmgt "github.com/thunder-id/thunder-id/internal/system/i18n/mgt"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	sysutils "github.com/thunder-id/thunder-id/internal/system/utils"
+	"github.com/thunder-id/thunderid/internal/application/model"
+	"github.com/thunder-id/thunderid/internal/cert"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	oauthutils "github.com/thunder-id/thunderid/internal/oauth/oauth2/utils"
+	oupkg "github.com/thunder-id/thunderid/internal/ou"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
+	i18nmgt "github.com/thunder-id/thunderid/internal/system/i18n/mgt"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // ApplicationServiceInterface defines the interface for the application service.
@@ -145,10 +145,7 @@ func (as *applicationService) CreateApplication(ctx context.Context, app *model.
 		clientSecret != "", app.Name); err != nil {
 		// Compensate: delete entity since config creation failed.
 		as.deleteEntityCompensation(appID)
-		if svcErr := translateInboundClientError(err); svcErr != nil {
-			return nil, svcErr
-		}
-		if svcErr := as.translateCertError(err); svcErr != nil {
+		if svcErr := as.translateInboundClientError(err); svcErr != nil {
 			return nil, svcErr
 		}
 		as.logger.Error("Failed to create application", log.Error(err), log.String("appID", appID))
@@ -231,7 +228,7 @@ func (as *applicationService) ValidateApplication(ctx context.Context, app *mode
 		hasClientSecret = inboundAuthConfig.OAuthConfig.ClientSecret != ""
 	}
 	if err := as.inboundClientService.Validate(ctx, &inboundClient, oauthProfile, hasClientSecret); err != nil {
-		if svcErr := translateInboundClientError(err); svcErr != nil {
+		if svcErr := as.translateInboundClientError(err); svcErr != nil {
 			return nil, nil, svcErr
 		}
 		as.logger.Error("Inbound client validation failed", log.Error(err))
@@ -381,10 +378,7 @@ func (as *applicationService) UpdateApplication(ctx context.Context, appID strin
 	if err := as.inboundClientService.UpdateInboundClient(
 		ctx, &inboundClient, app.Certificate, oauthProfile, oauthSecretSupplied, newOAuthClientID, app.Name,
 	); err != nil {
-		if svcErr := translateInboundClientError(err); svcErr != nil {
-			return nil, svcErr
-		}
-		if svcErr := as.translateCertError(err); svcErr != nil {
+		if svcErr := as.translateInboundClientError(err); svcErr != nil {
 			return nil, svcErr
 		}
 		as.logger.Error("Failed to update application", log.Error(err), log.String("appID", appID))
@@ -520,15 +514,11 @@ func (as *applicationService) DeleteApplication(ctx context.Context, appID strin
 	}
 
 	// Delete config.
-	appErr := as.inboundClientService.DeleteInboundClient(ctx, appID)
-	if appErr != nil {
+	if appErr := as.inboundClientService.DeleteInboundClient(ctx, appID); appErr != nil {
 		if errors.Is(appErr, inboundclient.ErrInboundClientNotFound) {
 			return nil
 		}
-		if svcErr := translateInboundClientError(appErr); svcErr != nil {
-			return svcErr
-		}
-		if svcErr := as.translateCertError(appErr); svcErr != nil {
+		if svcErr := as.translateInboundClientError(appErr); svcErr != nil {
 			return svcErr
 		}
 		as.logger.Error("Failed to delete application", log.Error(appErr), log.String("appID", appID))
@@ -1018,8 +1008,47 @@ func validateAcrValues(acrValues []string) *serviceerror.ServiceError {
 	return nil
 }
 
+// translateInboundClientError maps inbound-client sentinel errors and typed wrappers to
+// application-service errors. Returns nil when the input does not correspond to a known
+// inbound-client error, allowing the caller to log and fall back to InternalServerError.
+func (as *applicationService) translateInboundClientError(err error) *serviceerror.ServiceError {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, inboundclient.ErrCannotModifyDeclarative) {
+		return &ErrorCannotModifyDeclarativeResource
+	}
+	if svcErr := translateInboundClientFKError(err); svcErr != nil {
+		return svcErr
+	}
+	if svcErr := translateOAuthValidationError(err); svcErr != nil {
+		return svcErr
+	}
+	if svcErr := translateUserInfoValidationError(err); svcErr != nil {
+		return svcErr
+	}
+	if svcErr := translateIDTokenValidationError(err); svcErr != nil {
+		return svcErr
+	}
+	if svcErr := translateCertValidationError(err); svcErr != nil {
+		return svcErr
+	}
+	var opErr *inboundclient.CertOperationError
+	if errors.As(err, &opErr) {
+		return as.translateCertOperationError(opErr)
+	}
+	var consentErr *inboundclient.ConsentSyncError
+	if errors.As(err, &consentErr) {
+		return translateConsentSyncError(consentErr)
+	}
+	return nil
+}
+
+// translateOAuthValidationError maps OAuth redirect URI, grant/response type, token endpoint
+// auth method, and public client validation sentinels to application-service errors.
 func translateOAuthValidationError(err error) *serviceerror.ServiceError {
 	switch {
+	// OAuth: redirect URI
 	case errors.Is(err, inboundclient.ErrOAuthInvalidRedirectURI):
 		return &ErrorInvalidRedirectURI
 	case errors.Is(err, inboundclient.ErrOAuthRedirectURIFragmentNotAllowed):
@@ -1032,6 +1061,8 @@ func translateOAuthValidationError(err error) *serviceerror.ServiceError {
 			Key:          "error.applicationservice.auth_code_requires_redirect_uris_description",
 			DefaultValue: "authorization_code grant type requires redirect URIs",
 		})
+
+	// OAuth: grant + response type
 	case errors.Is(err, inboundclient.ErrOAuthInvalidGrantType):
 		return &ErrorInvalidGrantType
 	case errors.Is(err, inboundclient.ErrOAuthInvalidResponseType):
@@ -1061,6 +1092,8 @@ func translateOAuthValidationError(err error) *serviceerror.ServiceError {
 			Key:          "error.applicationservice.response_types_require_authorization_code_description",
 			DefaultValue: "Response types can only be configured with the authorization_code grant type",
 		})
+
+	// OAuth: token endpoint auth method
 	case errors.Is(err, inboundclient.ErrOAuthInvalidTokenEndpointAuthMethod):
 		return &ErrorInvalidTokenEndpointAuthMethod
 	case errors.Is(err, inboundclient.ErrOAuthPrivateKeyJWTRequiresCertificate):
@@ -1093,6 +1126,8 @@ func translateOAuthValidationError(err error) *serviceerror.ServiceError {
 			Key:          "error.applicationservice.client_credentials_cannot_use_none_auth_description",
 			DefaultValue: "client_credentials grant type cannot use 'none' authentication method",
 		})
+
+	// OAuth: public client
 	case errors.Is(err, inboundclient.ErrOAuthPublicClientMustUseNoneAuth):
 		return serviceerror.CustomServiceError(ErrorInvalidPublicClientConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.public_client_must_use_none_auth_description",
@@ -1103,11 +1138,12 @@ func translateOAuthValidationError(err error) *serviceerror.ServiceError {
 			Key:          "error.applicationservice.public_client_must_have_pkce_description",
 			DefaultValue: "Public clients must have PKCE required set to true",
 		})
-	default:
-		return translateUserInfoValidationError(err)
 	}
+	return nil
 }
 
+// translateUserInfoValidationError maps OAuth userinfo validation sentinels to
+// application-service errors.
 func translateUserInfoValidationError(err error) *serviceerror.ServiceError {
 	switch {
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoUnsupportedSigningAlg):
@@ -1128,12 +1164,12 @@ func translateUserInfoValidationError(err error) *serviceerror.ServiceError {
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoEncryptionAlgRequiresEnc):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.userinfo_encryption_alg_requires_enc_description",
-			DefaultValue: "encryptionEnc is required when encryptionAlg is set",
+			DefaultValue: "userinfo encryptionEnc is required when encryptionAlg is set",
 		})
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoEncryptionEncRequiresAlg):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.userinfo_encryption_enc_requires_alg_description",
-			DefaultValue: "encryptionAlg is required when encryptionEnc is set",
+			DefaultValue: "userinfo encryptionAlg is required when encryptionEnc is set",
 		})
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoEncryptionRequiresCertificate):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
@@ -1143,7 +1179,7 @@ func translateUserInfoValidationError(err error) *serviceerror.ServiceError {
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoJWKSURINotSSRFSafe):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.userinfo_jwks_uri_not_ssrf_safe_description",
-			DefaultValue: "JWKS URI must be a publicly reachable HTTPS URL",
+			DefaultValue: "userinfo JWKS URI must be a publicly reachable HTTPS URL",
 		})
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoUnsupportedResponseType):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
@@ -1153,18 +1189,32 @@ func translateUserInfoValidationError(err error) *serviceerror.ServiceError {
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoJWSRequiresSigningAlg):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.userinfo_jws_requires_signing_alg_description",
-			DefaultValue: "signingAlg is required when responseType is JWS",
+			DefaultValue: "signingAlg is required when userinfo responseType is JWS",
 		})
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoJWERequiresEncryption):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.userinfo_jwe_requires_encryption_description",
-			DefaultValue: "encryptionAlg and encryptionEnc are required when responseType is JWE",
+			DefaultValue: "encryptionAlg and encryptionEnc are required when userinfo responseType is JWE",
 		})
 	case errors.Is(err, inboundclient.ErrOAuthUserInfoNestedJWTRequiresAll):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
-			Key:          "error.applicationservice.userinfo_nested_jwt_requires_all_description",
-			DefaultValue: "signingAlg, encryptionAlg, and encryptionEnc are required when responseType is NESTED_JWT",
+			Key: "error.applicationservice.userinfo_nested_jwt_requires_all_description",
+			DefaultValue: "signingAlg, encryptionAlg, and encryptionEnc are required " +
+				"when userinfo responseType is NESTED_JWT",
 		})
+	case errors.Is(err, inboundclient.ErrOAuthUserInfoAlgRequiresResponseType):
+		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
+			Key:          "error.applicationservice.userinfo_alg_requires_response_type_description",
+			DefaultValue: "userinfo responseType is required when signingAlg or encryptionAlg is set",
+		})
+	}
+	return nil
+}
+
+// translateIDTokenValidationError maps OAuth ID token validation sentinels to
+// application-service errors.
+func translateIDTokenValidationError(err error) *serviceerror.ServiceError {
+	switch {
 	case errors.Is(err, inboundclient.ErrOAuthIDTokenEncryptionFieldsNotAllowed):
 		return serviceerror.CustomServiceError(ErrorInvalidOAuthConfiguration, core.I18nMessage{
 			Key:          "error.applicationservice.idtoken_encryption_fields_not_allowed_description",
@@ -1205,11 +1255,12 @@ func translateUserInfoValidationError(err error) *serviceerror.ServiceError {
 			Key:          "error.applicationservice.idtoken_jwks_uri_not_ssrf_safe_description",
 			DefaultValue: "idToken JWKS URI must be a publicly reachable HTTPS URL",
 		})
-	default:
-		return nil
 	}
+	return nil
 }
 
+// translateInboundClientFKError maps inbound-client foreign-key sentinel errors to
+// application-service errors.
 func translateInboundClientFKError(err error) *serviceerror.ServiceError {
 	switch {
 	case errors.Is(err, inboundclient.ErrFKInvalidAuthFlow):
@@ -1230,31 +1281,68 @@ func translateInboundClientFKError(err error) *serviceerror.ServiceError {
 		return &serviceerror.InternalServerError
 	case errors.Is(err, inboundclient.ErrInvalidUserAttribute):
 		return &ErrorInvalidUserAttribute
-	default:
-		return nil
-	}
-}
-
-func translateInboundClientError(err error) *serviceerror.ServiceError {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, inboundclient.ErrCannotModifyDeclarative) {
-		return &ErrorCannotModifyDeclarativeResource
-	}
-	if svcErr := translateInboundClientFKError(err); svcErr != nil {
-		return svcErr
-	}
-	if svcErr := translateOAuthValidationError(err); svcErr != nil {
-		return svcErr
-	}
-	var consentErr *inboundclient.ConsentSyncError
-	if errors.As(err, &consentErr) {
-		return translateConsentSyncError(consentErr)
 	}
 	return nil
 }
 
+// translateCertValidationError maps inbound-client certificate validation sentinels to
+// application-service errors.
+func translateCertValidationError(err error) *serviceerror.ServiceError {
+	switch {
+	case errors.Is(err, inboundclient.ErrCertValueRequired):
+		return &ErrorInvalidCertificateValue
+	case errors.Is(err, inboundclient.ErrCertInvalidJWKSURI):
+		return &ErrorInvalidJWKSURI
+	case errors.Is(err, inboundclient.ErrCertInvalidType):
+		return &ErrorInvalidCertificateType
+	}
+	return nil
+}
+
+// translateCertOperationError maps a typed cert operation error from the inbound-client layer
+// into an application-service ServiceError. Server-side failures are logged and surfaced as
+// InternalServerError; client-side failures are wrapped in ErrorCertificateClientError with an
+// operation-specific description.
+func (as *applicationService) translateCertOperationError(
+	err *inboundclient.CertOperationError) *serviceerror.ServiceError {
+	if !err.IsClientError() {
+		as.logger.Error("Certificate operation failed",
+			log.Any("operation", err.Operation),
+			log.Any("refType", err.RefType),
+			log.Any("serviceError", err.Underlying))
+		return &serviceerror.InternalServerError
+	}
+	var key, prefix string
+	switch err.Operation {
+	case inboundclient.CertOpCreate:
+		key, prefix = "error.applicationservice.create_certificate_failed_description",
+			"Failed to create application certificate: "
+	case inboundclient.CertOpUpdate:
+		key, prefix = "error.applicationservice.update_certificate_failed_description",
+			"Failed to update application certificate: "
+	case inboundclient.CertOpRetrieve:
+		key, prefix = "error.applicationservice.retrieve_certificate_failed_description",
+			"Failed to retrieve application certificate: "
+	case inboundclient.CertOpDelete:
+		if err.RefType == cert.CertificateReferenceTypeOAuthApp {
+			key, prefix = "error.applicationservice.delete_oauth_certificate_failed_description",
+				"Failed to delete OAuth app certificate: "
+		} else {
+			key, prefix = "error.applicationservice.delete_certificate_failed_description",
+				"Failed to delete application certificate: "
+		}
+	default:
+		return &serviceerror.InternalServerError
+	}
+	return serviceerror.CustomServiceError(ErrorCertificateClientError, core.I18nMessage{
+		Key:          key,
+		DefaultValue: prefix + err.Underlying.ErrorDescription.DefaultValue,
+	})
+}
+
+// translateConsentSyncError maps a typed consent sync error from the inbound-client layer into
+// an application-service ServiceError. Client-side failures are wrapped in ErrorConsentSyncFailed;
+// server-side failures collapse to InternalServerError.
 func translateConsentSyncError(err *inboundclient.ConsentSyncError) *serviceerror.ServiceError {
 	if err.IsClientError() {
 		return serviceerror.CustomServiceError(ErrorConsentSyncFailed, core.I18nMessage{
@@ -1368,77 +1456,16 @@ func resolveClientSecret(
 	return nil
 }
 
-func translateCertValidationError(err error) *serviceerror.ServiceError {
-	switch {
-	case errors.Is(err, inboundclient.ErrCertValueRequired):
-		return &ErrorInvalidCertificateValue
-	case errors.Is(err, inboundclient.ErrCertInvalidJWKSURI):
-		return &ErrorInvalidJWKSURI
-	case errors.Is(err, inboundclient.ErrCertInvalidType):
-		return &ErrorInvalidCertificateType
-	default:
-		return nil
-	}
-}
-
-func (as *applicationService) translateCertOperationError(
-	err *inboundclient.CertOperationError) *serviceerror.ServiceError {
-	if !err.IsClientError() {
-		as.logger.Error("Certificate operation failed",
-			log.Any("operation", err.Operation),
-			log.Any("refType", err.RefType),
-			log.Any("serviceError", err.Underlying))
-		return &serviceerror.InternalServerError
-	}
-
-	var key, prefix string
-	switch err.Operation {
-	case inboundclient.CertOpCreate:
-		key, prefix = "error.applicationservice.create_certificate_failed_description",
-			"Failed to create application certificate: "
-	case inboundclient.CertOpUpdate:
-		key, prefix = "error.applicationservice.update_certificate_failed_description",
-			"Failed to update application certificate: "
-	case inboundclient.CertOpRetrieve:
-		key, prefix = "error.applicationservice.retrieve_certificate_failed_description",
-			"Failed to retrieve application certificate: "
-	case inboundclient.CertOpDelete:
-		if err.RefType == cert.CertificateReferenceTypeOAuthApp {
-			key, prefix = "error.applicationservice.delete_oauth_certificate_failed_description",
-				"Failed to delete OAuth app certificate: "
-		} else {
-			key, prefix = "error.applicationservice.delete_certificate_failed_description",
-				"Failed to delete application certificate: "
-		}
-	default:
-		return &serviceerror.InternalServerError
-	}
-	return serviceerror.CustomServiceError(ErrorCertificateClientError, core.I18nMessage{
-		Key:          key,
-		DefaultValue: prefix + err.Underlying.ErrorDescription.DefaultValue,
-	})
-}
-
-// translateCertError converts a typed cert error returned from inboundclient into a ServiceError.
-// Returns nil if the error is not a cert error (caller should handle it separately).
-func (as *applicationService) translateCertError(err error) *serviceerror.ServiceError {
-	if svcErr := translateCertValidationError(err); svcErr != nil {
-		return svcErr
-	}
-	var opErr *inboundclient.CertOperationError
-	if errors.As(err, &opErr) {
-		return as.translateCertOperationError(opErr)
-	}
-	return nil
-}
-
 // enrichApplicationWithCertificate retrieves and adds the certificate to the application.
 func (as *applicationService) enrichApplicationWithCertificate(ctx context.Context, application *model.Application) (
 	*model.Application, *serviceerror.ServiceError) {
 	appCert, opErr := as.inboundClientService.GetCertificate(
 		ctx, cert.CertificateReferenceTypeApplication, application.ID)
 	if opErr != nil {
-		return nil, as.translateCertOperationError(opErr)
+		if mapped := as.translateCertOperationError(opErr); mapped != nil {
+			return nil, mapped
+		}
+		return nil, &serviceerror.InternalServerError
 	}
 	application.Certificate = appCert
 
@@ -1448,7 +1475,10 @@ func (as *applicationService) enrichApplicationWithCertificate(ctx context.Conte
 			oauthCert, oauthCertOpErr := as.inboundClientService.GetCertificate(ctx,
 				cert.CertificateReferenceTypeOAuthApp, inboundAuthConfig.OAuthConfig.ClientID)
 			if oauthCertOpErr != nil {
-				return nil, as.translateCertOperationError(oauthCertOpErr)
+				if mapped := as.translateCertOperationError(oauthCertOpErr); mapped != nil {
+					return nil, mapped
+				}
+				return nil, &serviceerror.InternalServerError
 			}
 			application.InboundAuthConfig[i].OAuthConfig.Certificate = oauthCert
 		}

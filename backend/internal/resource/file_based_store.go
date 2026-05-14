@@ -24,9 +24,9 @@ import (
 	"fmt"
 	"sort"
 
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
-	"github.com/thunder-id/thunder-id/internal/system/declarative_resource/entity"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
+	"github.com/thunder-id/thunderid/internal/system/declarative_resource/entity"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 var (

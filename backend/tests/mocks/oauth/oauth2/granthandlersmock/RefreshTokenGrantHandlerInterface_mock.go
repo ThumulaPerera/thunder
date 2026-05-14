@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	model0 "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
+	model0 "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
 )
 
 // NewRefreshTokenGrantHandlerInterfaceMock creates a new instance of RefreshTokenGrantHandlerInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

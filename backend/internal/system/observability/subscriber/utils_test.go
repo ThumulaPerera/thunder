@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thunder-id/thunder-id/internal/system/observability/event"
+	"github.com/thunder-id/thunderid/internal/system/observability/event"
 )
 
 // getCommonEventTestCases returns common test cases for event processing

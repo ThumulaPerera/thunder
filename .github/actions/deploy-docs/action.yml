@@ -17,6 +17,14 @@ inputs:
     description: 'Commit message for the deployment'
     required: false
     default: '📚 Deploy documentation'
+  site-url:
+    description: 'Override the site URL used during the Docusaurus build (e.g. https://owner.github.io)'
+    required: false
+    default: ''
+  site-base-url:
+    description: 'Override the base URL used during the Docusaurus build (e.g. /repo-name/)'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -41,6 +49,8 @@ runs:
         make build_docs
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        DOCUSAURUS_URL: ${{ inputs.site-url }}
+        DOCUSAURUS_BASE_URL: ${{ inputs.site-base-url }}
 
     - name: 📥 Download Docs Artifact
       if: inputs.docs-artifact-name != ''

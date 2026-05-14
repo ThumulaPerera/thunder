@@ -25,7 +25,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 const loggerComponentName = "SecurityService"

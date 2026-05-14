@@ -8,10 +8,10 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/authn/consent"
-	"github.com/thunder-id/thunder-id/internal/authnprovider/common"
-	consent0 "github.com/thunder-id/thunder-id/internal/consent"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/authn/consent"
+	"github.com/thunder-id/thunderid/internal/authnprovider/common"
+	consent0 "github.com/thunder-id/thunderid/internal/consent"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // NewConsentEnforcerServiceInterfaceMock creates a new instance of ConsentEnforcerServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

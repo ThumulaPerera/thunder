@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/attributecache"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/attributecache"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // NewAttributeCacheServiceInterfaceMock creates a new instance of AttributeCacheServiceInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

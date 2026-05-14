@@ -21,7 +21,7 @@ package passkey
 import (
 	"github.com/go-webauthn/webauthn/webauthn"
 
-	"github.com/thunder-id/thunder-id/internal/entity"
+	"github.com/thunder-id/thunderid/internal/entity"
 )
 
 // webAuthnUser adapts generic model to implement the webauthn.User interface.

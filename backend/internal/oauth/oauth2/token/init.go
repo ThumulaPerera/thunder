@@ -22,16 +22,16 @@ import (
 	"context"
 	"net/http"
 
-	authnprovidermgr "github.com/thunder-id/thunder-id/internal/authnprovider/manager"
-	"github.com/thunder-id/thunder-id/internal/inboundclient"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/clientauth"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/discovery"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/granthandlers"
-	"github.com/thunder-id/thunder-id/internal/oauth/scope"
-	"github.com/thunder-id/thunder-id/internal/system/jose/jwt"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
-	"github.com/thunder-id/thunder-id/internal/system/observability"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	authnprovidermgr "github.com/thunder-id/thunderid/internal/authnprovider/manager"
+	"github.com/thunder-id/thunderid/internal/inboundclient"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/clientauth"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/discovery"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/granthandlers"
+	"github.com/thunder-id/thunderid/internal/oauth/scope"
+	"github.com/thunder-id/thunderid/internal/system/jose/jwt"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/system/observability"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // Initialize initializes the token handler and registers its routes.

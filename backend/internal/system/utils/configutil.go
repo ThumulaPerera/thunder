@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"text/template"
 
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 var (

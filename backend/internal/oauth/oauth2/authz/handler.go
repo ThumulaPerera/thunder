@@ -24,11 +24,11 @@ import (
 	"net/http"
 	"net/url"
 
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	oauth2utils "github.com/thunder-id/thunder-id/internal/oauth/oauth2/utils"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/log"
-	"github.com/thunder-id/thunder-id/internal/system/utils"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	oauth2utils "github.com/thunder-id/thunderid/internal/oauth/oauth2/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/system/utils"
 )
 
 // AuthorizeHandlerInterface defines the interface for handling OAuth2 authorization requests.

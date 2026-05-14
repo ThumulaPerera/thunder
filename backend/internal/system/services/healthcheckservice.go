@@ -21,9 +21,9 @@ package services
 import (
 	"net/http"
 
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/handler"
-	"github.com/thunder-id/thunder-id/internal/system/healthcheck/service"
-	"github.com/thunder-id/thunder-id/internal/system/middleware"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/handler"
+	"github.com/thunder-id/thunderid/internal/system/healthcheck/service"
+	"github.com/thunder-id/thunderid/internal/system/middleware"
 )
 
 // HealthCheckService defines the service for handling readiness and liveness checks.

@@ -6,8 +6,8 @@ package flowexecmock
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/flow/flowexec"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/flow/flowexec"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
 )
 
 // newFlowEngineInterfaceMock creates a new instance of flowEngineInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

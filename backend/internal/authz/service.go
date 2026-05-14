@@ -22,9 +22,9 @@ package authz
 import (
 	"context"
 
-	"github.com/thunder-id/thunder-id/internal/authz/engine"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/internal/system/log"
+	"github.com/thunder-id/thunderid/internal/authz/engine"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/internal/system/log"
 )
 
 const loggerComponentName = "AuthorizationService"

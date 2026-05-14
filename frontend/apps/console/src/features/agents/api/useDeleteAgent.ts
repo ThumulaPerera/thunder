@@ -39,7 +39,8 @@ export default function useDeleteAgent(): UseMutationResult<void, Error, string>
         headers: {'Content-Type': 'application/json'},
       } as unknown as Parameters<typeof http.request>[0]);
     },
-    onSuccess: () => {
+    onSuccess: (_data, agentId) => {
+      queryClient.removeQueries({queryKey: [AgentQueryKeys.AGENT, agentId]});
       queryClient.invalidateQueries({queryKey: [AgentQueryKeys.AGENTS]}).catch(() => undefined);
       showToast(t('delete.success', 'Agent deleted successfully'), 'success');
     },

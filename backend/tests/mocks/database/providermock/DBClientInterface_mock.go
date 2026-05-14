@@ -8,8 +8,8 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/system/database/model"
-	"github.com/thunder-id/thunder-id/internal/system/transaction"
+	"github.com/thunder-id/thunderid/internal/system/database/model"
+	"github.com/thunder-id/thunderid/internal/system/transaction"
 )
 
 // NewDBClientInterfaceMock creates a new instance of DBClientInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

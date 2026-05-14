@@ -19,7 +19,7 @@
 package clientauth
 
 import (
-	"github.com/thunder-id/thunder-id/internal/system/i18n/core"
+	"github.com/thunder-id/thunderid/internal/system/i18n/core"
 
 	"encoding/json"
 	"net/http"
@@ -32,13 +32,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	authnprovidermgr "github.com/thunder-id/thunder-id/internal/authnprovider/manager"
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	"github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
-	"github.com/thunder-id/thunder-id/internal/system/error/serviceerror"
-	"github.com/thunder-id/thunder-id/tests/mocks/authnprovider/managermock"
-	"github.com/thunder-id/thunder-id/tests/mocks/inboundclientmock"
-	"github.com/thunder-id/thunder-id/tests/mocks/jose/jwtmock"
+	authnprovidermgr "github.com/thunder-id/thunderid/internal/authnprovider/manager"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	"github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/authnprovider/managermock"
+	"github.com/thunder-id/thunderid/tests/mocks/inboundclientmock"
+	"github.com/thunder-id/thunderid/tests/mocks/jose/jwtmock"
 )
 
 type ClientAuthMiddlewareTestSuite struct {

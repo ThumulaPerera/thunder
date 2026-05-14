@@ -22,7 +22,7 @@ import (
 	"context"
 	"encoding/json"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
 
 	"github.com/stretchr/testify/mock"
 
@@ -31,8 +31,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thunder-id/thunder-id/internal/application/model"
-	oauth2const "github.com/thunder-id/thunder-id/internal/oauth/oauth2/constants"
+	"github.com/thunder-id/thunderid/internal/application/model"
+	oauth2const "github.com/thunder-id/thunderid/internal/oauth/oauth2/constants"
 )
 
 // ValidateApplicationWrapperTestSuite tests the validateApplicationWrapper function.

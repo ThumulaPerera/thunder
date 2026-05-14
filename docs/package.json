@@ -5,16 +5,16 @@
   "description": "Documentation for ⚡️ ThunderID",
   "author": "WSO2",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/thunder-id/thunder-id/tree/main/docs#readme",
+  "homepage": "https://github.com/thunder-id/thunderid/tree/main/docs#readme",
   "bugs": {
-    "url": "https://github.com/thunder-id/thunder-id/issues"
+    "url": "https://github.com/thunder-id/thunderid/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thunder-id/thunder-id"
+    "url": "https://github.com/thunder-id/thunderid"
   },
   "keywords": [
-    "thunder-id",
+    "thunderid",
     "thunderid",
     "docs",
     "documentation",

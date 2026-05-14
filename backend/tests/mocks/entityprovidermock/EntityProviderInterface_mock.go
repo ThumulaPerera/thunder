@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/thunder-id/thunder-id/internal/entityprovider"
+	"github.com/thunder-id/thunderid/internal/entityprovider"
 )
 
 // NewEntityProviderInterfaceMock creates a new instance of EntityProviderInterfaceMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -24,10 +24,10 @@ import (
 	"errors"
 	"fmt"
 
-	oauth2model "github.com/thunder-id/thunder-id/internal/oauth/oauth2/model"
-	oauth2utils "github.com/thunder-id/thunder-id/internal/oauth/oauth2/utils"
-	"github.com/thunder-id/thunder-id/internal/system/config"
-	"github.com/thunder-id/thunder-id/internal/system/database/provider"
+	oauth2model "github.com/thunder-id/thunderid/internal/oauth/oauth2/model"
+	oauth2utils "github.com/thunder-id/thunderid/internal/oauth/oauth2/utils"
+	"github.com/thunder-id/thunderid/internal/system/config"
+	"github.com/thunder-id/thunderid/internal/system/database/provider"
 )
 
 const (

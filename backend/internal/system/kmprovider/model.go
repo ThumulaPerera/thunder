@@ -22,7 +22,7 @@ import (
 	gocrypto "crypto"
 	"crypto/tls"
 
-	"github.com/thunder-id/thunder-id/internal/system/cryptolab"
+	"github.com/thunder-id/thunderid/internal/system/cryptolab"
 )
 
 // KeyRef identifies a cryptographic key by its ID.

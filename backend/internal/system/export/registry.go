@@ -18,7 +18,7 @@
 
 package export
 
-import declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
+import declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
 
 // ResourceExporterRegistry holds all registered resource exporters.
 type ResourceExporterRegistry struct {

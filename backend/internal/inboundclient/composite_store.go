@@ -21,9 +21,9 @@ package inboundclient
 import (
 	"context"
 
-	inboundmodel "github.com/thunder-id/thunder-id/internal/inboundclient/model"
-	serverconst "github.com/thunder-id/thunder-id/internal/system/constants"
-	declarativeresource "github.com/thunder-id/thunder-id/internal/system/declarative_resource"
+	inboundmodel "github.com/thunder-id/thunderid/internal/inboundclient/model"
+	serverconst "github.com/thunder-id/thunderid/internal/system/constants"
+	declarativeresource "github.com/thunder-id/thunderid/internal/system/declarative_resource"
 )
 
 // compositeStore combines a file-backed (immutable, declarative) store and a database-backed

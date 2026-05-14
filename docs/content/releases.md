@@ -7,7 +7,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.36.0 {#v0-36-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 30, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.36.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.36.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -123,7 +123,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.35.0 {#v0-35-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 24, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.35.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.35.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -238,7 +238,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.34.0 {#v0-34-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 17, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.34.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.34.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -328,7 +328,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.33.0 {#v0-33-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 10, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.33.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.33.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -415,7 +415,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.32.0 {#v0-32-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 8, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.32.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.32.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -495,7 +495,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.31.0 {#v0-31-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>April 3, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.31.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.31.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -570,7 +570,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.30.0 {#v0-30-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 27, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.30.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.30.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -667,7 +667,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.29.0 {#v0-29-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 20, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.29.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.29.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -760,7 +760,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.28.0 {#v0-28-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 17, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.28.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.28.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -816,7 +816,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.27.0 {#v0-27-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 13, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.27.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.27.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -910,7 +910,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.26.0 {#v0-26-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 11, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.26.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.26.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -982,7 +982,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.25.0 {#v0-25-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>March 6, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.25.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.25.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1129,7 +1129,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.24.0 {#v0-24-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>February 27, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.24.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.24.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1247,7 +1247,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.23.0 {#v0-23-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>February 20, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.23.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.23.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1359,7 +1359,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.22.0 {#v0-22-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>February 13, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.22.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.22.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1458,7 +1458,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.21.0 {#v0-21-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>February 6, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.21.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.21.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1536,7 +1536,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.20.0 {#v0-20-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>January 30, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.20.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.20.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1613,7 +1613,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.19.0 {#v0-19-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>January 23, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.19.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.19.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1660,7 +1660,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 <div style={{ borderLeft: '3px solid #ff8c00', paddingLeft: '5px', marginLeft: '8px', marginBottom: '24px' }}>
 - Add react-api-based-sample app to the release artifacts
 - Allow defining meta for TASK_EXECUTION nodes
-- Bump golang.org/x/crypto from 0.44.0 to 0.45.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunder-id/pull/1108
+- Bump golang.org/x/crypto from 0.44.0 to 0.45.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunderid/pull/1108
 - Remove i18n keys from default flows
 - Add i18n resolution support for the flow builder UI
 - Add React SDK integration MCP tool
@@ -1687,7 +1687,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.18.0 {#v0-18-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>January 16, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.18.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.18.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1754,7 +1754,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.17.0 {#v0-17-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>January 9, 2026</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.17.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.17.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1810,8 +1810,8 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 - Improve logic in flow-builder UI and remove SCSS styling
 - Introduce unit tests to the flow-builder
 - Improve test coverage in develop app
-- Bump golang.org/x/net from 0.19.0 to 0.38.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunder-id/pull/1050
-- Bump google.golang.org/protobuf from 1.32.0 to 1.33.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunder-id/pull/1051
+- Bump golang.org/x/net from 0.19.0 to 0.38.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunderid/pull/1050
+- Bump google.golang.org/protobuf from 1.32.0 to 1.33.0 in /backend by @dependabot[bot] in https://github.com/thunder-id/thunderid/pull/1051
 - Update dockerfile UID&GID to 10001
 </div>
 
@@ -1829,7 +1829,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.16.0 {#v0-16-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>December 24, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.16.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.16.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1936,7 +1936,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.15.0 {#v0-15-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>December 13, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.15.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.15.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -1987,7 +1987,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.14.0 {#v0-14-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>December 6, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.14.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.14.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2079,7 +2079,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.13.0 {#v0-13-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>November 28, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.13.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.13.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2185,7 +2185,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.12.0 {#v0-12-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>November 17, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.12.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.12.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2318,7 +2318,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.11.0 {#v0-11-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>November 4, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.11.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.11.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2429,7 +2429,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.10.0 {#v0-10-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>October 18, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.10.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.10.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2481,7 +2481,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.9.0 {#v0-9-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>October 7, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.9.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.9.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2504,7 +2504,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.8.0 {#v0-8-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>September 23, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.8.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.8.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>
@@ -2533,7 +2533,7 @@ Explore the latest updates, features, and improvements to **ThunderID**.
 ## v0.7.0 {#v0-7-0}
 <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '-10px', marginBottom: '20px' }}>
   <span>📅 Published on <strong>September 10, 2025</strong></span> • 
-  <a href="https://github.com/thunder-id/thunder-id/releases/tag/v0.7.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
+  <a href="https://github.com/thunder-id/thunderid/releases/tag/v0.7.0" target="_blank" style={{ textDecoration: 'none' }}>View on GitHub ↗</a>
 </p>
 
 <div style={{ padding: '15px', marginBottom: '10px',}}>

@@ -50,7 +50,15 @@ function replaceProductNameInObject(value: unknown, productName: string, product
   return value;
 }
 
-const baseUrl = `/${productConfig.documentation.deployment.production.baseUrl}/`;
+const baseUrl =
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  process.env.DOCUSAURUS_BASE_URL ||
+  (productConfig.documentation.deployment.production.baseUrl
+    ? `/${productConfig.documentation.deployment.production.baseUrl}/`
+    : '/');
+
+// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+const siteUrl = process.env.DOCUSAURUS_URL || productConfig.documentation.deployment.production.url;
 
 const config: Config = {
   title: productConfig.project.name,
@@ -59,7 +67,7 @@ const config: Config = {
 
   // Prevent search engine indexing
   // TODO: Remove this flag when the docs are ready for public access
-  // Tracker: https://github.com/thunder-id/thunder-id/issues/1209
+  // Tracker: https://github.com/thunder-id/thunderid/issues/1209
   noIndex: true,
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -67,8 +75,7 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  url: productConfig.documentation.deployment.production.url,
-  // Since we use GitHub pages, the base URL is the repository name.
+  url: siteUrl,
   baseUrl,
 
   // GitHub pages deployment config.
@@ -245,7 +252,7 @@ const config: Config = {
               value: '<hr style="margin: 0.3rem 0;">',
             },
             {
-              href: 'https://github.com/thunder-id/thunder-id/issues/1912',
+              href: 'https://github.com/thunder-id/thunderid/issues/1912',
               label: '🌍 Help translate',
             },
           ],
