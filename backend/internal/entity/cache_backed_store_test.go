@@ -35,10 +35,12 @@ import (
 // CacheBackedEntityStoreTestSuite tests the cacheBackedEntityStore.
 type CacheBackedEntityStoreTestSuite struct {
 	suite.Suite
-	mockStore       *entityStoreInterfaceMock
-	entityByIDCache *cachemock.CacheInterfaceMock[*Entity]
-	cachedStore     *cacheBackedEntityStore
-	entityByIDData  map[string]*Entity
+	mockStore                      *entityStoreInterfaceMock
+	entityByIDCache                *cachemock.CacheInterfaceMock[*Entity]
+	entityWithCredentialsByIDCache *cachemock.CacheInterfaceMock[*entityWithCredentials]
+	cachedStore                    *cacheBackedEntityStore
+	entityByIDData                 map[string]*Entity
+	entityWithCredsByIDData        map[string]*entityWithCredentials
 }
 
 func TestCacheBackedEntityStoreTestSuite(t *testing.T) {
@@ -48,16 +50,21 @@ func TestCacheBackedEntityStoreTestSuite(t *testing.T) {
 func (s *CacheBackedEntityStoreTestSuite) SetupTest() {
 	s.mockStore = newEntityStoreInterfaceMock(s.T())
 	s.entityByIDData = make(map[string]*Entity)
+	s.entityWithCredsByIDData = make(map[string]*entityWithCredentials)
 
 	s.entityByIDCache = cachemock.NewCacheInterfaceMock[*Entity](s.T())
+	s.entityWithCredentialsByIDCache = cachemock.NewCacheInterfaceMock[*entityWithCredentials](s.T())
 
 	setupEntityCacheMock(s.entityByIDCache, s.entityByIDData)
+	setupEntityCacheMock(s.entityWithCredentialsByIDCache, s.entityWithCredsByIDData)
 
 	s.entityByIDCache.EXPECT().IsEnabled().Return(true).Maybe()
+	s.entityWithCredentialsByIDCache.EXPECT().IsEnabled().Return(true).Maybe()
 
 	s.cachedStore = &cacheBackedEntityStore{
-		entityByIDCache: s.entityByIDCache,
-		store:           s.mockStore,
+		entityByIDCache:                s.entityByIDCache,
+		entityWithCredentialsByIDCache: s.entityWithCredentialsByIDCache,
+		store:                          s.mockStore,
 		logger: log.GetLogger().With(
 			log.String(log.LoggerKeyComponentName, "CacheBackedEntityStore")),
 	}
@@ -151,6 +158,57 @@ func (s *CacheBackedEntityStoreTestSuite) TestGetEntity_StoreError() {
 	s.False(ok)
 }
 
+// GetEntityWithCredentials tests
+
+func (s *CacheBackedEntityStoreTestSuite) TestGetEntityWithCredentials_CacheHit() {
+	entity := s.makeEntity(testEntityID, "client-1")
+	ewc := &entityWithCredentials{
+		Entity:            &entity,
+		SchemaCredentials: json.RawMessage(`{"password":"hashed"}`),
+		SystemCredentials: json.RawMessage(`{"secret":"val"}`),
+	}
+	s.entityWithCredsByIDData[entity.ID] = ewc
+
+	result, err := s.cachedStore.GetEntityWithCredentials(context.Background(), entity.ID)
+	s.Nil(err)
+	s.Equal(entity.ID, result.Entity.ID)
+	s.Equal(ewc.SchemaCredentials, result.SchemaCredentials)
+	s.mockStore.AssertNotCalled(s.T(), "GetEntityWithCredentials")
+}
+
+func (s *CacheBackedEntityStoreTestSuite) TestGetEntityWithCredentials_CacheMiss() {
+	entity := s.makeEntity(testEntityID, "client-1")
+	ewc := &entityWithCredentials{
+		Entity:            &entity,
+		SchemaCredentials: json.RawMessage(`{"password":"hashed"}`),
+		SystemCredentials: json.RawMessage(`{"secret":"val"}`),
+	}
+	s.mockStore.On("GetEntityWithCredentials", mock.Anything, entity.ID).Return(ewc, nil).Once()
+
+	result, err := s.cachedStore.GetEntityWithCredentials(context.Background(), entity.ID)
+	s.Nil(err)
+	s.Equal(entity.ID, result.Entity.ID)
+	s.mockStore.AssertExpectations(s.T())
+
+	cached, ok := s.entityWithCredentialsByIDCache.Get(context.Background(),
+		cache.CacheKey{Key: entity.ID})
+	s.True(ok)
+	s.Equal(entity.ID, cached.Entity.ID)
+}
+
+func (s *CacheBackedEntityStoreTestSuite) TestGetEntityWithCredentials_StoreError() {
+	storeErr := errors.New("db error")
+	s.mockStore.On("GetEntityWithCredentials", mock.Anything, "bad-id").
+		Return(nil, storeErr).Once()
+
+	_, err := s.cachedStore.GetEntityWithCredentials(context.Background(), "bad-id")
+	s.Equal(storeErr, err)
+
+	_, ok := s.entityWithCredentialsByIDCache.Get(context.Background(),
+		cache.CacheKey{Key: "bad-id"})
+	s.False(ok)
+}
+
 // IdentifyEntity tests
 
 func (s *CacheBackedEntityStoreTestSuite) TestIdentifyEntity_CallsStore() {
@@ -191,6 +249,40 @@ func (s *CacheBackedEntityStoreTestSuite) TestUpdateSystemAttributes_Invalidates
 
 	_, ok := s.entityByIDCache.Get(context.Background(), cache.CacheKey{Key: entity.ID})
 	s.False(ok)
+}
+
+// UpdateCredentials / UpdateSystemCredentials tests
+
+func (s *CacheBackedEntityStoreTestSuite) TestUpdateCredentials_InvalidatesBothCaches() {
+	tests := []struct {
+		name       string
+		storeFn    string
+		updateFunc func(ctx context.Context, entityID string, creds json.RawMessage) error
+	}{
+		{"UpdateCredentials", "UpdateCredentials", s.cachedStore.UpdateCredentials},
+		{"UpdateSystemCredentials", "UpdateSystemCredentials", s.cachedStore.UpdateSystemCredentials},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			entity := s.makeEntity(testEntityID, "client-1")
+			s.entityByIDData[entity.ID] = &entity
+			s.entityWithCredsByIDData[entity.ID] = &entityWithCredentials{Entity: &entity}
+
+			newCreds := json.RawMessage(`{"key":"new"}`)
+			s.mockStore.On(tc.storeFn, mock.Anything, entity.ID, newCreds).Return(nil).Once()
+
+			err := tc.updateFunc(context.Background(), entity.ID, newCreds)
+			s.Nil(err)
+			s.mockStore.AssertExpectations(s.T())
+
+			_, ok := s.entityByIDCache.Get(context.Background(), cache.CacheKey{Key: entity.ID})
+			s.False(ok)
+			_, ok = s.entityWithCredentialsByIDCache.Get(context.Background(),
+				cache.CacheKey{Key: entity.ID})
+			s.False(ok)
+		})
+	}
 }
 
 // DeleteEntity tests

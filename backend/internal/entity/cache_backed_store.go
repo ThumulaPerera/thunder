@@ -29,17 +29,20 @@ import (
 // cacheBackedEntityStore wraps an entityStoreInterface with in-memory caching
 // for individual entity lookups by ID and identifier filter resolution.
 type cacheBackedEntityStore struct {
-	entityByIDCache cache.CacheInterface[*Entity]
-	store           entityStoreInterface
-	logger          *log.Logger
+	entityByIDCache                cache.CacheInterface[*Entity]
+	entityWithCredentialsByIDCache cache.CacheInterface[*entityWithCredentials]
+	store                          entityStoreInterface
+	logger                         *log.Logger
 }
 
 // newCacheBackedEntityStore creates a cache-backed wrapper around the given store.
 func newCacheBackedEntityStore(store entityStoreInterface,
-	entityByIDCache cache.CacheInterface[*Entity]) entityStoreInterface {
+	entityByIDCache cache.CacheInterface[*Entity],
+	entityWithCredentialsByIDCache cache.CacheInterface[*entityWithCredentials]) entityStoreInterface {
 	return &cacheBackedEntityStore{
-		entityByIDCache: entityByIDCache,
-		store:           store,
+		entityByIDCache:                entityByIDCache,
+		entityWithCredentialsByIDCache: entityWithCredentialsByIDCache,
+		store:                          store,
 		logger: log.GetLogger().With(
 			log.String(log.LoggerKeyComponentName, "CacheBackedEntityStore")),
 	}
@@ -71,7 +74,18 @@ func (s *cacheBackedEntityStore) GetEntity(ctx context.Context, id string) (Enti
 
 func (s *cacheBackedEntityStore) GetEntityWithCredentials(ctx context.Context,
 	id string) (*entityWithCredentials, error) {
-	return s.store.GetEntityWithCredentials(ctx, id)
+	cacheKey := cache.CacheKey{Key: id}
+	if cached, ok := s.entityWithCredentialsByIDCache.Get(ctx, cacheKey); ok {
+		return cached, nil
+	}
+
+	result, err := s.store.GetEntityWithCredentials(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	s.cacheEntityWithCredentialsByID(ctx, result)
+	return result, nil
 }
 
 func (s *cacheBackedEntityStore) UpdateEntity(ctx context.Context, entity *Entity) error {
@@ -225,12 +239,28 @@ func (s *cacheBackedEntityStore) cacheEntityByID(ctx context.Context, entity *En
 	}
 }
 
+func (s *cacheBackedEntityStore) cacheEntityWithCredentialsByID(ctx context.Context,
+	ewc *entityWithCredentials) {
+	if ewc == nil || ewc.Entity == nil || ewc.Entity.ID == "" {
+		return
+	}
+	if err := s.entityWithCredentialsByIDCache.Set(ctx,
+		cache.CacheKey{Key: ewc.Entity.ID}, ewc); err != nil {
+		s.logger.Error("Failed to cache entity with credentials by ID",
+			log.String("entityID", ewc.Entity.ID), log.Error(err))
+	}
+}
+
 func (s *cacheBackedEntityStore) invalidateEntityByID(ctx context.Context, entityID string) {
 	if entityID == "" {
 		return
 	}
 	if err := s.entityByIDCache.Delete(ctx, cache.CacheKey{Key: entityID}); err != nil {
 		s.logger.Error("Failed to invalidate entity cache by ID",
+			log.String("entityID", entityID), log.Error(err))
+	}
+	if err := s.entityWithCredentialsByIDCache.Delete(ctx, cache.CacheKey{Key: entityID}); err != nil {
+		s.logger.Error("Failed to invalidate entity with credentials cache by ID",
 			log.String("entityID", entityID), log.Error(err))
 	}
 }
