@@ -126,7 +126,7 @@ func registerServices(mux *http.ServeMux, cacheManager cache.CacheManagerInterfa
 		logger.Fatal("Failed to initialize system authorization service", log.Error(err))
 	}
 
-	ouService, ouHierarchyResolver, ouExporter, err := ou.Initialize(mux, ouAuthzService)
+	ouService, ouHierarchyResolver, ouExporter, err := ou.Initialize(mux, cacheManager, ouAuthzService)
 	if err != nil {
 		logger.Fatal("Failed to initialize OrganizationUnitService", log.Error(err))
 	}
