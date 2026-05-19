@@ -29,17 +29,23 @@ import (
 // cacheBackedEntityStore wraps an entityStoreInterface with in-memory caching
 // for individual entity lookups by ID and identifier filter resolution.
 type cacheBackedEntityStore struct {
-	entityByIDCache cache.CacheInterface[*Entity]
-	store           entityStoreInterface
-	logger          *log.Logger
+	entityByIDCache                cache.CacheInterface[*Entity]
+	entityWithCredentialsByIDCache cache.CacheInterface[*entityWithCredentials]
+	entityIDByClientIDCache        cache.CacheInterface[*string]
+	store                          entityStoreInterface
+	logger                         *log.Logger
 }
 
 // newCacheBackedEntityStore creates a cache-backed wrapper around the given store.
 func newCacheBackedEntityStore(store entityStoreInterface,
-	entityByIDCache cache.CacheInterface[*Entity]) entityStoreInterface {
+	entityByIDCache cache.CacheInterface[*Entity],
+	entityWithCredentialsByIDCache cache.CacheInterface[*entityWithCredentials],
+	entityIDByClientIDCache cache.CacheInterface[*string]) entityStoreInterface {
 	return &cacheBackedEntityStore{
-		entityByIDCache: entityByIDCache,
-		store:           store,
+		entityByIDCache:                entityByIDCache,
+		entityWithCredentialsByIDCache: entityWithCredentialsByIDCache,
+		entityIDByClientIDCache:        entityIDByClientIDCache,
+		store:                          store,
 		logger: log.GetLogger().With(
 			log.String(log.LoggerKeyComponentName, "CacheBackedEntityStore")),
 	}
@@ -51,6 +57,9 @@ func (s *cacheBackedEntityStore) CreateEntity(ctx context.Context, entity Entity
 		return err
 	}
 	s.cacheEntityByID(ctx, &entity)
+	if clientID := extractClientID(&entity); clientID != "" {
+		s.cacheEntityIDByClientID(ctx, clientID, &entity.ID)
+	}
 	return nil
 }
 
@@ -71,7 +80,18 @@ func (s *cacheBackedEntityStore) GetEntity(ctx context.Context, id string) (Enti
 
 func (s *cacheBackedEntityStore) GetEntityWithCredentials(ctx context.Context,
 	id string) (*entityWithCredentials, error) {
-	return s.store.GetEntityWithCredentials(ctx, id)
+	cacheKey := cache.CacheKey{Key: id}
+	if cached, ok := s.entityWithCredentialsByIDCache.Get(ctx, cacheKey); ok {
+		return cached, nil
+	}
+
+	result, err := s.store.GetEntityWithCredentials(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	s.cacheEntityWithCredentialsByID(ctx, result)
+	return result, nil
 }
 
 func (s *cacheBackedEntityStore) UpdateEntity(ctx context.Context, entity *Entity) error {
@@ -79,8 +99,12 @@ func (s *cacheBackedEntityStore) UpdateEntity(ctx context.Context, entity *Entit
 		return err
 	}
 
+	s.invalidateClientIDCache(ctx, entity.ID)
 	s.invalidateEntityByID(ctx, entity.ID)
 	s.cacheEntityByID(ctx, entity)
+	if clientID := extractClientID(entity); clientID != "" {
+		s.cacheEntityIDByClientID(ctx, clientID, &entity.ID)
+	}
 	return nil
 }
 
@@ -100,6 +124,7 @@ func (s *cacheBackedEntityStore) UpdateSystemAttributes(ctx context.Context,
 		return err
 	}
 
+	s.invalidateClientIDCache(ctx, entityID)
 	s.invalidateEntityByID(ctx, entityID)
 	return nil
 }
@@ -129,18 +154,31 @@ func (s *cacheBackedEntityStore) DeleteEntity(ctx context.Context, id string) er
 		return err
 	}
 
+	s.invalidateClientIDCache(ctx, id)
 	s.invalidateEntityByID(ctx, id)
 	return nil
 }
 
 func (s *cacheBackedEntityStore) IdentifyEntity(ctx context.Context,
 	filters map[string]interface{}) (*string, error) {
-	entityID, err := s.store.IdentifyEntity(ctx, filters)
-	if err != nil || entityID == nil {
-		return entityID, err
+	if len(filters) == 1 {
+		if clientID, ok := filters["clientId"].(string); ok && clientID != "" {
+			cacheKey := cache.CacheKey{Key: clientID}
+			if cached, hit := s.entityIDByClientIDCache.Get(ctx, cacheKey); hit {
+				return cached, nil
+			}
+
+			entityID, err := s.store.IdentifyEntity(ctx, filters)
+			if err != nil || entityID == nil {
+				return entityID, err
+			}
+
+			s.cacheEntityIDByClientID(ctx, clientID, entityID)
+			return entityID, nil
+		}
 	}
 
-	return entityID, nil
+	return s.store.IdentifyEntity(ctx, filters)
 }
 
 // Pass-through methods.
@@ -215,6 +253,55 @@ func (s *cacheBackedEntityStore) LoadIndexedAttributes(attributes []string) erro
 
 // --- Cache helpers ---
 
+func extractClientID(entity *Entity) string {
+	if entity == nil || len(entity.SystemAttributes) == 0 {
+		return ""
+	}
+	var attrs map[string]interface{}
+	if err := json.Unmarshal(entity.SystemAttributes, &attrs); err != nil {
+		return ""
+	}
+	clientID, _ := attrs["clientId"].(string)
+	return clientID
+}
+
+func (s *cacheBackedEntityStore) cacheEntityIDByClientID(ctx context.Context,
+	clientID string, entityID *string) {
+	if clientID == "" || entityID == nil {
+		return
+	}
+	if err := s.entityIDByClientIDCache.Set(ctx,
+		cache.CacheKey{Key: clientID}, entityID); err != nil {
+		s.logger.Error("Failed to cache entity ID by client ID",
+			log.String("clientID", clientID), log.Error(err))
+	}
+}
+
+func (s *cacheBackedEntityStore) invalidateClientIDCache(ctx context.Context, entityID string) {
+	if entityID == "" {
+		return
+	}
+	var entity *Entity
+	if cached, ok := s.entityByIDCache.Get(ctx, cache.CacheKey{Key: entityID}); ok && cached != nil {
+		entity = cached
+	} else {
+		fetched, err := s.store.GetEntity(ctx, entityID)
+		if err != nil {
+			return
+		}
+		entity = &fetched
+	}
+	clientID := extractClientID(entity)
+	if clientID == "" {
+		return
+	}
+	if err := s.entityIDByClientIDCache.Delete(ctx,
+		cache.CacheKey{Key: clientID}); err != nil {
+		s.logger.Error("Failed to invalidate entity ID by client ID cache",
+			log.String("clientID", clientID), log.Error(err))
+	}
+}
+
 func (s *cacheBackedEntityStore) cacheEntityByID(ctx context.Context, entity *Entity) {
 	if entity == nil || entity.ID == "" {
 		return
@@ -225,12 +312,28 @@ func (s *cacheBackedEntityStore) cacheEntityByID(ctx context.Context, entity *En
 	}
 }
 
+func (s *cacheBackedEntityStore) cacheEntityWithCredentialsByID(ctx context.Context,
+	ewc *entityWithCredentials) {
+	if ewc == nil || ewc.Entity == nil || ewc.Entity.ID == "" {
+		return
+	}
+	if err := s.entityWithCredentialsByIDCache.Set(ctx,
+		cache.CacheKey{Key: ewc.Entity.ID}, ewc); err != nil {
+		s.logger.Error("Failed to cache entity with credentials by ID",
+			log.String("entityID", ewc.Entity.ID), log.Error(err))
+	}
+}
+
 func (s *cacheBackedEntityStore) invalidateEntityByID(ctx context.Context, entityID string) {
 	if entityID == "" {
 		return
 	}
 	if err := s.entityByIDCache.Delete(ctx, cache.CacheKey{Key: entityID}); err != nil {
 		s.logger.Error("Failed to invalidate entity cache by ID",
+			log.String("entityID", entityID), log.Error(err))
+	}
+	if err := s.entityWithCredentialsByIDCache.Delete(ctx, cache.CacheKey{Key: entityID}); err != nil {
+		s.logger.Error("Failed to invalidate entity with credentials cache by ID",
 			log.String("entityID", entityID), log.Error(err))
 	}
 }
