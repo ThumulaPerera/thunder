@@ -54,6 +54,11 @@ func initializeStore(cacheManager cache.CacheManagerInterface) (
 		return nil, nil, err
 	}
 	entityByIDCache := cache.GetCache[*Entity](cacheManager, "EntityByIDCache")
-	cacheBackedEntityStore := newCacheBackedEntityStore(dbStore, entityByIDCache)
+	entityWithCredsByIDCache := cache.GetCache[*entityWithCredentials](cacheManager,
+		"EntityWithCredentialsByIDCache")
+	entityIDByClientIDCache := cache.GetCache[*string](cacheManager,
+		"EntityIDByClientIDCache")
+	cacheBackedEntityStore := newCacheBackedEntityStore(dbStore, entityByIDCache,
+		entityWithCredsByIDCache, entityIDByClientIDCache)
 	return newEntityCompositeStore(fileStore, cacheBackedEntityStore), transactioner, nil
 }
