@@ -489,6 +489,26 @@ jobs:
           echo "📦 Image available at: ${IMAGE_NAME}:${DOCKER_VERSION}"
           echo "📦 Image available at: ${IMAGE_NAME}:latest"
 
+      - name: 📦 Publish Docker Compose (Quick Start) to GHCR
+        run: |
+          OWNER_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          DOCKER_VERSION="${{ needs.build.outputs.version }}"
+          if [[ $DOCKER_VERSION == v* ]]; then
+            DOCKER_VERSION="${DOCKER_VERSION#v}"
+          fi
+
+          COMPOSE_IMAGE="ghcr.io/${OWNER_NAME}/${PRODUCT_NAME_LOWER}-quick-start"
+
+          docker compose -f install/quick-start/docker-compose.yml publish \
+            --resolve-image-digests -y "${COMPOSE_IMAGE}:${DOCKER_VERSION}"
+
+          docker compose -f install/quick-start/docker-compose.yml publish \
+            --resolve-image-digests -y "${COMPOSE_IMAGE}:latest"
+
+          echo "✅ Docker Compose published successfully!"
+          echo "📦 Available at: ${COMPOSE_IMAGE}:${DOCKER_VERSION}"
+          echo "📦 Available at: ${COMPOSE_IMAGE}:latest"
+
       - name: 🏷️ Update Helm Values Image Tag
         run: |
           # Get version without 'v' prefix
