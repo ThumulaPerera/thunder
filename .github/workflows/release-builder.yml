@@ -500,10 +500,10 @@ jobs:
           COMPOSE_IMAGE="ghcr.io/${OWNER_NAME}/${PRODUCT_NAME_LOWER}-quick-start"
 
           docker compose -f install/quick-start/docker-compose.yml publish \
-            --resolve-image-digests -y "${COMPOSE_IMAGE}:${DOCKER_VERSION}"
+            -y "${COMPOSE_IMAGE}:${DOCKER_VERSION}"
 
           docker compose -f install/quick-start/docker-compose.yml publish \
-            --resolve-image-digests -y "${COMPOSE_IMAGE}:latest"
+            -y "${COMPOSE_IMAGE}:latest"
 
           echo "✅ Docker Compose published successfully!"
           echo "📦 Available at: ${COMPOSE_IMAGE}:${DOCKER_VERSION}"
