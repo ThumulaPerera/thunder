@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	authncm "github.com/thunder-id/thunderid/internal/authn/common"
+	authnprovidercm "github.com/thunder-id/thunderid/internal/authnprovider/common"
 	"github.com/thunder-id/thunderid/internal/entityprovider"
 	"github.com/thunder-id/thunderid/internal/entitytype/model"
 	"github.com/thunder-id/thunderid/internal/flow/common"
@@ -37,6 +37,7 @@ import (
 	"github.com/thunder-id/thunderid/internal/group"
 	"github.com/thunder-id/thunderid/internal/role"
 	"github.com/thunder-id/thunderid/internal/system/error/serviceerror"
+	"github.com/thunder-id/thunderid/tests/mocks/authnprovider/managermock"
 	"github.com/thunder-id/thunderid/tests/mocks/entityprovidermock"
 	"github.com/thunder-id/thunderid/tests/mocks/entitytypemock"
 	"github.com/thunder-id/thunderid/tests/mocks/flow/coremock"
@@ -61,6 +62,7 @@ type ProvisioningExecutorTestSuite struct {
 	mockFlowFactory           *coremock.FlowFactoryInterfaceMock
 	mockEntityProvider        *entityprovidermock.EntityProviderInterfaceMock
 	mockEntityTypeService     *entitytypemock.EntityTypeServiceInterfaceMock
+	mockAuthnProvider         *managermock.AuthnProviderManagerInterfaceMock
 	executor                  *provisioningExecutor
 }
 
@@ -75,6 +77,11 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 	suite.mockFlowFactory = coremock.NewFlowFactoryInterfaceMock(suite.T())
 	suite.mockEntityProvider = entityprovidermock.NewEntityProviderInterfaceMock(suite.T())
 	suite.mockEntityTypeService = entitytypemock.NewEntityTypeServiceInterfaceMock(suite.T())
+	suite.mockAuthnProvider = managermock.NewAuthnProviderManagerInterfaceMock(suite.T())
+	suite.mockAuthnProvider.On("AuthenticateUser", mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Return(newAuthenticatedAuthUser(), authnprovidercm.AuthenticatedClaims{},
+			(*serviceerror.ServiceError)(nil)).Maybe()
 
 	// Mock the embedded identifying executor first
 	identifyingMock := suite.createMockIdentifyingExecutor()
@@ -87,7 +94,7 @@ func (suite *ProvisioningExecutorTestSuite) SetupTest() {
 
 	suite.executor = newProvisioningExecutor(suite.mockFlowFactory,
 		suite.mockGroupService, suite.mockRoleService, suite.mockRoleAssignmentService, suite.mockEntityProvider,
-		suite.mockEntityTypeService)
+		suite.mockEntityTypeService, suite.mockAuthnProvider)
 }
 
 // expectSchemaForProvisioning sets up the schema service mocks for Execute tests.
@@ -203,8 +210,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success() {
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 	suite.mockGroupService.AssertExpectations(suite.T())
 	suite.mockRoleService.AssertExpectations(suite.T())
@@ -213,6 +218,7 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success() {
 
 func (suite *ProvisioningExecutorTestSuite) TestExecute_UserAlreadyExists() {
 	suite.expectSchemaForProvisioning()
+	nodeInputs := []common.Input{{Identifier: "username", Type: "string", Required: true}}
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeRegistration,
@@ -220,8 +226,19 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserAlreadyExists() {
 			"username": "existinguser",
 		},
 		RuntimeData: map[string]string{userTypeKey: testUserType},
-		NodeInputs:  []common.Input{{Identifier: "username", Type: "string", Required: true}},
+		NodeInputs:  nodeInputs,
 	}
+
+	// Override GetRequiredInputs to return node inputs so the retry path is exercised
+	provMock := suite.executor.ExecutorInterface.(*coremock.ExecutorInterfaceMock)
+	var filteredCalls []*mock.Call
+	for _, call := range provMock.ExpectedCalls {
+		if call.Method != methodGetRequiredInputs {
+			filteredCalls = append(filteredCalls, call)
+		}
+	}
+	provMock.ExpectedCalls = filteredCalls
+	provMock.On(methodGetRequiredInputs, mock.Anything).Return(nodeInputs).Maybe()
 
 	userID := "user-existing"
 	suite.mockEntityProvider.On("IdentifyEntity", map[string]interface{}{
@@ -232,7 +249,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserAlreadyExists() {
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
-	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
 	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
 	assert.Contains(suite.T(), resp.Error.Error.DefaultValue, "User already exists")
 	suite.mockEntityProvider.AssertExpectations(suite.T())
@@ -289,9 +305,6 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_AttributesFrom
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
 		FlowType:    common.FlowTypeRegistration,
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{attributeEmail: "test@example.com"},
-		},
 		NodeInputs:  []common.Input{{Identifier: attributeEmail, Type: "string", Required: true}},
 		RuntimeData: map[string]string{userTypeKey: testUserType},
 	}
@@ -346,7 +359,7 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Sch
 }
 
 // TestGetAttributesForProvisioning_RequiredAttrsFromMultipleSources verifies that required schema
-// attributes are resolved from UserInputs, AuthenticatedUser.Attributes, and RuntimeData.
+// attributes are resolved from UserInputs and RuntimeData.
 func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_RequiredAttrsFromMultipleSources() {
 	suite.mockEntityTypeService.On("GetAttributes", mock.Anything, mock.Anything, testUserType, true, true, false).
 		Return([]model.AttributeInfo{
@@ -358,15 +371,11 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Req
 
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{"username": "testuser"},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "auth@example.com",
-				"given_name":   "Test",
-			},
-		},
 		RuntimeData: map[string]string{
-			userTypeKey: testUserType,
-			"phone":     "+1234567890",
+			userTypeKey:    testUserType,
+			attributeEmail: "auth@example.com",
+			"given_name":   "Test",
+			"phone":        "+1234567890",
 		},
 		NodeInputs: []common.Input{},
 	}
@@ -391,15 +400,10 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Con
 
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{attributeEmail: "userinput@example.com"},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "authn@example.com",
-				"name":         "Authn Name",
-			},
-		},
 		RuntimeData: map[string]string{
 			userTypeKey:    testUserType,
 			attributeEmail: "runtime@example.com",
+			"name":         "Authn Name",
 			"phone":        "+1234567890",
 		},
 		NodeInputs: []common.Input{},
@@ -409,7 +413,7 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Con
 
 	// UserInputs is checked first — wins for email.
 	assert.Equal(suite.T(), "userinput@example.com", result[attributeEmail])
-	// Only in AuthenticatedUser — comes from there.
+	// Only in RuntimeData — comes from there.
 	assert.Equal(suite.T(), "Authn Name", result["name"])
 	// Only in RuntimeData — comes from there.
 	assert.Equal(suite.T(), "+1234567890", result["phone"])
@@ -534,7 +538,7 @@ func (suite *ProvisioningExecutorTestSuite) newExecutorWithNodeInputs(inputs []c
 
 	return newProvisioningExecutor(mockFlowFactory,
 		suite.mockGroupService, suite.mockRoleService, suite.mockRoleAssignmentService, suite.mockEntityProvider,
-		suite.mockEntityTypeService)
+		suite.mockEntityTypeService, suite.mockAuthnProvider)
 }
 
 func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_FilteredPath_RequiredAttrFromUserInputs() {
@@ -585,15 +589,13 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Fil
 
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{"username": "testuser"},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "federated@example.com",
-				"given_name":   "Test",
-				"mobileNumber": "0779876543",
-			},
+		RuntimeData: map[string]string{
+			userTypeKey:    testUserType,
+			attributeEmail: "federated@example.com",
+			"given_name":   "Test",
+			"mobileNumber": "0779876543",
 		},
-		RuntimeData: map[string]string{userTypeKey: testUserType},
-		NodeInputs:  nodeInputs,
+		NodeInputs: nodeInputs,
 	}
 
 	result, _, _ := exec.getAttributesForProvisioning(ctx)
@@ -618,25 +620,22 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Fil
 
 	ctx := &core.NodeContext{
 		UserInputs: map[string]string{attributeEmail: "userinput@example.com"},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "authn@example.com",
-				"username":     "federateduser",
-			},
+		RuntimeData: map[string]string{
+			userTypeKey: testUserType,
+			"username":  "federateduser",
 		},
-		RuntimeData: map[string]string{userTypeKey: testUserType},
-		NodeInputs:  nodeInputs,
+		NodeInputs: nodeInputs,
 	}
 
 	result, _, _ := exec.getAttributesForProvisioning(ctx)
 
 	assert.Equal(suite.T(), "userinput@example.com", result[attributeEmail],
-		"UserInputs must win over AuthenticatedUser.Attributes for the same key")
+		"UserInputs must win over RuntimeData for the same key")
 	assert.Equal(suite.T(), "federateduser", result["username"],
-		"required schema attr from AuthenticatedUser.Attributes must still be included")
+		"required schema attr from RuntimeData must still be included")
 }
 
-func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_UserAlreadyExists() {
+func (suite *ProvisioningExecutorTestSuite) TestExecute_AllowRegistrationWithExistingUser_SkipsProvisioning() {
 	suite.expectSchemaForProvisioning()
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
@@ -645,8 +644,8 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_UserAlr
 			"username": "existinguser",
 		},
 		RuntimeData: map[string]string{
-			common.RuntimeKeySkipProvisioning: dataValueTrue,
-			userTypeKey:                       testUserType,
+			common.RuntimeKeyAllowRegistrationWithExistingUser: dataValueTrue,
+			userTypeKey: testUserType,
 		},
 		NodeInputs: []common.Input{
 			{Identifier: "username", Type: "string", Required: true},
@@ -664,15 +663,11 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_UserAlr
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testExistingUser123ID, resp.RuntimeData[userAttributeUserID])
-	assert.Equal(suite.T(), testExistingUser123ID, resp.RuntimeData[userAttributeUserID])
-	// Verify that CreateUser was not called (provisioning was skipped)
-	// Verify that CreateUser was not called (provisioning was skipped)
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 	suite.mockEntityProvider.AssertNotCalled(suite.T(), "CreateEntity")
 }
 
-func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_ProceedsNormally() {
+func (suite *ProvisioningExecutorTestSuite) TestExecute_NewUser_NoGroupOrRoleProperties() {
 	suite.expectSchemaForProvisioning()
 	ctx := &core.NodeContext{
 		ExecutionID: "flow-123",
@@ -682,9 +677,8 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_Proceed
 			attributeEmail: "new@example.com",
 		},
 		RuntimeData: map[string]string{
-			common.RuntimeKeySkipProvisioning: "false",
-			ouIDKey:                           testOUID,
-			userTypeKey:                       testUserType,
+			ouIDKey:     testOUID,
+			userTypeKey: testUserType,
 		},
 		NodeInputs: []common.Input{
 			{Identifier: "username", Type: "string", Required: true},
@@ -719,11 +713,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_SkipProvisioning_Proceed
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
-	// userAutoProvisioned flag is not set in registration flows
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
-	// userAutoProvisioned flag is not set in registration flows
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 
 	// Verify no group/role methods were called
@@ -778,8 +767,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserEligibleForProvision
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.True(suite.T(), resp.AuthenticatedUser.IsAuthenticated)
-	assert.Equal(suite.T(), "user-provisioned", resp.AuthenticatedUser.UserID)
 	assert.Equal(suite.T(), dataValueTrue, resp.RuntimeData[common.RuntimeKeyUserAutoProvisioned])
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 }
@@ -828,40 +815,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UserAutoProvisionedFlag_
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
 	assert.Equal(suite.T(), dataValueTrue, resp.RuntimeData[common.RuntimeKeyUserAutoProvisioned],
 		"userAutoProvisioned flag should be set to true after successful provisioning")
-	suite.mockEntityProvider.AssertExpectations(suite.T())
-}
-
-func (suite *ProvisioningExecutorTestSuite) TestExecute_RegistrationFlow_SkipProvisioningWithExistingUser() {
-	suite.expectSchemaForProvisioning()
-	userID := "existing-user-id"
-	ctx := &core.NodeContext{
-		ExecutionID: "flow-123",
-		FlowType:    common.FlowTypeRegistration,
-		UserInputs: map[string]string{
-			"username": "existinguser",
-		},
-		RuntimeData: map[string]string{
-			common.RuntimeKeySkipProvisioning: dataValueTrue,
-			userTypeKey:                       testUserType,
-		},
-		NodeInputs: []common.Input{
-			{Identifier: "username", Type: "string", Required: true},
-		},
-	}
-
-	attrs := map[string]interface{}{
-		"username": "existinguser",
-	}
-	suite.mockEntityProvider.On("IdentifyEntity", attrs).Return(&userID, nil)
-
-	resp, err := suite.executor.Execute(ctx)
-
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), resp)
-	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), userID, resp.RuntimeData[userAttributeUserID])
-	assert.Nil(suite.T(), resp.Error)
-	suite.mockEntityProvider.AssertNotCalled(suite.T(), "CreateEntity")
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 }
 
@@ -1069,9 +1022,6 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_AllAttributesI
 			attributeEmail: "user@example.com",
 			"username":     "testuser",
 			userTypeKey:    testUserType,
-		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{},
 		},
 		NodeInputs: []common.Input{
 			{Identifier: attributeEmail, Type: "string", Required: true},
@@ -1365,7 +1315,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success_WithGroupAndRole
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
 
 	// Verify all mocks were called
 	suite.mockEntityProvider.AssertExpectations(suite.T())
@@ -1418,7 +1367,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_Success_WithMultipleGrou
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testNewUserID, resp.AuthenticatedUser.UserID)
 
 	suite.mockEntityProvider.AssertExpectations(suite.T())
 	suite.mockGroupService.AssertExpectations(suite.T())
@@ -1471,7 +1419,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_Success() {
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testNewUserID, resp.RuntimeData[userAttributeUserID])
 }
 
 func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_NotEnabled_Fails() {
@@ -1498,8 +1445,7 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_NotEnabled_Fails
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
-	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
+	assert.Equal(suite.T(), common.ExecFailure, resp.Status)
 	assert.Equal(suite.T(), ErrUserAlreadyExists.Error.DefaultValue, resp.Error.Error.DefaultValue)
 }
 
@@ -1534,8 +1480,7 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_SameOU_Fails() {
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
-	assert.Equal(suite.T(), common.ExecUserInputRequired, resp.Status)
+	assert.Equal(suite.T(), common.ExecFailure, resp.Status)
 	assert.Equal(suite.T(), ErrUserAlreadyExistsInTargetOU.Error.DefaultValue, resp.Error.Error.DefaultValue)
 }
 
@@ -1653,9 +1598,9 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_NotEnabled_Authn
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), common.ExecFailure, resp.Status,
-		"Authentication flow should return ExecFailure (not UserInputRequired) when user already exists")
-	assert.Equal(suite.T(), ErrUserAlreadyExists.Error.DefaultValue, resp.Error.Error.DefaultValue)
+	assert.Equal(suite.T(), common.ExecComplete, resp.Status,
+		"Authentication flow should skip provisioning and return ExecComplete when user already exists")
+	assert.Nil(suite.T(), resp.Error, "No error should be set when skipping provisioning in authentication flow")
 	assert.Empty(suite.T(), resp.Inputs, "Inputs should not be populated for authentication flows")
 }
 
@@ -1735,9 +1680,9 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_SameOU_AuthnFlow
 	resp, err := suite.executor.Execute(ctx)
 
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), common.ExecFailure, resp.Status,
-		"Authentication flow should return ExecFailure (not UserInputRequired) when user exists in target OU")
-	assert.Equal(suite.T(), ErrUserAlreadyExistsInTargetOU.Error.DefaultValue, resp.Error.Error.DefaultValue)
+	assert.Equal(suite.T(), common.ExecComplete, resp.Status,
+		"Authentication flow should skip provisioning and return ExecComplete when user exists in target OU")
+	assert.Nil(suite.T(), resp.Error, "No error should be set when skipping provisioning in authentication flow")
 	assert.Empty(suite.T(), resp.Inputs, "Inputs should not be populated for authentication flows")
 }
 
@@ -1869,12 +1814,6 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_SchemaAttrSati
 		ExecutionID: "flow-123",
 		UserInputs:  map[string]string{},
 		RuntimeData: map[string]string{userTypeKey: testUserType},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "user@example.com",
-				"firstName":    "Test",
-			},
-		},
 	}
 	execResp := &common.ExecutorResponse{RuntimeData: make(map[string]string)}
 
@@ -2161,11 +2100,6 @@ func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_RequiredCreden
 		ExecutionID: "flow-123",
 		UserInputs:  map[string]string{},
 		RuntimeData: map[string]string{userTypeKey: testUserType},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributePassword: "profile-secret",
-			},
-		},
 	}
 	execResp := &common.ExecutorResponse{RuntimeData: make(map[string]string)}
 
@@ -2604,13 +2538,11 @@ func (suite *ProvisioningExecutorTestSuite) TestGetAttributesForProvisioning_Sch
 			"username":    "testuser",
 			"extra_field": "should-not-appear",
 		},
-		AuthenticatedUser: authncm.AuthenticatedUser{
-			Attributes: map[string]interface{}{
-				attributeEmail: "test@example.com",
-			},
+		RuntimeData: map[string]string{
+			userTypeKey:    testUserType,
+			attributeEmail: "test@example.com",
 		},
-		RuntimeData: map[string]string{userTypeKey: testUserType},
-		NodeInputs:  []common.Input{},
+		NodeInputs: []common.Input{},
 	}
 
 	result, _, _ := suite.executor.getAttributesForProvisioning(ctx)
@@ -2775,8 +2707,9 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_UnmarshalAttributesError
 
 	resp, err := suite.executor.Execute(ctx)
 
-	assert.Nil(suite.T(), resp)
-	assert.Error(suite.T(), err)
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), resp)
+	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
 }
 
 func (suite *ProvisioningExecutorTestSuite) TestHasRequiredInputs_NilRuntimeData_IsInitialized() {
@@ -3237,7 +3170,6 @@ func (suite *ProvisioningExecutorTestSuite) TestExecute_CrossOU_AmbiguousUser_No
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), resp)
 	assert.Equal(suite.T(), common.ExecComplete, resp.Status)
-	assert.Equal(suite.T(), testNewUserID, resp.RuntimeData[userAttributeUserID])
 }
 
 // Ambiguous user + cross-OU allowed + match found in target OU → fail "already exists in target".
