@@ -54,31 +54,40 @@ func (suite *RestAuthnProviderTestSuite) setupMockClient() *httpmock.HTTPClientI
 	return client
 }
 
-func (suite *RestAuthnProviderTestSuite) initRuntime(rest config.RestConfig) {
-	cfg := &config.Config{
-		AuthnProvider: config.AuthnProviderConfig{Type: "rest", Rest: rest},
-	}
+// initRuntime installs a minimal server runtime so the REST registrar can build
+// an HTTP client (its TLS config reads GetServerRuntime).
+func (suite *RestAuthnProviderTestSuite) initRuntime() {
 	config.ResetServerRuntime()
-	suite.Require().NoError(config.InitializeServerRuntime("/tmp/test", cfg))
+	suite.Require().NoError(config.InitializeServerRuntime("/tmp/test", &config.Config{}))
 	suite.T().Cleanup(config.ResetServerRuntime)
 }
 
 func (suite *RestAuthnProviderTestSuite) TestInitializeRestAuthnProvider_DefaultCorrelationHeader() {
-	suite.initRuntime(config.RestConfig{BaseURL: "https://authn.example.com"})
+	suite.initRuntime()
+	props := map[string]interface{}{
+		"enabled":  true,
+		"base_url": "https://authn.example.com",
+	}
+	registrar := newBuiltInAuthnProviderRegistrars()["rest"]
+	p, err := registrar(props, AuthnProviderDependencies{})
+	suite.Require().NoError(err)
 
-	provider := initializeRestAuthnProvider().(*restAuthnProvider)
-
+	provider := p.(*restAuthnProvider)
 	suite.Equal(serverconst.CorrelationIDHeaderName, provider.correlationIDHeader)
 }
 
 func (suite *RestAuthnProviderTestSuite) TestInitializeRestAuthnProvider_ConfiguredCorrelationHeader() {
-	suite.initRuntime(config.RestConfig{
-		BaseURL:             "https://authn.example.com",
-		CorrelationIDHeader: "X-Trace-Token",
-	})
+	suite.initRuntime()
+	props := map[string]interface{}{
+		"enabled":               true,
+		"base_url":              "https://authn.example.com",
+		"correlation_id_header": "X-Trace-Token",
+	}
+	registrar := newBuiltInAuthnProviderRegistrars()["rest"]
+	p, err := registrar(props, AuthnProviderDependencies{})
+	suite.Require().NoError(err)
 
-	provider := initializeRestAuthnProvider().(*restAuthnProvider)
-
+	provider := p.(*restAuthnProvider)
 	suite.Equal("X-Trace-Token", provider.correlationIDHeader)
 }
 

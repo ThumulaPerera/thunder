@@ -685,27 +685,31 @@ Controls notification delivery behaviour, including OTP generation parameters.
 
 ## Authentication Provider Configuration
 
-External authentication provider settings.
+Authentication providers are registered in code. These settings override the
+defaults for built-in providers and route specific credential types between
+providers.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `authn_provider.type` | `default` | Provider type (`default` or `rest`) |
-| `authn_provider.rest.base_url` | `""` | Base URL for REST authentication provider |
-| `authn_provider.rest.timeout` | `10` | Request timeout in seconds |
-| `authn_provider.rest.correlation_id_header` | `X-Correlation-ID` | Header used to forward the request's correlation ID (trace ID) to the REST provider. Set a different name if the provider expects one. |
-| `authn_provider.rest.security.api_key` | `""` | API key for REST provider authentication |
+| `authn_provider.credential_mapping` | `{}` | Overlay on the built-in credential-to-provider map. Keys are credential identifiers (e.g. `password`, `passkey`, `otp`, `federated`, `magiclink`, `openid4vp`, `clientSecret`, `provisionedEntityID`); values are provider names from the catalog (`default`, `rest`). |
+| `authn_provider.properties.rest.enabled` | `false` | Set to `true` to register the REST authentication provider. When `false` (or absent), the rest of the `rest.*` properties are ignored — useful for staging config ahead of rollout. |
+| `authn_provider.properties.rest.base_url` | `""` | Base URL for the REST authentication provider. Required when `rest.enabled` is `true`. |
+| `authn_provider.properties.rest.timeout` | `10` | REST request timeout in seconds. |
+| `authn_provider.properties.rest.correlation_id_header` | `X-Correlation-ID` | Header used to forward the request's correlation ID (trace ID) to the REST provider. Set a different name if the provider expects one. |
+| `authn_provider.properties.rest.security.api_key` | `""` | API key sent with REST provider requests. |
 
 ### Correlation ID Propagation
 
-Each request is assigned a correlation ID (trace ID), which the server generates when the client does not supply one. <ProductName /> forwards this ID on outbound HTTP calls so a request can be traced across services. The REST authentication provider, the consent service, the flow HTTP request executor, and the Vonage notification provider all set the `X-Correlation-ID` header when it is missing. For the REST authentication provider, the header name is configurable via `authn_provider.rest.correlation_id_header`.
+Each request is assigned a correlation ID (trace ID), which the server generates when the client does not supply one. <ProductName /> forwards this ID on outbound HTTP calls so a request can be traced across services. The REST authentication provider, the consent service, the flow HTTP request executor, and the Vonage notification provider all set the `X-Correlation-ID` header when it is missing. For the REST authentication provider, the header name is configurable via `authn_provider.properties.rest.correlation_id_header`.
 
 **Example** — forward the correlation ID under a custom header name:
 ```yaml
 authn_provider:
-  type: rest
-  rest:
-    base_url: "https://my-authn-service"
-    correlation_id_header: "X-Trace-Token"
+  properties:
+    rest:
+      enabled: true
+      base_url: "https://my-authn-service"
+      correlation_id_header: "X-Trace-Token"
 ```
 
 ## CORS Configuration
