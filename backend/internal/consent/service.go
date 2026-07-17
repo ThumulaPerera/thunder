@@ -52,18 +52,55 @@ type InboundClientProvider interface {
 	ListInboundClientAttributes(ctx context.Context) ([]inboundmodel.InboundClientAttributes, error)
 }
 
+// ConsentAuditAction identifies the consent mutation an audit record describes.
+type ConsentAuditAction string
+
+const (
+	// ConsentAuditActionCreated records the creation of a consent.
+	ConsentAuditActionCreated ConsentAuditAction = "CONSENT_CREATED"
+	// ConsentAuditActionUpdated records the update of a consent.
+	ConsentAuditActionUpdated ConsentAuditAction = "CONSENT_UPDATED"
+)
+
+// ConsentAuditEntry is the audit record of a single consent mutation. It carries the affected consent
+// identity, the subject users, and a full snapshot of the consent state that resulted from the
+// mutation.
+type ConsentAuditEntry struct {
+	Action         ConsentAuditAction
+	ConsentID      string
+	GroupID        string
+	SubjectUserIDs []string
+	Status         ConsentStatus
+	ValidityTime   int64
+	Purposes       []ConsentPurposeItem
+	Authorizations []ConsentAuthorization
+}
+
+// ConsentAuditProvider records consent audit entries. It is the consumer-facing contract the consent
+// service depends on; the default database-backed implementation lives in the consentaudit package,
+// and an external audit service can be plugged in by supplying another implementation.
+//
+// Record is called within the consent mutation's database transaction, so returning an error rolls
+// the mutation back: a consent and its audit record are persisted together or not at all.
+type ConsentAuditProvider interface {
+	Record(ctx context.Context, entry ConsentAuditEntry) error
+}
+
 // consentService is the default implementation of ConsentServiceInterface.
 type consentService struct {
 	consentStore          consentStoreInterface
 	transactioner         transaction.Transactioner
 	inboundClientProvider InboundClientProvider
 	logger                *log.Logger
+	auditProvider         ConsentAuditProvider
 }
 
 // newConsentService creates a new consent service backed by the database store. The inbound client
-// provider supplies the persisted inbound client data from which consent purposes are derived.
+// provider supplies the persisted inbound client data from which consent purposes are derived, and the
+// auditor records an audit entry for each consent mutation.
 func newConsentService(
 	inboundClientProvider InboundClientProvider,
+	auditProvider ConsentAuditProvider,
 ) (ConsentServiceInterface, error) {
 	consentStore, transactioner, err := newConsentStore()
 	if err != nil {
@@ -75,6 +112,7 @@ func newConsentService(
 		transactioner:         transactioner,
 		inboundClientProvider: inboundClientProvider,
 		logger:                log.GetLogger().With(log.String(log.LoggerKeyComponentName, "ConsentService")),
+		auditProvider:         auditProvider,
 	}, nil
 }
 
@@ -193,7 +231,10 @@ func (c *consentService) CreateConsent(
 	}
 
 	err = c.transactioner.Transact(ctx, func(txCtx context.Context) error {
-		return c.consentStore.CreateConsent(txCtx, newConsent)
+		if err := c.consentStore.CreateConsent(txCtx, newConsent); err != nil {
+			return err
+		}
+		return c.recordConsentAudit(txCtx, ConsentAuditActionCreated, newConsent)
 	})
 	if err != nil {
 		c.logger.Error(ctx, "Failed to create consent", log.Error(err))
@@ -235,7 +276,10 @@ func (c *consentService) UpdateConsent(
 			Purposes:       consent.Purposes,
 			Authorizations: authorizations,
 		}
-		return c.consentStore.UpdateConsent(txCtx, updatedConsent)
+		if err := c.consentStore.UpdateConsent(txCtx, updatedConsent); err != nil {
+			return err
+		}
+		return c.recordConsentAudit(txCtx, ConsentAuditActionUpdated, updatedConsent)
 	})
 	if err != nil {
 		if errors.Is(err, errConsentNotFound) {
@@ -360,4 +404,30 @@ func buildAuthorizations(requests []ConsentAuthorizationRequest) ([]ConsentAutho
 		})
 	}
 	return authorizations, nil
+}
+
+// recordConsentAudit records an audit entry for a consent mutation.
+func (c *consentService) recordConsentAudit(
+	ctx context.Context, action ConsentAuditAction, consent *Consent,
+) error {
+	return c.auditProvider.Record(ctx, ConsentAuditEntry{
+		Action:         action,
+		ConsentID:      consent.ID,
+		GroupID:        consent.GroupID,
+		SubjectUserIDs: extractSubjectUserIDs(consent.Authorizations),
+		Status:         consent.Status,
+		ValidityTime:   consent.ValidityTime,
+		Purposes:       consent.Purposes,
+		Authorizations: consent.Authorizations,
+	})
+}
+
+// extractSubjectUserIDs returns the unique, non-empty user IDs across a consent's authorizations,
+// preserving their order of first appearance.
+func extractSubjectUserIDs(authorizations []ConsentAuthorization) []string {
+	userIDs := make([]string, 0, len(authorizations))
+	for _, authorization := range authorizations {
+		userIDs = append(userIDs, authorization.UserID)
+	}
+	return utils.UniqueNonEmptyStrings(userIDs)
 }

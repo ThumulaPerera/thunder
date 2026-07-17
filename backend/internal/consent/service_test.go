@@ -37,6 +37,7 @@ type ConsentServiceTestSuite struct {
 	suite.Suite
 	mockStore          *consentStoreInterfaceMock
 	mockInboundClients *InboundClientProviderMock
+	mockAuditor        *ConsentAuditProviderMock
 	service            *consentService
 }
 
@@ -47,11 +48,13 @@ func TestConsentServiceTestSuite(t *testing.T) {
 func (s *ConsentServiceTestSuite) SetupTest() {
 	s.mockStore = newConsentStoreInterfaceMock(s.T())
 	s.mockInboundClients = NewInboundClientProviderMock(s.T())
+	s.mockAuditor = NewConsentAuditProviderMock(s.T())
 	s.service = &consentService{
 		consentStore:          s.mockStore,
 		transactioner:         transaction.NewNoOpTransactioner(),
 		inboundClientProvider: s.mockInboundClients,
 		logger:                log.GetLogger().With(log.String(log.LoggerKeyComponentName, "ConsentService")),
+		auditProvider:         s.mockAuditor,
 	}
 }
 
@@ -149,6 +152,9 @@ func (s *ConsentServiceTestSuite) validCreateRequest() *ConsentRequest {
 
 func (s *ConsentServiceTestSuite) TestCreateConsent_Success() {
 	s.mockStore.On("CreateConsent", mock.Anything, mock.AnythingOfType("*consent.Consent")).Return(nil)
+	var entry ConsentAuditEntry
+	s.mockAuditor.On("Record", mock.Anything, mock.AnythingOfType("consent.ConsentAuditEntry")).
+		Run(func(args mock.Arguments) { entry = args.Get(1).(ConsentAuditEntry) }).Return(nil)
 
 	created, svcErr := s.service.CreateConsent(context.Background(), s.validCreateRequest())
 
@@ -161,6 +167,13 @@ func (s *ConsentServiceTestSuite) TestCreateConsent_Success() {
 	s.NotEmpty(created.Authorizations[0].ID)
 	s.Equal("user1", created.Authorizations[0].UserID)
 	s.NotZero(created.Authorizations[0].UpdatedTime)
+	s.Equal(ConsentAuditActionCreated, entry.Action)
+	s.Equal(created.ID, entry.ConsentID)
+	s.Equal("app1", entry.GroupID)
+	s.Equal([]string{"user1"}, entry.SubjectUserIDs)
+	s.Equal(ConsentStatusActive, entry.Status)
+	s.Equal(created.Authorizations, entry.Authorizations)
+	s.Equal(created.Purposes, entry.Purposes)
 }
 
 func (s *ConsentServiceTestSuite) TestCreateConsent_StoreError() {
@@ -169,6 +182,20 @@ func (s *ConsentServiceTestSuite) TestCreateConsent_StoreError() {
 
 	created, svcErr := s.service.CreateConsent(context.Background(), s.validCreateRequest())
 
+	s.Nil(created)
+	s.NotNil(svcErr)
+	s.Equal(tidcommon.InternalServerError.Code, svcErr.Code)
+	s.mockAuditor.AssertNotCalled(s.T(), "Record", mock.Anything, mock.Anything)
+}
+
+func (s *ConsentServiceTestSuite) TestCreateConsent_AuditError() {
+	s.mockStore.On("CreateConsent", mock.Anything, mock.AnythingOfType("*consent.Consent")).Return(nil)
+	s.mockAuditor.On("Record", mock.Anything, mock.AnythingOfType("consent.ConsentAuditEntry")).
+		Return(errors.New("audit down"))
+
+	created, svcErr := s.service.CreateConsent(context.Background(), s.validCreateRequest())
+
+	// A failed audit rolls the mutation back, so the operation fails.
 	s.Nil(created)
 	s.NotNil(svcErr)
 	s.Equal(tidcommon.InternalServerError.Code, svcErr.Code)
@@ -257,6 +284,9 @@ func (s *ConsentServiceTestSuite) TestUpdateConsent_Success() {
 	}
 	s.mockStore.On("GetConsent", mock.Anything, "c1").Return(existing, nil)
 	s.mockStore.On("UpdateConsent", mock.Anything, mock.AnythingOfType("*consent.Consent")).Return(nil)
+	var entry ConsentAuditEntry
+	s.mockAuditor.On("Record", mock.Anything, mock.AnythingOfType("consent.ConsentAuditEntry")).
+		Run(func(args mock.Arguments) { entry = args.Get(1).(ConsentAuditEntry) }).Return(nil)
 
 	req := s.validCreateRequest()
 	req.ValidityTime = 999
@@ -272,6 +302,11 @@ func (s *ConsentServiceTestSuite) TestUpdateConsent_Success() {
 	s.Equal(int64(999), updated.ValidityTime)
 	s.Len(updated.Authorizations, 1)
 	s.NotEmpty(updated.Authorizations[0].ID)
+	s.Equal(ConsentAuditActionUpdated, entry.Action)
+	s.Equal("c1", entry.ConsentID)
+	s.Equal("app1", entry.GroupID)
+	s.Equal([]string{"user1"}, entry.SubjectUserIDs)
+	s.Equal(updated.Authorizations, entry.Authorizations)
 }
 
 func (s *ConsentServiceTestSuite) TestUpdateConsent_StoreError() {
@@ -282,6 +317,22 @@ func (s *ConsentServiceTestSuite) TestUpdateConsent_StoreError() {
 
 	updated, svcErr := s.service.UpdateConsent(context.Background(), "c1", s.validCreateRequest())
 
+	s.Nil(updated)
+	s.NotNil(svcErr)
+	s.Equal(tidcommon.InternalServerError.Code, svcErr.Code)
+	s.mockAuditor.AssertNotCalled(s.T(), "Record", mock.Anything, mock.Anything)
+}
+
+func (s *ConsentServiceTestSuite) TestUpdateConsent_AuditError() {
+	existing := &Consent{ID: "c1", GroupID: "app1", Status: ConsentStatusActive}
+	s.mockStore.On("GetConsent", mock.Anything, "c1").Return(existing, nil)
+	s.mockStore.On("UpdateConsent", mock.Anything, mock.AnythingOfType("*consent.Consent")).Return(nil)
+	s.mockAuditor.On("Record", mock.Anything, mock.AnythingOfType("consent.ConsentAuditEntry")).
+		Return(errors.New("audit down"))
+
+	updated, svcErr := s.service.UpdateConsent(context.Background(), "c1", s.validCreateRequest())
+
+	// A failed audit rolls the mutation back, so the operation fails.
 	s.Nil(updated)
 	s.NotNil(svcErr)
 	s.Equal(tidcommon.InternalServerError.Code, svcErr.Code)

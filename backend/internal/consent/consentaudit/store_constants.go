@@ -16,13 +16,17 @@
  * under the License.
  */
 
-// Package consent provides the consent persistence and service layer.
-package consent
+package consentaudit
 
-// Initialize constructs the consent service.
-func Initialize(
-	inboundClientProvider InboundClientProvider,
-	auditProvider ConsentAuditProvider,
-) (ConsentServiceInterface, error) {
-	return newConsentService(inboundClientProvider, auditProvider)
+import (
+	dbmodel "github.com/thunder-id/thunderid/internal/system/database/model"
+)
+
+// QueryCreateConsentAudit is the query to insert a consent audit record.
+var QueryCreateConsentAudit = dbmodel.DBQuery{
+	ID: "CNQ-CONSENT_AUDIT-01",
+	Query: `INSERT INTO "CONSENT_AUDIT" ` +
+		`(ID, ACTION, CONSENT_ID, GROUP_ID, SUBJECT_USER_IDS, ACTOR_ID, TRACE_ID, DETAILS, ` +
+		`DEPLOYMENT_ID, CREATED_AT) ` +
+		`VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 }

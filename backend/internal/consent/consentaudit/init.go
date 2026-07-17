@@ -16,13 +16,19 @@
  * under the License.
  */
 
-// Package consent provides the consent persistence and service layer.
-package consent
+// Package consentaudit provides the default database-backed implementation of the consent.ConsentAuditProvider contract.
+package consentaudit
 
-// Initialize constructs the consent service.
-func Initialize(
-	inboundClientProvider InboundClientProvider,
-	auditProvider ConsentAuditProvider,
-) (ConsentServiceInterface, error) {
-	return newConsentService(inboundClientProvider, auditProvider)
+import (
+	"github.com/thunder-id/thunderid/internal/consent"
+)
+
+// Initialize constructs the database-backed consent auditor.
+func Initialize() (consent.ConsentAuditProvider, error) {
+	store, transactioner, err := newConsentAuditStore()
+	if err != nil {
+		return nil, err
+	}
+
+	return newConsentAuditService(store, transactioner), nil
 }

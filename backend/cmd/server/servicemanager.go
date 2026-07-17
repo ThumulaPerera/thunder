@@ -49,6 +49,7 @@ import (
 	"github.com/thunder-id/thunderid/internal/cert"
 	"github.com/thunder-id/thunderid/internal/connection"
 	"github.com/thunder-id/thunderid/internal/consent"
+	"github.com/thunder-id/thunderid/internal/consent/consentaudit"
 	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
 	"github.com/thunder-id/thunderid/internal/design/resolve"
 	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
@@ -522,7 +523,11 @@ func readSessionConfig(ctx context.Context, svc serverconfig.ServerConfigService
 // satisfies consent.InboundClientProvider directly.
 func initConsentService(ctx context.Context, logger *log.Logger,
 	inboundClientService inboundclient.InboundClientServiceInterface) consent.ConsentServiceInterface {
-	consentService, err := consent.Initialize(inboundClientService)
+	consentAuditService, err := consentaudit.Initialize()
+	if err != nil {
+		logger.Fatal(ctx, "Failed to initialize consent auditor", log.Error(err))
+	}
+	consentService, err := consent.Initialize(inboundClientService, consentAuditService)
 	fatalOnError(ctx, logger, err, "Failed to initialize consent service")
 	return consentService
 }
