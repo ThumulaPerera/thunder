@@ -17,9 +17,9 @@ on:
   merge_group:
   workflow_dispatch:
 
-# Avoid running multiple PR builders for the same PR on subsequent pushes.
+# Avoid running multiple PR builders for the same PR on subsequent pushes. GitHub Actions'
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -32,7 +32,7 @@ env:
 jobs:
   security-audit:
     name: 🔒 Security Audit
-    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -53,7 +53,7 @@ jobs:
 
   dependency-review:
     name: 🔎 Dependency Review
-    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -97,7 +97,7 @@ jobs:
 
   verify-mocks:
     name: 🔍 Verify Mock Files
-    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -133,7 +133,7 @@ jobs:
 
   lint:
     name: 🧹 Lint Code
-    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -177,7 +177,7 @@ jobs:
   build:
     name: 🛠️ Build Product
     needs: [detect-code-changes]
-    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -274,7 +274,7 @@ jobs:
 
   detect-code-changes:
     name: 🔍 Detect Code Changes
-    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group'
+    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -310,7 +310,7 @@ jobs:
   test-frontend-packages:
     name: 🧪 Frontend Packages Tests
     needs: [detect-code-changes]
-    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -348,7 +348,7 @@ jobs:
   test-frontend-gate-app:
     name: 🧪 Gate App Tests with Coverage
     needs: [detect-code-changes]
-    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -397,7 +397,7 @@ jobs:
   test-frontend-console-app:
     name: 🧪 Console App Tests with Coverage
     needs: [detect-code-changes]
-    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -525,7 +525,7 @@ jobs:
   build_samples:
     name: 🛠️ Build Sample Apps
     needs: [detect-code-changes]
-    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group') && (needs.detect-code-changes.result == 'skipped' || needs.detect-code-changes.outputs.should-run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -666,7 +666,7 @@ jobs:
   test-integration-status:
     name: ✅ Integration Tests Status
     needs: [test-integration]
-    if: ${{ always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) }}
+    if: ${{ always() && (github.event_name != 'pull_request' || (contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder'))) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -1067,7 +1067,7 @@ jobs:
 
   detect-powershell-changes:
     name: 🔍 Detect PowerShell Changes
-    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group'
+    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -1092,7 +1092,7 @@ jobs:
 
   detect-docs-changes:
     name: 🔍 Detect Documentation Changes
-    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')) || github.event_name == 'merge_group'
+    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')) || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -1145,7 +1145,7 @@ jobs:
     name: 🗑️ Cleanup Stale Turbo Cache
     runs-on: ubuntu-latest
     # Skip on fork PRs — GITHUB_TOKEN is always read-only there regardless of permissions declared here.
-    if: always() && github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder')
+    if: always() && github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'trigger-pr-builder') && (github.event.action != 'labeled' || github.event.label.name == 'trigger-pr-builder')
     needs:
       - build
       - test-frontend-packages
