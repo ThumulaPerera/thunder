@@ -1,5 +1,5 @@
 name: Setup Playwright Browsers
-description: Caches and installs Playwright Chromium browser for the workspace.
+description: Caches and installs Playwright browsers keyed on the resolved Playwright version.
 
 inputs:
   working-directory:
@@ -18,8 +18,36 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: 🎭 Install Playwright Browsers
+    - name: 🔎 Resolve Playwright Version
+      id: pw-version
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        VERSION=$(pnpm exec playwright --version | awk '{print $NF}')
+        if [ -z "$VERSION" ]; then
+          echo "❌ Failed to resolve Playwright version" >&2
+          exit 1
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "Resolved Playwright version: $VERSION"
+
+    - name: 📦 Restore Playwright Browser Cache
+      id: pw-cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: ~/.cache/ms-playwright
+        # Include runner.arch and the browser selection so a hit populated on one arch or with a
+        # different `browsers` input can't be reused with a cache-hit shortcut that skips download.
+        key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.pw-version.outputs.version }}-${{ inputs.scope }}-${{ inputs.browsers || 'default' }}
+
+    - name: 🎭 Install Playwright Browsers and System Deps (cache miss)
+      if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: pnpm exec playwright install --with-deps ${{ inputs.browsers }}
 
+    - name: 🎭 Install Playwright System Deps (cache hit)
+      if: steps.pw-cache.outputs.cache-hit == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: pnpm exec playwright install-deps ${{ inputs.browsers }}
