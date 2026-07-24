@@ -422,26 +422,36 @@ func (m *authnProviderManager) updateAuthUser(ctx context.Context, authResult *p
 	return authUser, nil
 }
 
-// selectProvider resolves the single credential key to its provider, falling back to the
-// default provider for keys not claimed by a custom provider. Callers must supply exactly one
-// credential key; zero or multiple keys indicates an internal fault and is treated as a server error.
+// selectProvider resolves the supplied credential keys to a single provider. The request is valid as long
+// as every key resolves to the same provider; keys that fan out to different providers are ambiguous
+// and treated as an internal fault. At least one key must be supplied.
 func (m *authnProviderManager) selectProvider(ctx context.Context, credentialTypes []string) (
 	string, providers.AuthnProviderInterface, *tidcommon.ServiceError) {
-	if len(credentialTypes) != 1 {
-		m.logger.Error(ctx, "expected exactly one credential key; rejecting ambiguous request",
-			log.Any("credentialKeys", credentialTypes))
+	if len(credentialTypes) == 0 {
+		m.logger.Error(ctx, "no credential keys supplied; cannot select a provider")
 		return "", nil, &tidcommon.InternalServerError
 	}
-	credentialType := credentialTypes[0]
-	selectedProviderName, ok := m.credToProviderMapping[credentialType]
-	if !ok {
-		// Credentials not claimed by a custom provider fall through to the default provider.
-		selectedProviderName = defaultProviderName
+
+	selectedProviderName := ""
+	for i, credentialType := range credentialTypes {
+		providerName, ok := m.credToProviderMapping[credentialType]
+		if !ok {
+			// Credentials not claimed by a custom provider fall through to the default provider.
+			providerName = defaultProviderName
+		}
+		if i == 0 {
+			selectedProviderName = providerName
+		} else if providerName != selectedProviderName {
+			m.logger.Error(ctx, "credential keys map to multiple providers; rejecting ambiguous request",
+				log.Any("credentialKeys", credentialTypes))
+			return "", nil, &tidcommon.InternalServerError
+		}
 	}
+
 	selectedProvider, ok := m.authnProviders[selectedProviderName]
 	if !ok || selectedProvider == nil {
 		m.logger.Error(ctx, "credential key mapped to a provider that is not registered",
-			log.String("credentialType", credentialType), log.String("providerName", selectedProviderName))
+			log.String("providerName", selectedProviderName))
 		return "", nil, &tidcommon.InternalServerError
 	}
 	return selectedProviderName, selectedProvider, nil
