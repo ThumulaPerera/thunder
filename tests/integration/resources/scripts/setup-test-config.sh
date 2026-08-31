@@ -133,6 +133,9 @@ flow:
 server_config:
   store: composite
 
+authzen_pdp:
+  store: composite
+
 passkey:
   allowed_origins:
     - "https://localhost:8095"

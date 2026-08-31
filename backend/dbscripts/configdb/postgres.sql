@@ -159,6 +159,22 @@ CREATE TABLE "NOTIFICATION_SENDER" (
 -- Composite index for name-based notification sender lookups
 CREATE INDEX idx_notification_sender_name_deployment ON "NOTIFICATION_SENDER" (DEPLOYMENT_ID, NAME);
 
+-- Table to store external authorization PDP connections.
+CREATE TABLE "AUTHORIZATION_PDP_CONNECTION" (
+	DEPLOYMENT_ID VARCHAR(255) NOT NULL,
+	ID VARCHAR(36) PRIMARY KEY,
+	NAME VARCHAR(255) NOT NULL,
+	DESCRIPTION VARCHAR(500),
+	TYPE VARCHAR(50) NOT NULL,
+	PROPERTIES JSONB NOT NULL,
+    CREATED_AT TIMESTAMPTZ DEFAULT NOW(),
+    UPDATED_AT TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Unique constraint: Authorization PDP provider names must be unique per provider type and deployment.
+CREATE UNIQUE INDEX idx_authorization_pdp_connection_type_name_deployment
+	ON "AUTHORIZATION_PDP_CONNECTION" (DEPLOYMENT_ID, TYPE, NAME);
+
 -- Table to store certificates associated with various entities.
 CREATE TABLE "CERTIFICATE" (
     DEPLOYMENT_ID VARCHAR(255) NOT NULL,
