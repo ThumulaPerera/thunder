@@ -112,9 +112,13 @@ func (ts *ExportEntityResourcesTestSuite) TearDownSuite() {
 	ts.clearTranslationLanguage()
 
 	// Restored before the OU is deleted, so the singleton is never left pointing at a missing OU.
+	// A failed restore keeps the OU: leaking one is cheaper than leaving the shared agent type
+	// referencing a deleted resource, which every later suite would inherit.
+	agentTypeRestored := true
 	if ts.agentTypeSnapshot != nil {
 		if err := testutils.RestoreAgentType(ts.agentTypeSnapshot); err != nil {
 			ts.T().Errorf("teardown: failed to restore the default agent type: %v", err)
+			agentTypeRestored = false
 		}
 	}
 
@@ -128,7 +132,7 @@ func (ts *ExportEntityResourcesTestSuite) TearDownSuite() {
 			ts.T().Logf("Failed to delete the user type: %v", err)
 		}
 	}
-	if ts.ouID != "" {
+	if ts.ouID != "" && agentTypeRestored {
 		if err := testutils.DeleteOrganizationUnit(ts.ouID); err != nil {
 			ts.T().Logf("Failed to delete the test organization unit: %v", err)
 		}
