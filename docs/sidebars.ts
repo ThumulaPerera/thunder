@@ -1173,6 +1173,11 @@ const sidebars: SidebarsConfig = {
           id: 'deployment/observability',
           label: 'Observability',
         },
+        {
+          type: 'doc',
+          id: 'deployment/agent-analytics',
+          label: 'Agent Analytics',
+        },
       ],
     },
   ],
