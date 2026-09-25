@@ -16,6 +16,7 @@ import (
 	agentmodel "github.com/thunder-id/thunderid/internal/agent/model"
 	appmodel "github.com/thunder-id/thunderid/internal/application/model"
 	"github.com/thunder-id/thunderid/internal/connection"
+	"github.com/thunder-id/thunderid/internal/connection/authzenpdp"
 	layoutmgt "github.com/thunder-id/thunderid/internal/design/layout/mgt"
 	thememgt "github.com/thunder-id/thunderid/internal/design/theme/mgt"
 	"github.com/thunder-id/thunderid/internal/entitytype"
@@ -63,6 +64,20 @@ type senderAdapter interface {
 		*ncommon.NotificationSenderDTO,
 		*tidcommon.ServiceError,
 	)
+}
+
+// authZENPDPAdapter defines the AuthZEN PDP connection operations required by the importer.
+type authZENPDPAdapter interface {
+	CreateAuthZENPDPConnection(
+		ctx context.Context,
+		request authzenpdp.ConnectionRequest,
+	) (*authzenpdp.AuthZENPDPConnection, *tidcommon.ServiceError)
+	GetAuthZENPDP(ctx context.Context, id string) (*authzenpdp.AuthZENPDPConnection, *tidcommon.ServiceError)
+	UpdateAuthZENPDPConnection(
+		ctx context.Context,
+		id string,
+		request authzenpdp.ConnectionRequest,
+	) (*authzenpdp.AuthZENPDPConnection, *tidcommon.ServiceError)
 }
 
 type flowAdapter interface {
@@ -218,6 +233,7 @@ type importService struct {
 	applicationService             applicationAdapter
 	idpService                     idpAdapter
 	senderService                  senderAdapter
+	authZENPDPService              authZENPDPAdapter
 	flowService                    flowAdapter
 	ouService                      ouAdapter
 	entityTypeService              entityTypeAdapter
@@ -254,11 +270,17 @@ func newImportService(
 	presentationDefinitionService presentationDefinitionAdapter,
 	credentialConfigurationService credentialConfigurationAdapter,
 	serverConfigService serverConfigAdapter,
+	authZENPDPServices ...authZENPDPAdapter,
 ) ImportServiceInterface {
+	var authZENPDPService authZENPDPAdapter
+	if len(authZENPDPServices) > 0 {
+		authZENPDPService = authZENPDPServices[0]
+	}
 	return &importService{
 		applicationService:             applicationService,
 		idpService:                     idpService,
 		senderService:                  senderService,
+		authZENPDPService:              authZENPDPService,
 		flowService:                    flowService,
 		ouService:                      ouService,
 		entityTypeService:              entityTypeService,
@@ -450,6 +472,17 @@ func (s *importService) importDocument(
 func (s *importService) importConnection(
 	ctx context.Context, doc parsedDocument, options *ImportOptions, dryRun bool,
 ) ImportItemOutcome {
+	if authZENPDP, err := connection.ParseAuthZENPDPConnectionFromNode(doc.Node); err != nil {
+		return ImportItemOutcome{
+			ResourceType: resourceTypeConnection,
+			Status:       statusFailed,
+			Code:         ErrorInvalidYAMLContent.Code,
+			Message:      fmt.Sprintf("failed to decode connection document: %v", err),
+		}
+	} else if authZENPDP != nil {
+		return s.importConnectionAuthZENPDP(ctx, authZENPDP, options, dryRun)
+	}
+
 	idpDTO, senderDTO, err := connection.ParseConnectionFromNode(doc.Node)
 	if err != nil {
 		return ImportItemOutcome{
@@ -464,6 +497,69 @@ func (s *importService) importConnection(
 		return s.importConnectionIDP(ctx, idpDTO, options, dryRun)
 	}
 	return s.importConnectionSender(ctx, senderDTO, options, dryRun)
+}
+
+// importConnectionAuthZENPDP creates or updates an AuthZEN PDP connection from an import document.
+func (s *importService) importConnectionAuthZENPDP(
+	ctx context.Context, req *authzenpdp.AuthZENPDPConnection, options *ImportOptions, dryRun bool,
+) ImportItemOutcome {
+	if s.authZENPDPService == nil {
+		return unsupportedAdapterOutcome(resourceTypeConnection, "AuthZEN PDP")
+	}
+	if options.IsUpsertEnabled() && req.ID != "" {
+		existing, svcErr := s.authZENPDPService.GetAuthZENPDP(ctx, req.ID)
+		if svcErr != nil {
+			return authZENPDPImportServiceError(req, operationUpdate, svcErr)
+		}
+		if existing != nil {
+			if dryRun {
+				return successOutcome(resourceTypeConnection, req.ID, req.Name, operationUpdate)
+			}
+			if _, svcErr := s.authZENPDPService.UpdateAuthZENPDPConnection(
+				ctx, req.ID, authZENPDPConnectionRequest(req)); svcErr != nil {
+				return authZENPDPImportServiceError(req, operationUpdate, svcErr)
+			}
+			return successOutcome(resourceTypeConnection, req.ID, req.Name, operationUpdate)
+		}
+	}
+	if dryRun {
+		return successOutcome(resourceTypeConnection, req.ID, req.Name, operationCreate)
+	}
+	created, svcErr := s.authZENPDPService.CreateAuthZENPDPConnection(
+		ctx, authZENPDPConnectionRequest(req))
+	if svcErr != nil {
+		return authZENPDPImportServiceError(req, operationCreate, svcErr)
+	}
+	return successOutcome(resourceTypeConnection, created.ID, created.Name, operationCreate)
+}
+
+// authZENPDPConnectionRequest converts an imported connection into the service request shape.
+func authZENPDPConnectionRequest(connection *authzenpdp.AuthZENPDPConnection) authzenpdp.ConnectionRequest {
+	return authzenpdp.ConnectionRequest{
+		ID:                       connection.ID,
+		Name:                     connection.Name,
+		Description:              connection.Description,
+		Endpoint:                 connection.Endpoint,
+		BatchEndpoint:            connection.BatchEndpoint,
+		TimeoutMS:                connection.TimeoutMS,
+		RetryCount:               &connection.RetryCount,
+		SubjectAttributeMappings: connection.SubjectAttributeMappings,
+	}
+}
+
+// authZENPDPImportServiceError converts a service error into an import outcome.
+func authZENPDPImportServiceError(
+	req *authzenpdp.AuthZENPDPConnection, operation string, svcErr *tidcommon.ServiceError,
+) ImportItemOutcome {
+	return ImportItemOutcome{
+		ResourceType: resourceTypeConnection,
+		ResourceID:   req.ID,
+		ResourceName: req.Name,
+		Operation:    operation,
+		Status:       statusFailed,
+		Code:         svcErr.Code,
+		Message:      svcErr.Error.DefaultValue,
+	}
 }
 
 func (s *importService) importConnectionIDP(
@@ -759,8 +855,8 @@ var resourceDependencyOrder = []string{
 	resourceTypeOrganizationUnit,
 	resourceTypeEntityType,
 	resourceTypeAgentType,
-	resourceTypeResourceServer,
 	resourceTypeConnection,
+	resourceTypeResourceServer,
 	resourceTypeFlow,
 	resourceTypeTheme,
 	resourceTypeLayout,
