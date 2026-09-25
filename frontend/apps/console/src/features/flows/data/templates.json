@@ -124,8 +124,178 @@
               "width": 206
             }
           },
-          "onSuccess": "owner_resolution",
+          "onSuccess": "agent_type_resolution",
           "type": "TASK_EXECUTION"
+        },
+        {
+          "executor": {
+            "name": "AgentTypeResolver"
+          },
+          "id": "agent_type_resolution",
+          "layout": {
+            "position": {"x": 580, "y": 175},
+            "size": {
+              "height": 113,
+              "width": 206
+            }
+          },
+          "onIncomplete": "prompt_agent_type",
+          "onSuccess": "ou_selection",
+          "properties": {
+            "allowedAgentTypes": ["default"]
+          },
+          "type": "TASK_EXECUTION"
+        },
+        {
+          "id": "prompt_agent_type",
+          "layout": {
+            "position": {"x": 580, "y": -320},
+            "size": {
+              "height": 480,
+              "width": 350
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "align": "left",
+                "id": "text_header_agent_type",
+                "label": "{{ t(agentOnboarding:forms.agent_type.title) }}",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "align": "left",
+                "id": "text_subtitle_agent_type",
+                "label": "{{ t(agentOnboarding:forms.agent_type.subtitle) }}",
+                "type": "TEXT",
+                "variant": "HEADING_6"
+              },
+              {
+                "components": [
+                  {
+                    "id": "agenttype_input",
+                    "label": "{{ t(agentOnboarding:forms.agent_type.fields.type.label) }}",
+                    "options": [],
+                    "placeholder": "{{ t(agentOnboarding:forms.agent_type.fields.type.placeholder) }}",
+                    "ref": "agentType",
+                    "required": true,
+                    "type": "SELECT"
+                  },
+                  {
+                    "eventType": "SUBMIT",
+                    "id": "action_agent_type",
+                    "label": "{{ t(agentOnboarding:forms.agent_type.actions.next.label) }}",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_agent_type",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "action": {
+                "nextNode": "agent_type_resolution",
+                "ref": "action_agent_type"
+              },
+              "inputs": [
+                {
+                  "identifier": "agentType",
+                  "ref": "agenttype_input",
+                  "required": true,
+                  "type": "SELECT"
+                }
+              ]
+            }
+          ],
+          "type": "PROMPT"
+        },
+        {
+          "executor": {
+            "name": "OUResolverExecutor"
+          },
+          "id": "ou_selection",
+          "layout": {
+            "position": {"x": 860, "y": 175},
+            "size": {
+              "height": 113,
+              "width": 206
+            }
+          },
+          "onIncomplete": "prompt_ou_selection",
+          "onSuccess": "owner_resolution",
+          "properties": {
+            "resolveFrom": "prompt"
+          },
+          "type": "TASK_EXECUTION"
+        },
+        {
+          "id": "prompt_ou_selection",
+          "layout": {
+            "position": {"x": 860, "y": -320},
+            "size": {
+              "height": 525,
+              "width": 350
+            }
+          },
+          "meta": {
+            "components": [
+              {
+                "align": "left",
+                "id": "text_header_ou_selection",
+                "label": "{{ t(agentOnboarding:forms.ou_selection.title) }}",
+                "type": "TEXT",
+                "variant": "HEADING_1"
+              },
+              {
+                "align": "left",
+                "id": "text_subtitle_ou_selection",
+                "label": "{{ t(agentOnboarding:forms.ou_selection.subtitle) }}",
+                "type": "TEXT",
+                "variant": "HEADING_6"
+              },
+              {
+                "components": [
+                  {
+                    "id": "ou_selection_input",
+                    "label": "{{ t(agentOnboarding:forms.ou_selection.fields.ou.label) }}",
+                    "ref": "ouId",
+                    "required": true,
+                    "type": "OU_SELECT"
+                  },
+                  {
+                    "eventType": "SUBMIT",
+                    "id": "action_ou_selection",
+                    "label": "{{ t(agentOnboarding:forms.ou_selection.actions.next.label) }}",
+                    "type": "ACTION",
+                    "variant": "PRIMARY"
+                  }
+                ],
+                "id": "block_ou_selection",
+                "type": "BLOCK"
+              }
+            ]
+          },
+          "prompts": [
+            {
+              "action": {
+                "nextNode": "ou_selection",
+                "ref": "action_ou_selection"
+              },
+              "inputs": [
+                {
+                  "identifier": "ouId",
+                  "ref": "ou_selection_input",
+                  "required": true,
+                  "type": "OU_SELECT"
+                }
+              ]
+            }
+          ],
+          "type": "PROMPT"
         },
         {
           "executor": {
@@ -133,7 +303,7 @@
           },
           "id": "owner_resolution",
           "layout": {
-            "position": {"x": 580, "y": 175},
+            "position": {"x": 1140, "y": 175},
             "size": {
               "height": 113,
               "width": 206
@@ -146,7 +316,7 @@
         {
           "id": "prompt_owner",
           "layout": {
-            "position": {"x": 580, "y": -320},
+            "position": {"x": 1140, "y": -320},
             "size": {
               "height": 480,
               "width": 350
@@ -212,7 +382,7 @@
         {
           "id": "prompt_agent_name",
           "layout": {
-            "position": {"x": 900, "y": 100},
+            "position": {"x": 1460, "y": 100},
             "size": {
               "height": 410,
               "width": 350
@@ -278,7 +448,7 @@
         {
           "id": "prompt_agent_details",
           "layout": {
-            "position": {"x": 1250, "y": 60},
+            "position": {"x": 1810, "y": 60},
             "size": {
               "height": 566,
               "width": 350
@@ -344,7 +514,7 @@
           "prompts": [
             {
               "action": {
-                "nextNode": "provisioning",
+                "nextNode": "agent_attribute_uniqueness",
                 "ref": "action_agent_details"
               },
               "inputs": [
@@ -373,16 +543,36 @@
         },
         {
           "executor": {
-            "name": "ProvisioningExecutor"
+            "name": "AttributeUniquenessValidator"
           },
-          "id": "provisioning",
+          "id": "agent_attribute_uniqueness",
           "layout": {
-            "position": {"x": 1620, "y": 175},
+            "position": {"x": 2180, "y": 175},
             "size": {
               "height": 113,
               "width": 206
             }
           },
+          "onIncomplete": "prompt_agent_details",
+          "onSuccess": "provisioning",
+          "properties": {
+            "mode": "agent"
+          },
+          "type": "TASK_EXECUTION"
+        },
+        {
+          "executor": {
+            "name": "ProvisioningExecutor"
+          },
+          "id": "provisioning",
+          "layout": {
+            "position": {"x": 2460, "y": 175},
+            "size": {
+              "height": 113,
+              "width": 206
+            }
+          },
+          "onFailure": "prompt_agent_name",
           "onIncomplete": "prompt_agent_details",
           "onSuccess": "agent_credentials",
           "properties": {
@@ -394,7 +584,7 @@
         {
           "id": "agent_credentials",
           "layout": {
-            "position": {"x": 1900, "y": 60},
+            "position": {"x": 2740, "y": 60},
             "size": {
               "height": 520,
               "width": 350
@@ -445,7 +635,7 @@
         {
           "id": "end",
           "layout": {
-            "position": {"x": 2250, "y": 200},
+            "position": {"x": 3090, "y": 200},
             "size": {
               "height": 34,
               "width": 85

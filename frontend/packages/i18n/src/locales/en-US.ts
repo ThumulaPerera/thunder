@@ -129,17 +129,17 @@ const translations = {
     'errors.DCR-1003': 'This resource is managed declaratively and cannot be deleted.',
 
     // Backend error code translations for flow executor failures (per the flow execution error envelope).
-    'errors.FET-1002': 'Could not check whether a matching user already exists. Please try again.',
-    'errors.FET-1003': 'The provided details match more than one existing user.',
-    'errors.FET-1006': 'The user was created but could not be signed in.',
-    'errors.FET-1007': 'A user with these details already exists.',
-    'errors.FET-1020': 'Provide at least one user attribute to continue.',
-    'errors.FET-1021': 'Something went wrong while creating the user. Please try again.',
-    'errors.FET-1022': 'The user was created but group or role assignment failed.',
+    'errors.FET-1002': 'Could not check whether a matching {{entity}} already exists. Please try again.',
+    'errors.FET-1003': 'The provided details match more than one existing {{entity}}.',
+    'errors.FET-1006': 'The {{entity}} was created but could not be signed in.',
+    'errors.FET-1007': 'Another {{entity}} with these details already exists.',
+    'errors.FET-1020': 'Provide at least one {{entity}} attribute to continue.',
+    'errors.FET-1021': 'Something went wrong while creating the {{entity}}. Please try again.',
+    'errors.FET-1022': 'The {{entity}} was created but group or role assignment failed.',
     'errors.FET-1023': 'Select an organization unit before continuing.',
-    'errors.FET-1024': 'A user with these details already exists in the selected organization unit.',
-    'errors.FET-1061': 'A user already exists with the provided {{attribute}}.',
-    'errors.FET-1080': 'A user with the same unique attribute value already exists.',
+    'errors.FET-1024': 'Another {{entity}} with these details already exists in the selected organization unit.',
+    'errors.FET-1061': 'Another {{entity}} already exists with the provided {{attribute}}.',
+    'errors.FET-1080': 'Another {{entity}} with the same unique attribute value already exists.',
     'errors.FET-1084': 'This user cannot be deleted in their current state.',
     'errors.FET-1085': 'The user could not be deleted. Please try again.',
     'errors.FET-1086': 'This application cannot be deleted in its current state.',
@@ -1049,6 +1049,7 @@ const translations = {
   // ============================================================================
   agents: {
     // Listing page
+    addAgent: 'Add Agent',
     'listing.title': 'Agents',
     'listing.subtitle': 'Manage service identities and machine clients',
     'listing.addAgent': 'Add Agent',
@@ -1060,31 +1061,19 @@ const translations = {
     'listing.columns.organizationUnit': 'Organization Unit',
     'listing.columns.actions': 'Actions',
 
-    // Create wizard
-    'createWizard.createAgent': 'Create agent',
-    'createWizard.errors.createFailed': 'Failed to create agent. Please try again.',
-    'createWizard.errors.ouRequired': 'Organization unit is required',
-    'createWizard.errors.schemaRequired': 'Schema is required',
-    'createWizard.steps.name': 'Details',
-    'createWizard.steps.organizationUnit': 'Organization unit',
-    'createWizard.steps.profile': 'Profile',
-    'createWizard.steps.owner': 'Owner',
-    'createWizard.organizationUnit.title': 'Where should this agent belong?',
-    'createWizard.organizationUnit.subtitle':
-      "Choose the organization unit that will own this agent. You can't change this once created.",
-    'createWizard.organizationUnit.fieldLabel': 'Organization Unit',
-    'createWizard.name.title': "Let's collect some details about your agent",
-    'createWizard.name.fieldLabel': 'Agent name',
-    'createWizard.name.placeholder': 'e.g. Billing Service',
-    'createWizard.name.maxLength': 'Agent name cannot exceed {{max}} characters',
-    'createWizard.agentDetails.title': 'Agent attributes',
-    'createWizard.agentDetails.subtitle': 'Provide values for the attributes defined by the agent schema.',
-    'createWizard.owner.title': 'Owner',
-    'createWizard.owner.subtitle': 'Choose the user that owns this agent.',
-    'createWizard.owner.userLabel': 'Owner',
-    'createWizard.owner.userPlaceholder': 'Select a user',
-    'createWizard.owner.helperText':
-      'Defaults to you if left unchanged. You can assign ownership to another user instead.',
+    // Onboarding (flow driven)
+    'onboarding.errors.notConfigured.title': 'Agent onboarding is not configured',
+    'onboarding.errors.notConfigured.description':
+      'No agent onboarding flow is configured for this deployment. Set flow.agentOnboardingFlow.defaultHandle in the server configuration to the handle of an administration flow that creates agents.',
+    'onboarding.errors.flowMissing.title': 'Agent onboarding flow not found',
+    'onboarding.errors.flowMissing.description':
+      'The configured agent onboarding flow "{{handle}}" does not exist. Create an administration flow with that handle, or point flow.agentOnboardingFlow.defaultHandle at one that exists.',
+    'onboarding.errors.unavailable.title': 'Could not start agent onboarding',
+    'onboarding.errors.unavailable.description':
+      'The agent onboarding flow could not be loaded. Check that the server is reachable and try again.',
+    'onboarding.errors.stepFailed': 'This step could not be completed. Review the values and try again.',
+    'onboarding.selectPlaceholder': 'Select an option',
+    'onboarding.addAnother': 'Add Another Agent',
 
     // Client secret (creation)
     'clientSecret.saveTitle': 'Save your client secret',
